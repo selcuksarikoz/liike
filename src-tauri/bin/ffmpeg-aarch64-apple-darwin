@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "ffmpeg sidecar placeholder. Please replace this file with the real ffmpeg binary for your platform."

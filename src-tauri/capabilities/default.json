@@ -1,0 +1,31 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schemas/desktop-capabilities.json",
+  "identifier": "default",
+  "description": "Default capabilities for Liike (fs + shell for render pipeline).",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "fs:write-files"
+    },
+    {
+      "identifier": "fs:read-files"
+    },
+    {
+      "identifier": "fs:read-dirs"
+    },
+    {
+      "identifier": "fs:scope",
+      "allow": [{ "path": "$TEMP/**" }]
+    },
+    {
+      "identifier": "shell:allow-spawn"
+    },
+    {
+      "identifier": "shell:allow-execute"
+    },
+    {
+      "identifier": "shell:allow-stdin-write"
+    }
+  ]
+}
