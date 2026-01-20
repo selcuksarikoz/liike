@@ -47,6 +47,7 @@ const getFileExtension = (format: ExportFormat): string => {
     case 'webm': return 'webm';
     case 'mov': return 'mov';
     case 'png': return 'png';
+    case 'gif': return 'gif';
     case 'mp4':
     default: return 'mp4';
   }
@@ -57,9 +58,32 @@ const getFileFilter = (format: ExportFormat): { name: string; extensions: string
     case 'webm': return { name: 'WebM Video', extensions: ['webm'] };
     case 'mov': return { name: 'QuickTime Movie', extensions: ['mov'] };
     case 'png': return { name: 'PNG Image', extensions: ['png'] };
+    case 'gif': return { name: 'GIF Animation', extensions: ['gif'] };
     case 'mp4':
     default: return { name: 'MP4 Video', extensions: ['mp4'] };
   }
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const createQueue = (concurrency: number) => {
+  let active = 0;
+  const queue: (() => Promise<void>)[] = [];
+  const next = () => {
+    if (active >= concurrency || queue.length === 0) return;
+    active++;
+    const fn = queue.shift()!;
+    fn().finally(() => {
+      active--;
+      next();
+    });
+  };
+  return (fn: () => Promise<void>) => {
+    return new Promise<void>((resolve, reject) => {
+      queue.push(() => fn().then(resolve, reject));
+      next();
+    });
+  };
 };
 
 const cleanupTempFiles = async (framesDir: string, tempOutputPath: string) => {
@@ -102,16 +126,13 @@ export const useRenderLoop = () => {
     resetRenderStatus();
   }, [resetRenderStatus]);
 
-  const saveFrame = useCallback(
-    async (framesDir: string, index: number, node: HTMLElement) => {
-      const blob = await toBlob(node, { pixelRatio: 1 });
-      if (!blob) {
-        throw new Error('Failed to capture frame.');
-      }
 
+
+  // Helper to write frame to disk
+  const writeFrame = useCallback(
+    async (framesDir: string, index: number, blob: Blob) => {
       const bytes = await blobToUint8Array(blob);
       const filePath = await join(framesDir, frameFileName(index));
-
       await writeFile(filePath, bytes);
     },
     []
@@ -158,17 +179,35 @@ export const useRenderLoop = () => {
         phase: 'capturing',
       });
 
+
       try {
+        const queueLimit = createQueue(5); // 5 concurrent writes
+        const writePromises: Promise<void>[] = [];
+
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex += 1) {
+          // Check abort at start of loop
           if (abortController.signal.aborted) {
             resetState();
             return;
           }
 
+          // Yield to main thread to allow UI updates
+          await sleep(0);
+
           const t = (frameIndex / fps) * 1000;
           pauseAndSeekAnimations(node, t);
-          await saveFrame(framesDir, frameIndex, node);
+          
+          // Capture frame (must be sequential with DOM state)
+          const blob = await toBlob(node, { pixelRatio: 1 });
+          if (!blob) {
+            throw new Error('Failed to capture frame.');
+          }
 
+          // Queue the write operation (parallel)
+          const p = queueLimit(() => writeFrame(framesDir, frameIndex, blob));
+          writePromises.push(p);
+
+          // Update progress
           setState((prev) => ({
             ...prev,
             currentFrame: frameIndex + 1,
@@ -179,6 +218,10 @@ export const useRenderLoop = () => {
             progress: (frameIndex + 1) / totalFrames,
           });
         }
+        
+        // Wait for all writes to complete
+        await Promise.all(writePromises);
+        
       } catch (error) {
         const errorMsg = (error as Error).message;
         setState((prev) => ({ ...prev, error: errorMsg, isRendering: false }));
@@ -280,7 +323,7 @@ export const useRenderLoop = () => {
         }
       }
     },
-    [resetState, saveFrame, setRenderStatus]
+    [resetState, writeFrame, setRenderStatus]
   );
 
   const cancel = useCallback(() => {

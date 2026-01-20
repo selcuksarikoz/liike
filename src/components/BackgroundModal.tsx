@@ -129,7 +129,7 @@ type Props = {
 };
 
 export const BackgroundModal = ({ isOpen, onClose }: Props) => {
-  const [activeTab, setActiveTab] = useState<TabType>('gradients');
+  const [activeTab, setActiveTab] = useState<TabType>('images');
   const [customColor, setCustomColor] = useState('#1a1a2e');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -153,6 +153,7 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
   };
 
   const handleImageSelect = (imageSrc: string) => {
+    console.log(imageSrc);
     setBackgroundImage(imageSrc);
   };
 
@@ -169,9 +170,9 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
   };
 
   const tabs = [
+    { id: 'images' as TabType, label: 'Images', icon: <Image className="w-4 h-4" /> },
     { id: 'gradients' as TabType, label: 'Gradients', icon: <Blend className="w-4 h-4" /> },
     { id: 'colors' as TabType, label: 'Colors', icon: <Palette className="w-4 h-4" /> },
-    { id: 'images' as TabType, label: 'Images', icon: <Image className="w-4 h-4" /> },
   ];
 
   return (

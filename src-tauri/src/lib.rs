@@ -54,6 +54,10 @@ fn get_encoder_args(format: &str) -> Vec<String> {
       "-crf".to_string(), "18".to_string(),
       "-movflags".to_string(), "+faststart".to_string(),
     ],
+    "gif" => vec![
+      "-vf".to_string(), "fps=15,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse".to_string(),
+      "-loop".to_string(), "0".to_string(),
+    ],
   }
 }
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ExportFormat = 'mp4' | 'webm' | 'mov' | 'png';
+export type ExportFormat = 'mp4' | 'webm' | 'mov' | 'png' | 'gif';
 
 type RenderSettings = {
   durationMs: number;
@@ -93,9 +93,9 @@ export const useRenderStore = create<RenderStore>((set) => ({
   rotationZ: 0,
   cornerRadius: 12,
   backgroundGradient: 'from-[#1c3b4a] via-[#141b1e] to-[#0a0f12]',
-  backgroundType: 'gradient',
+  backgroundType: 'image',
   backgroundColor: '#1a1a2e',
-  backgroundImage: null,
+  backgroundImage: "/src/assets/bg/1.webp",
   mediaAssets: [],
   canvasWidth: 1080,
   canvasHeight: 1080,
