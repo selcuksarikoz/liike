@@ -15,7 +15,15 @@ export type AnimationType =
   | 'shake'
   | 'pulse'
   | 'swing'
-  | 'flip';
+  | 'flip'
+  | 'elastic-rotate'
+  | 'converge'
+  | 'diverge'
+  | 'glitch'
+  | 'wobble-3d'
+  | 'rotate-3d'
+  | 'elevator'
+  | 'skew-slide';
 
 export type AnimationPreset = {
   id: string;
@@ -25,6 +33,7 @@ export type AnimationPreset = {
   color: string;
   duration: number;
   easing: string;
+  category?: 'Basic' | 'Creative' | '3D' | 'Combo';
 };
 
 export type TimelineClip = {
@@ -290,6 +299,7 @@ export const useZoom = () => useTimelineStore(state => state.zoom);
 
 // Animation Presets
 export const ANIMATION_PRESETS: AnimationPreset[] = [
+  // Basic
   {
     id: 'float',
     name: 'Float',
@@ -298,6 +308,7 @@ export const ANIMATION_PRESETS: AnimationPreset[] = [
     color: '#60A5FA',
     duration: 2000,
     easing: 'ease-in-out',
+    category: 'Basic',
   },
   {
     id: 'bounce',
@@ -307,24 +318,7 @@ export const ANIMATION_PRESETS: AnimationPreset[] = [
     color: '#F472B6',
     duration: 1000,
     easing: 'ease-out',
-  },
-  {
-    id: 'rotate-zoom',
-    name: 'Rotate + Zoom',
-    animations: ['rotate', 'zoom-in'],
-    icon: '360',
-    color: '#A78BFA',
-    duration: 1500,
-    easing: 'ease-in-out',
-  },
-  {
-    id: 'slide-bounce',
-    name: 'Slide + Bounce',
-    animations: ['slide-right', 'bounce'],
-    icon: 'swipe_right',
-    color: '#34D399',
-    duration: 1200,
-    easing: 'ease-out',
+    category: 'Basic',
   },
   {
     id: 'pulse',
@@ -334,6 +328,7 @@ export const ANIMATION_PRESETS: AnimationPreset[] = [
     color: '#FB7185',
     duration: 800,
     easing: 'ease-in-out',
+    category: 'Basic',
   },
   {
     id: 'shake',
@@ -343,41 +338,112 @@ export const ANIMATION_PRESETS: AnimationPreset[] = [
     color: '#FBBF24',
     duration: 500,
     easing: 'linear',
+    category: 'Basic',
+  },
+  
+  // Creative
+  {
+    id: 'glitch-snap',
+    name: 'Glitch Snap',
+    animations: ['glitch', 'zoom-in'],
+    icon: 'broken_image',
+    color: '#22d3ee',
+    duration: 600,
+    easing: 'linear',
+    category: 'Creative',
   },
   {
-    id: 'swing',
-    name: 'Swing',
-    animations: ['swing'],
-    icon: 'swap_horiz',
-    color: '#2DD4BF',
-    duration: 1000,
-    easing: 'ease-in-out',
-  },
-  {
-    id: 'flip-zoom',
-    name: 'Flip + Zoom',
-    animations: ['flip', 'zoom-out'],
-    icon: 'flip',
-    color: '#E879F9',
+    id: 'elastic-spin',
+    name: 'Elastic Spin',
+    animations: ['elastic-rotate', 'zoom-out'],
+    icon: 'loop',
+    color: '#fb923c',
     duration: 1500,
-    easing: 'ease-in-out',
+    easing: 'easeInOutBack',
+    category: 'Creative',
   },
   {
-    id: 'float-rotate',
-    name: 'Float + Rotate',
-    animations: ['float', 'rotate'],
-    icon: 'cyclone',
-    color: '#38BDF8',
+    id: 'magnetic-pull',
+    name: 'Magnetic',
+    animations: ['converge', 'pulse'],
+    icon: 'join_inner',
+    color: '#818cf8',
+    duration: 1200,
+    easing: 'ease-out',
+    category: 'Creative',
+  },
+  {
+    id: 'explosion',
+    name: 'Explosion',
+    animations: ['diverge', 'shake'],
+    icon: 'flare',
+    color: '#f87171',
+    duration: 800,
+    easing: 'ease-out',
+    category: 'Creative',
+  },
+
+  // 3D Motion
+  {
+    id: '3d-wobble',
+    name: '3D Wobble',
+    animations: ['wobble-3d', 'float'],
+    icon: '3d_rotation',
+    color: '#34d399',
     duration: 2500,
     easing: 'ease-in-out',
+    category: '3D',
   },
   {
-    id: 'zoom-pulse',
-    name: 'Zoom + Pulse',
-    animations: ['zoom-in', 'pulse'],
-    icon: 'radio_button_checked',
-    color: '#F97316',
+    id: 'cube-spin',
+    name: 'Cube Spin',
+    animations: ['rotate-3d'],
+    icon: 'view_in_ar',
+    color: '#60a5fa',
+    duration: 3000,
+    easing: 'linear',
+    category: '3D',
+  },
+  {
+    id: 'elevator-pitch',
+    name: 'Rise Up',
+    animations: ['elevator'],
+    icon: 'elevator',
+    color: '#4ade80',
     duration: 1500,
     easing: 'ease-out',
+    category: '3D',
+  },
+  {
+    id: 'super-skew',
+    name: 'Super Skew',
+    animations: ['skew-slide'],
+    icon: 'bolt',
+    color: '#d8b4fe',
+    duration: 1000,
+    easing: 'ease-out',
+    category: '3D',
+  },
+
+  // Combos
+  {
+    id: 'rotate-zoom',
+    name: 'Rotate + Zoom',
+    animations: ['rotate', 'zoom-in'],
+    icon: '360',
+    color: '#A78BFA',
+    duration: 1500,
+    easing: 'ease-in-out',
+    category: 'Combo',
+  },
+  {
+    id: 'flip-pop',
+    name: 'Flip Pop',
+    animations: ['flip', 'zoom-out', 'bounce'],
+    icon: 'flip',
+    color: '#E879F9',
+    duration: 1800,
+    easing: 'ease-in-out',
+    category: 'Combo',
   },
 ];

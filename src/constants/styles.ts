@@ -187,7 +187,7 @@ export const FRAMES_DATA = [
 ];
 
 export type LayoutAnimation = {
-  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'flip' | 'spiral' | 'fan' | 'domino' | 'elastic-rotate' | 'converge' | 'diverge' | 'glitch' | 'wobble-3d' | 'none';
+  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'flip' | 'spiral' | 'fan' | 'domino' | 'elastic-rotate' | 'converge' | 'diverge' | 'glitch' | 'wobble-3d' | 'rotate-3d' | 'elevator' | 'skew-slide' | 'none';
   duration: number;
   easing: string;
   intensity?: number;
@@ -794,6 +794,55 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       { type: 'zoom-in', duration: 800, easing: 'ease-out', intensity: 1.1, stagger: 100 },
     ],
     durationMs: 3000,
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // 3D & PRESENTATION PRESETS
+  // ═══════════════════════════════════════════════════════════════
+
+  {
+    id: 'present-3d-spin',
+    name: '3D Cube',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-blue-900 via-slate-900 to-black',
+    icon: 'view_in_ar',
+    color: '#60a5fa',
+    animations: [
+      { type: 'rotate-3d', duration: 4000, easing: 'linear', intensity: 360 },
+    ],
+    durationMs: 4000,
+  },
+
+  {
+    id: 'present-elevator',
+    name: 'Elevator Pitch',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-emerald-900 via-green-900 to-black',
+    icon: 'elevator',
+    color: '#4ade80',
+    animations: [
+      { type: 'elevator', duration: 1500, easing: 'ease-out', intensity: 1 },
+    ],
+    durationMs: 2500,
+  },
+
+  {
+    id: 'present-skew',
+    name: 'Dynamic Skew',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-purple-900 via-fuchsia-900 to-black',
+    icon: 'bolt',
+    color: '#d8b4fe',
+    animations: [
+      { type: 'skew-slide', duration: 1200, easing: 'ease-out', intensity: 30 },
+    ],
+    durationMs: 2000,
   },
 ];
 

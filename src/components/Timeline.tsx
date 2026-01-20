@@ -1,10 +1,35 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { X, SkipBack, Play, Pause, SkipForward, Clapperboard, ZoomOut, ZoomIn } from 'lucide-react';
+import { 
+  X, SkipBack, Play, Pause, SkipForward, Clapperboard, ZoomOut, ZoomIn,
+  Cloud, Trophy, Heart, Smartphone, Zap, RefreshCw, Magnet, Sparkles, 
+  Box, BoxSelect, ArrowUpFromLine, Component, Maximize, Scan
+} from 'lucide-react';
 import { useTimelineStore, ANIMATION_PRESETS, type TimelineClip, type AnimationPreset } from '../store/timelineStore';
 import { useRenderStore } from '../store/renderStore';
 
 const MS_PER_SECOND = 1000;
 const PIXELS_PER_SECOND = 200;
+
+const getPresetIcon = (iconName: string, className?: string) => {
+  const props = { className };
+  switch (iconName) {
+    case 'cloud': return <Cloud {...props} />;
+    case 'sports_basketball': return <Trophy {...props} />;
+    case 'favorite': return <Heart {...props} />;
+    case 'vibration': return <Smartphone {...props} />; // Closest to vibration
+    case 'broken_image': return <Zap {...props} />;
+    case 'loop': return <RefreshCw {...props} />;
+    case 'join_inner': return <Magnet {...props} />;
+    case 'flare': return <Sparkles {...props} />;
+    case '3d_rotation': return <Box {...props} />;
+    case 'view_in_ar': return <BoxSelect {...props} />;
+    case 'elevator': return <ArrowUpFromLine {...props} />;
+    case 'bolt': return <Component {...props} />;
+    case '360': return <Maximize {...props} />;
+    case 'flip': return <Scan {...props} />;
+    default: return <Clapperboard {...props} />;
+  }
+};
 
 type DragState = {
   clipId: string;
@@ -108,7 +133,7 @@ const AnimationPresetItem = ({
         className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
         style={{ backgroundColor: preset.color }}
       >
-        <Clapperboard className="w-4 h-4 text-white" />
+        {getPresetIcon(preset.icon, "w-4 h-4 text-white")}
       </div>
       <span className="text-[9px] text-ui-text font-medium">{preset.name}</span>
     </div>
@@ -376,19 +401,35 @@ export const Timeline = () => {
         {/* Animation Presets Panel */}
         {showPresets && (
           <div className="w-48 border-r border-ui-border bg-ui-panel/20 overflow-y-auto no-scrollbar">
-            <div className="p-2">
-              <h3 className="text-[9px] font-bold uppercase tracking-widest text-ui-muted mb-2 px-1">
+            <div className="p-2 pb-6">
+              <h3 className="text-[9px] font-bold uppercase tracking-widest text-ui-muted mb-3 px-1">
                 Drag to Timeline
               </h3>
-              <div className="grid grid-cols-3 gap-1">
-                {ANIMATION_PRESETS.map((preset) => (
-                  <AnimationPresetItem
-                    key={preset.id}
-                    preset={preset}
-                    onDragStart={handlePresetDragStart}
-                  />
-                ))}
-              </div>
+              
+              {/* Group by category */}
+              {['Basic', 'Creative', '3D', 'Combo'].map((category) => {
+                const categoryPresets = ANIMATION_PRESETS.filter(p => (p.category || 'Basic') === category);
+                if (categoryPresets.length === 0) return null;
+                
+                return (
+                  <div key={category} className="mb-4 last:mb-0">
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                      <div className="h-px flex-1 bg-ui-border/50" />
+                      <span className="text-[9px] font-semibold text-ui-muted/80 uppercase tracking-wider">{category}</span>
+                      <div className="h-px flex-1 bg-ui-border/50" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {categoryPresets.map((preset) => (
+                        <AnimationPresetItem
+                          key={preset.id}
+                          preset={preset}
+                          onDragStart={handlePresetDragStart}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -402,7 +443,7 @@ export const Timeline = () => {
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="flex h-12 items-center border-b border-ui-border px-3 hover:bg-ui-highlight/10"
+                className="flex h-14 items-center border-b border-ui-border px-3 hover:bg-ui-highlight/10"
               >
                 <span className="text-[10px]">{track.name}</span>
               </div>

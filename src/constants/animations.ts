@@ -104,6 +104,9 @@ export const DEFAULT_INTENSITIES: Record<string, number> = {
   'diverge': 20,
   'glitch': 5,
   'wobble-3d': 15,
+  'rotate-3d': 360,
+  'elevator': 1,
+  'skew-slide': 20,
 } as const;
 
 export const getDefaultIntensity = (type: string): number => {
@@ -538,6 +541,34 @@ export const createLayoutAnimation = (
         options: { duration, easing: EASINGS.sineInOut, iterations: Infinity },
       };
 
+    case 'rotate-3d':
+      return {
+        keyframes: [
+          { transform: 'rotate3d(1, 1, 1, 0deg)' },
+          { transform: `rotate3d(1, 1, 1, ${intensity}deg)` },
+          { transform: 'rotate3d(1, 1, 1, 0deg)' },
+        ],
+        options: { duration, easing: 'linear', iterations: Infinity },
+      };
+
+    case 'elevator':
+      return {
+        keyframes: [
+          { transform: 'translateY(100%) scale(0.5)', opacity: 0 },
+          { transform: 'translateY(0) scale(1)', opacity: 1 },
+        ],
+        options: { duration, easing: EASINGS.smoothOut, fill: 'forwards' as FillMode },
+      };
+
+    case 'skew-slide':
+      return {
+        keyframes: [
+          { transform: `skewX(${intensity/2}deg) translateX(100%)`, opacity: 0 },
+          { transform: 'skewX(0deg) translateX(0)', opacity: 1 },
+        ],
+        options: { duration, easing: EASINGS.smoothOut, fill: 'forwards' as FillMode },
+      };
+
     default:
       return {
         keyframes: [{ opacity: 1 }],
@@ -680,6 +711,65 @@ export const calculateAnimationValue = (
       const dominoY = (1 - easedProgress) * -20;
       return {
         transform: `perspective(500px) rotateX(${dominoRotateX}deg) translateY(${dominoY}px)`,
+        opacity: easedProgress,
+      };
+
+    case 'elastic-rotate':
+      // Oscillate rotation
+      const elasticRot = Math.sin(easedProgress * Math.PI * 2) * intensity;
+      return {
+        transform: `rotate(${elasticRot}deg)`,
+      };
+
+    case 'converge':
+      const convInv = 1 - easedProgress;
+      const convScale = 0.8 + easedProgress * 0.2;
+      return {
+        transform: `translate(${convInv * intensity}px, ${convInv * intensity}px) scale(${convScale})`,
+        opacity: easedProgress,
+      };
+
+    case 'diverge':
+      return {
+        transform: `scale(${(1 + intensity / 100) * easedProgress})`,
+        opacity: easedProgress,
+      };
+
+    case 'glitch':
+      // Random-like steps based on progress
+      // Use sine waves at different frequencies to simulate randomness
+      const gX = Math.floor(Math.sin(easedProgress * 50) * 2) * intensity / 2;
+      const gY = Math.floor(Math.cos(easedProgress * 40) * 2) * intensity / 2;
+      return {
+        transform: `translate(${gX}px, ${gY}px)`,
+      };
+
+    case 'wobble-3d':
+      // Use progress directly to ensure continuous movement
+      const wRotX = Math.sin(easedProgress * Math.PI * 2) * intensity;
+      const wRotY = Math.cos(easedProgress * Math.PI * 2) * intensity;
+      return {
+        transform: `rotateX(${wRotX}deg) rotateY(${wRotY}deg)`,
+      };
+
+    case 'rotate-3d':
+      return {
+        transform: `rotate3d(1, 1, 1, ${easedProgress * intensity}deg)`,
+      };
+
+    case 'elevator':
+      const elevY = (1 - easedProgress) * 100;
+      const elevScale = 0.5 + easedProgress * 0.5;
+      return {
+        transform: `translateY(${elevY}%) scale(${elevScale})`,
+        opacity: easedProgress,
+      };
+
+    case 'skew-slide':
+      const skewXVal = (1 - easedProgress) * (intensity / 2);
+      const slideXVal = (1 - easedProgress) * 100;
+      return {
+        transform: `skewX(${skewXVal}deg) translateX(${slideXVal}%)`,
         opacity: easedProgress,
       };
 

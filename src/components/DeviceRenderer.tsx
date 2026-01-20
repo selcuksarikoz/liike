@@ -157,7 +157,8 @@ const getStaggeredAnimationStyle = (
     // Return initial state based on animation type
     const firstAnim = animations[0]?.type;
     if (firstAnim?.includes('slide') || firstAnim?.includes('zoom-up') || firstAnim?.includes('zoom-down') ||
-        firstAnim === 'spiral' || firstAnim === 'fan' || firstAnim === 'domino') {
+        firstAnim === 'spiral' || firstAnim === 'fan' || firstAnim === 'domino' || 
+        firstAnim === 'converge' || firstAnim === 'diverge' || firstAnim === 'elevator' || firstAnim === 'skew-slide') {
       return { transform: 'scale(0)', opacity: 0 };
     }
     return { transform: 'none', opacity: 1 };
