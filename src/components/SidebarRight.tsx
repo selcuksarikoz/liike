@@ -4,41 +4,10 @@ export const SidebarRight = () => {
   const { setBackgroundGradient } = useRenderStore();
 
   return (
-    <aside className="flex w-64 flex-col border-l border-[#2c393f] bg-[#141b1e]">
-      <div className="flex flex-1 flex-col border-b border-[#2c393f]">
-        <div className="flex items-center justify-between border-b border-[#2c393f] p-3">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#9fb2bc]">Layers</h2>
-          <button className="rounded p-1 transition-all hover:bg-[#1c3b4a]/40">
-            <span className="material-symbols-outlined text-[16px]">add_circle</span>
-          </button>
-        </div>
-        <div className="flex flex-col gap-1 overflow-y-auto p-2">
-          {[
-            { icon: 'smartphone', label: 'iPhone 15 Pro', active: true },
-            { icon: 'image', label: 'Scene Background' },
-            { icon: 'flare', label: 'Lens Flare Overlay' },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className={`flex items-center gap-3 rounded-lg p-2 ${
-                item.active
-                  ? 'border border-[#1c3b4a]/40 bg-[#1c3b4a]/30'
-                  : 'border border-transparent hover:bg-[#1c3b4a]/10'
-              } transition-all`}
-            >
-              <span className={`material-symbols-outlined text-[18px] ${item.active ? 'text-[#d4ff3f]' : 'text-[#9fb2bc]'}`}>
-                {item.icon}
-              </span>
-              <span className="flex-1 text-xs">{item.label}</span>
-              <span className="material-symbols-outlined text-[16px] text-[#9fb2bc]">visibility</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
+    <aside className="flex w-64 flex-col border-l border-ui-border bg-ui-bg">
       <div className="flex h-[300px] flex-col">
-        <div className="border-b border-[#2c393f] p-3">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-[#9fb2bc]">Presets</h2>
+        <div className="border-b border-ui-border p-3">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-ui-muted">Presets</h2>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-2 overflow-y-auto p-3">
           {[
@@ -50,7 +19,7 @@ export const SidebarRight = () => {
             <div
               key={gradient}
               onClick={() => setBackgroundGradient(gradient)}
-              className="group aspect-square cursor-pointer rounded-lg border border-[#2c393f] bg-[#1c2529] p-2 transition-all hover:border-[#d4ff3f]"
+              className="group aspect-square cursor-pointer rounded-lg border border-ui-border bg-ui-panel p-2 transition-all hover:border-accent"
             >
               <div className={`h-full w-full rounded bg-gradient-to-tr ${gradient} opacity-40 transition-opacity group-hover:opacity-100`} />
             </div>

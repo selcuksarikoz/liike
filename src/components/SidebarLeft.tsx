@@ -1,47 +1,46 @@
+import { useState } from 'react';
 import { useRenderStore } from '../store/renderStore';
+import { MockupSelector } from './MockupSelector';
 
 export const SidebarLeft = () => {
   const { 
-    deviceModel, setDeviceModel,
+    deviceModel, 
     rotationX, setRotationX,
     rotationY, setRotationY,
     cornerRadius, setCornerRadius
   } = useRenderStore();
-
-  const handleRangeChange = (setter: (v: number) => void, min: number, max: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    setter(Number(e.target.value));
-  };
+  
+  const [isMockupSelectorOpen, setIsMockupSelectorOpen] = useState(false);
 
   return (
-    <aside className="z-20 flex w-72 flex-col border-r border-[#2c393f] bg-[#141b1e]">
+    <aside className="z-20 flex w-72 flex-col border-r border-[#2c393f] bg-[#141b1e] relative">
       <div className="flex flex-col gap-6 p-4">
         <div>
-          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-[#9fb2bc]">Device Config</h2>
-          <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-[#9fb2bc]">Model Frame</span>
-              <div className="relative">
-                <select 
-                  className="h-10 w-full appearance-none rounded-lg border border-[#2c393f] bg-[#1c2529] px-3 text-xs text-white focus:ring-1 focus:ring-[#d4ff3f]"
-                  value={deviceModel}
-                  onChange={(e) => setDeviceModel(e.target.value)}
-                >
-                  <option>iPhone 15 Pro Max</option>
-                  <option>MacBook Air M2</option>
-                  <option>Browser Window</option>
-                </select>
-                <span className="material-symbols-outlined pointer-events-none absolute right-3 top-2 text-[#9fb2bc]">
-                  expand_more
-                </span>
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-[#9fb2bc]">Mockup</h2>
+          <div className="relative">
+             <button
+               onClick={() => setIsMockupSelectorOpen(!isMockupSelectorOpen)}
+               className="w-full flex items-center justify-between bg-[#1c2529] border border-[#2c393f] rounded-lg px-3 py-2 text-xs text-white hover:border-[#d4ff3f]/50 transition-colors"
+             >
+                 <span className="flex items-center gap-2">
+                     <span className="material-symbols-outlined text-[16px]">smartphone</span>
+                     {deviceModel || 'Select Device'}
+                 </span>
+                 <span className="material-symbols-outlined text-[16px] text-[#9fb2bc]">expand_more</span>
+             </button>
+             
+             {isMockupSelectorOpen && (
+                 <MockupSelector onClose={() => setIsMockupSelectorOpen(false)} />
+             )}
+          </div>
+          
+          {/* Slider Controls */}
+          <div className="mt-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <span className="text-xs font-medium text-[#9fb2bc]">3D Rotation X</span>
+                <span className="text-[10px] font-mono text-[#d4ff3f]">{rotationX}°</span>
               </div>
-            </label>
-
-            <div className="mt-2 flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between">
-                  <span className="text-xs font-medium text-[#9fb2bc]">3D Rotation X</span>
-                  <span className="text-[10px] font-mono text-[#d4ff3f]">{rotationX}°</span>
-                </div>
                 {/* Custom Slider using Input Range with opacity 0 over custom UI? Or just styled Input */}
                 <input 
                   type="range" min="0" max="360" value={rotationX}
@@ -85,7 +84,6 @@ export const SidebarLeft = () => {
                   }}
                 />
               </div>
-            </div>
           </div>
         </div>
 

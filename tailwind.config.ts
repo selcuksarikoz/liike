@@ -6,12 +6,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        accent: '#d4ff3f',
+        accent: {
+            DEFAULT: '#d4ff3f',
+            hover: '#c2eb30',
+        },
         primary: '#1c3b4a',
-        'background-light': '#f6f7f8',
-        'background-dark': '#141b1e',
-        'panel-dark': '#1c2529',
-        'border-dark': '#2c393f',
+        ui: {
+            bg: '#141b1e',
+            panel: '#1c2529',
+            border: '#2c393f',
+            muted: '#9fb2bc',
+            highlight: '#1c3b4a',
+        },
+        canvas: '#111618',
       },
       fontFamily: {
         display: ['Space Grotesk', 'sans-serif'],

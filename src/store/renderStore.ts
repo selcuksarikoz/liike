@@ -12,11 +12,15 @@ type RenderStore = RenderSettings & {
   rotationY: number;
   cornerRadius: number;
   backgroundGradient: string;
+  mockupType: string;
+  mediaAssets: string[];
   setDeviceModel: (model: string) => void;
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
   setCornerRadius: (px: number) => void;
   setBackgroundGradient: (gradient: string) => void;
+  setMockupType: (type: string) => void;
+  setMediaAssets: (assets: string[]) => void;
   setDurationMs: (durationMs: number) => void;
   setFps: (fps: number) => void;
   setOutputName: (outputName: string) => void;
@@ -31,11 +35,15 @@ export const useRenderStore = create<RenderStore>((set) => ({
   rotationY: -25,
   cornerRadius: 40,
   backgroundGradient: 'from-[#1c3b4a] via-[#141b1e] to-[#0a0f12]',
+  mockupType: 'iphone',
+  mediaAssets: [],
   setDeviceModel: (deviceModel) => set({ deviceModel }),
   setRotationX: (rotationX) => set({ rotationX }),
   setRotationY: (rotationY) => set({ rotationY }),
   setCornerRadius: (cornerRadius) => set({ cornerRadius }),
   setBackgroundGradient: (backgroundGradient) => set({ backgroundGradient }),
+  setMockupType: (mockupType) => set({ mockupType }),
+  setMediaAssets: (mediaAssets) => set({ mediaAssets }),
   setDurationMs: (durationMs) => set({ durationMs }),
   setFps: (fps) => set({ fps }),
   setOutputName: (outputName) => set({ outputName }),

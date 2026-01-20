@@ -59,3 +59,12 @@
   transform: perspective(1000px) rotateX(15deg) rotateY(-25deg) rotateZ(5deg);
   box-shadow: -20px 40px 60px rgba(0, 0, 0, 0.5);
 }
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

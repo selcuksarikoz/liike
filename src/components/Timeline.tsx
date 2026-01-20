@@ -67,43 +67,17 @@ export const Timeline = () => {
             </div>
           </div>
 
-          <div className="relative min-w-[2000px]">
-            <div className="group relative flex h-12 items-center border-b border-[#2c393f]/50 px-0">
-              <div className="absolute left-0 top-1.5 bottom-1.5 flex w-[800px] items-center rounded-r-lg border-y border-[#d4ff3f]/20 bg-[#1c3b4a]/40 px-4">
-                <span className="text-[9px] font-bold tracking-tighter text-[#d4ff3f]">SCREEN_CAPTURE_01.MP4</span>
-                {[50, 340, 620].map((pos) => (
-                  <div key={pos} className="absolute left-[50px]" />
-                ))}
-                <div className="absolute left-[50px] w-2.5 h-2.5 rotate-45 border border-black bg-[#d4ff3f] shadow-lg" />
-                <div className="absolute left-[340px] w-2.5 h-2.5 rotate-45 border border-black bg-[#d4ff3f] shadow-lg" />
-                <div className="absolute left-[620px] w-2.5 h-2.5 rotate-45 border border-black bg-[#d4ff3f] shadow-lg" />
-              </div>
-            </div>
-
-            <div className="group relative flex h-12 items-center border-b border-[#2c393f]/50 px-0">
-              <div className="absolute left-0 top-1.5 bottom-1.5 flex w-[1400px] items-center rounded-r-lg border-y border-blue-400/20 bg-blue-500/20 px-4">
-                <span className="text-[9px] font-bold tracking-tighter text-blue-400">GRADIENT_FLOW_ANIM.JS</span>
-                <div className="absolute left-[10px] w-2 h-2 rotate-45 bg-white shadow-lg" />
-                <div className="absolute left-[1380px] w-2 h-2 rotate-45 bg-white shadow-lg" />
-              </div>
-            </div>
-
-            <div className="group relative flex h-12 items-center border-b border-[#2c393f]/50 px-0">
-              <div className="absolute left-[200px] top-1.5 bottom-1.5 flex w-[600px] items-center overflow-hidden rounded-lg border-y border-pink-400/20 bg-pink-500/10 px-4">
-                <div className="flex h-full items-end gap-0.5 py-2 opacity-50">
-                  {['3', '5', '8', '4', '6', '3', '9', '5', '7', '4'].map((h, idx) => (
-                    <div key={idx} className="w-1" style={{ height: `${Number(h) * 4}px`, background: '#f472b6' }} />
-                  ))}
+            <div className="relative min-w-[2000px] h-full">
+               <div className="absolute top-0 bottom-0 left-[624px] z-40 w-0.5 bg-[#d4ff3f] shadow-[0_0_10px_rgba(212,255,63,0.5)] pointer-events-none">
+                <div className="absolute top-0 -left-2 flex h-6 w-4.5 items-center justify-center rounded-b-sm bg-[#d4ff3f]">
+                  <div className="h-3 w-0.5 bg-black/50" />
                 </div>
               </div>
+               {/* Empty State or Droppable Area */}
+               <div className="flex h-full items-center justify-center text-[#2c393f] text-sm font-medium uppercase tracking-widest">
+                  Drop Media to Start
+               </div>
             </div>
-
-            <div className="pointer-events-none absolute -top-8 bottom-0 left-[624px] z-40 w-0.5 bg-[#d4ff3f] shadow-[0_0_10px_rgba(212,255,63,0.5)]">
-              <div className="absolute top-0 -left-2 flex h-6 w-4.5 items-center justify-center rounded-b-sm bg-[#d4ff3f]">
-                <div className="h-3 w-0.5 bg-black/50" />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </footer>
