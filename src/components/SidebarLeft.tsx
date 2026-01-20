@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, X, Square, Columns2, Rows2 } from 'lucide-react';
+import { Plus, X, Square, Columns2, Rows2, LayoutGrid, Layers, CircleDot } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import type { ImageLayout } from '../store/renderStore';
 import { FrameSelectorModal } from './modals/FrameSelectorModal';
@@ -9,11 +9,14 @@ import { DropdownTrigger } from './ui/Dropdown';
 
 const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = [
   { value: 'single', label: 'Single', icon: <Square className="w-5 h-5" /> },
-  { value: 'side-by-side', label: 'Side by Side', icon: <Columns2 className="w-5 h-5" /> },
-  { value: 'stacked', label: 'Stacked', icon: <Rows2 className="w-5 h-5" /> },
+  { value: 'side-by-side', label: 'Side', icon: <Columns2 className="w-5 h-5" /> },
+  { value: 'stacked', label: 'Stack', icon: <Rows2 className="w-5 h-5" /> },
+  { value: 'grid', label: 'Grid', icon: <LayoutGrid className="w-5 h-5" /> },
+  { value: 'overlap', label: 'Overlap', icon: <Layers className="w-5 h-5" /> },
+  { value: 'fan', label: 'Fan', icon: <CircleDot className="w-5 h-5" /> },
 ];
 
-const IMAGE_SLOTS = [0, 1, 2];
+const IMAGE_SLOTS = [0, 1, 2, 3];
 
 export const SidebarLeft = () => {
   const {
@@ -26,6 +29,7 @@ export const SidebarLeft = () => {
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
   const [isAspectRatioModalOpen, setIsAspectRatioModalOpen] = useState(false);
   const fileInputRefs = [
+    useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
@@ -64,7 +68,7 @@ export const SidebarLeft = () => {
         {/* Media Selection */}
         <div>
           <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Images</h2>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {IMAGE_SLOTS.map((index) => (
               <div
                 key={index}
@@ -90,7 +94,7 @@ export const SidebarLeft = () => {
                       <Plus className="w-3.5 h-3.5 text-ui-muted group-hover:text-accent transition-colors" />
                     </div>
                     <span className="text-[8px] text-ui-muted group-hover:text-white font-medium">
-                      {index === 0 ? 'Main' : index === 1 ? 'Left' : 'Right'}
+                      {index === 0 ? '1' : index === 1 ? '2' : index === 2 ? '3' : '4'}
                     </span>
                   </div>
                 )}
@@ -138,19 +142,19 @@ export const SidebarLeft = () => {
         {/* Layout */}
         <div className="border-t border-ui-border pt-6">
           <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Layout</h2>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {LAYOUTS.map(({ value, label, icon }) => (
               <button
                 key={value}
                 onClick={() => setImageLayout(value)}
-                className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all ${
+                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg transition-all ${
                   imageLayout === value
                     ? 'bg-accent text-black'
                     : 'bg-ui-panel text-ui-text hover:bg-ui-highlight hover:text-white'
                 }`}
               >
                 {icon}
-                <span className="text-[9px] font-medium uppercase">{label}</span>
+                <span className="text-[8px] font-medium uppercase">{label}</span>
               </button>
             ))}
           </div>

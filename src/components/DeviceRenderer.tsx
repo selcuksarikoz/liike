@@ -1,9 +1,8 @@
 import { useRef, useEffect } from 'react';
-import gsap from 'gsap';
 import { ImagePlus } from 'lucide-react';
 import { getShadowStyle, STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
-import { combineAnimations } from '../hooks/useTimelinePlayback';
+import { combineAnimations, CSS_TRANSITIONS, ANIMATION_PRESETS } from '../constants/animations';
 
 export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3';
 
@@ -28,7 +27,7 @@ type ImageRendererProps = {
   stylePreset?: string;
   shadowType?: string;
   shadowOpacity?: number;
-  layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column';
+  layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan';
   animationInfo?: AnimationInfo;
 };
 
@@ -101,21 +100,9 @@ export const DeviceRenderer = ({
   useEffect(() => {
     if (!containerRef.current || isPreview) return;
 
-    gsap.fromTo(containerRef.current,
-      { opacity: 0, scale: 0.9, y: 30 },
-      { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: 'back.out(1.4)' }
-    );
+    const { keyframes, options } = ANIMATION_PRESETS.fadeInScale;
+    containerRef.current.animate([...keyframes], options);
   }, [isPreview]);
-
-  // Smooth rotation animation
-  useEffect(() => {
-    if (!containerRef.current || isPreview) return;
-
-    gsap.to(containerRef.current, {
-      duration: 0.4,
-      ease: 'power2.out',
-    });
-  }, [rotationX, rotationY, rotationZ, scale, isPreview]);
 
   // Get style preset CSS (moved up for use in MediaContainer)
   const styleCSS = (() => {
@@ -131,10 +118,8 @@ export const DeviceRenderer = ({
     useEffect(() => {
       if (!mediaRef.current || isPreview) return;
       if (media) {
-        gsap.fromTo(mediaRef.current,
-          { opacity: 0, scale: 1.05 },
-          { opacity: 1, scale: 1, duration: 0.4, ease: 'power2.out' }
-        );
+        const { keyframes, options } = ANIMATION_PRESETS.mediaFadeIn;
+        mediaRef.current.animate([...keyframes], options);
       }
     }, [media]);
 
@@ -204,16 +189,13 @@ export const DeviceRenderer = ({
     transformStyle: 'preserve-3d' as const,
   };
 
-  // Count active media
-  const activeMediaCount = mediaAssets.filter(m => m !== null).length;
-
   // Single image layout
-  if (layout === 'single' || activeMediaCount <= 1) {
+  if (layout === 'single') {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative overflow-hidden transition-all duration-500 border border-transparent"
+          className="relative overflow-hidden transition-all duration-300 ease-out"
           style={{
             ...containerStyle,
             width: aspectValue ? 'auto' : '85%',
@@ -239,7 +221,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative flex gap-4 transition-all duration-500"
+          className="relative flex gap-4 transition-all duration-300 ease-out"
           style={{
             ...containerStyle,
             width: '90%',
@@ -252,14 +234,14 @@ export const DeviceRenderer = ({
             return (
               <div
                 key={index}
-                className="flex-1 overflow-hidden border border-transparent"
+                className="flex-1 overflow-hidden"
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
                   boxShadow: computedShadow(),
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
-                  transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+                  transition: CSS_TRANSITIONS.stagger,
                   ...styleCSS
                 }}
               >
@@ -278,7 +260,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative flex flex-col gap-4 transition-all duration-500"
+          className="relative flex flex-col gap-4 transition-all duration-300 ease-out"
           style={{
             ...containerStyle,
             width: aspectValue ? undefined : '70%',
@@ -291,14 +273,14 @@ export const DeviceRenderer = ({
             return (
               <div
                 key={index}
-                className="flex-1 overflow-hidden border border-transparent"
+                className="flex-1 overflow-hidden"
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
                   boxShadow: computedShadow(),
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
-                  transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+                  transition: CSS_TRANSITIONS.stagger,
                   ...styleCSS
                 }}
               >
@@ -317,7 +299,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative flex gap-3 transition-all duration-500"
+          className="relative flex gap-3 transition-all duration-300 ease-out"
           style={{
             ...containerStyle,
             width: '95%',
@@ -330,14 +312,14 @@ export const DeviceRenderer = ({
             return (
               <div
                 key={index}
-                className="flex-1 overflow-hidden border border-transparent"
+                className="flex-1 overflow-hidden"
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
                   boxShadow: computedShadow(),
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
-                  transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+                  transition: CSS_TRANSITIONS.stagger,
                   ...styleCSS
                 }}
               >
@@ -351,38 +333,203 @@ export const DeviceRenderer = ({
   }
 
   // Trio column layout (3 images vertical)
+  if (layout === 'trio-column') {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div
+          ref={containerRef}
+          className="relative flex flex-col gap-3 transition-all duration-300 ease-out"
+          style={{
+            ...containerStyle,
+            width: aspectValue ? undefined : '55%',
+            height: '95%',
+            maxWidth: '70%',
+          }}
+        >
+          {[0, 1, 2].map((index) => {
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
+            return (
+              <div
+                key={index}
+                className="flex-1 overflow-hidden"
+                style={{
+                  aspectRatio: aspectValue ? aspectValue : undefined,
+                  borderRadius: `${cornerRadius}px`,
+                  boxShadow: computedShadow(),
+                  transform: animStyle.transform,
+                  opacity: animStyle.opacity,
+                  transition: CSS_TRANSITIONS.stagger,
+                  ...styleCSS
+                }}
+              >
+                <MediaContainer index={index} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Grid layout (2x2)
+  if (layout === 'grid') {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div
+          ref={containerRef}
+          className="relative grid grid-cols-2 gap-3 transition-all duration-300 ease-out"
+          style={{
+            ...containerStyle,
+            width: '85%',
+            height: '85%',
+            maxWidth: '85%',
+            maxHeight: '85%',
+          }}
+        >
+          {[0, 1, 2, 3].map((index) => {
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+            return (
+              <div
+                key={index}
+                className="overflow-hidden"
+                style={{
+                  aspectRatio: aspectValue ? aspectValue : 1,
+                  borderRadius: `${cornerRadius}px`,
+                  boxShadow: computedShadow(),
+                  transform: animStyle.transform,
+                  opacity: animStyle.opacity,
+                  transition: CSS_TRANSITIONS.stagger,
+                  ...styleCSS
+                }}
+              >
+                <MediaContainer index={index} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Overlap layout (stacked cards with offset)
+  if (layout === 'overlap') {
+    const offsets = [
+      { x: 0, y: 0, rotate: -8, zIndex: 30 },
+      { x: 25, y: 15, rotate: 0, zIndex: 20 },
+      { x: 50, y: 30, rotate: 8, zIndex: 10 },
+    ];
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div
+          ref={containerRef}
+          className="relative transition-all duration-300 ease-out"
+          style={{
+            ...containerStyle,
+            width: '70%',
+            height: '70%',
+          }}
+        >
+          {[0, 1, 2].map((index) => {
+            const offset = offsets[index];
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
+            return (
+              <div
+                key={index}
+                className="absolute overflow-hidden"
+                style={{
+                  width: '65%',
+                  aspectRatio: aspectValue ? aspectValue : 3/4,
+                  left: `${offset.x}%`,
+                  top: `${offset.y}%`,
+                  zIndex: offset.zIndex,
+                  borderRadius: `${cornerRadius}px`,
+                  boxShadow: computedShadow(),
+                  transform: `rotate(${offset.rotate}deg) ${animStyle.transform}`,
+                  opacity: animStyle.opacity,
+                  transition: CSS_TRANSITIONS.stagger,
+                  ...styleCSS
+                }}
+              >
+                <MediaContainer index={index} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Fan layout (radial spread)
+  if (layout === 'fan') {
+    const fanAngles = [-25, 0, 25];
+    const fanOffsets = [
+      { x: -15, y: 10 },
+      { x: 0, y: 0 },
+      { x: 15, y: 10 },
+    ];
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div
+          ref={containerRef}
+          className="relative transition-all duration-300 ease-out"
+          style={{
+            ...containerStyle,
+            width: '80%',
+            height: '80%',
+          }}
+        >
+          {[0, 1, 2].map((index) => {
+            const angle = fanAngles[index];
+            const offset = fanOffsets[index];
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
+            return (
+              <div
+                key={index}
+                className="absolute overflow-hidden"
+                style={{
+                  width: '45%',
+                  aspectRatio: aspectValue ? aspectValue : 3/4,
+                  left: '50%',
+                  top: '50%',
+                  transformOrigin: 'bottom center',
+                  zIndex: index === 1 ? 30 : 20 - index,
+                  borderRadius: `${cornerRadius}px`,
+                  boxShadow: computedShadow(),
+                  transform: `translate(calc(-50% + ${offset.x}%), calc(-70% + ${offset.y}%)) rotate(${angle}deg) ${animStyle.transform}`,
+                  opacity: animStyle.opacity,
+                  transition: CSS_TRANSITIONS.stagger,
+                  ...styleCSS
+                }}
+              >
+                <MediaContainer index={index} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Default fallback (single)
   return (
     <div className="flex h-full w-full items-center justify-center">
       <div
         ref={containerRef}
-        className="relative flex flex-col gap-3 transition-all duration-500"
+        className="relative overflow-hidden transition-all duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: aspectValue ? undefined : '55%',
-          height: '95%',
-          maxWidth: '70%',
+          width: aspectValue ? 'auto' : '85%',
+          height: aspectValue ? '85%' : '85%',
+          aspectRatio: aspectValue ? aspectValue : undefined,
+          maxWidth: '85%',
+          maxHeight: '85%',
+          borderRadius: `${cornerRadius}px`,
+          boxShadow: computedShadow(),
+          backfaceVisibility: 'hidden',
+          ...styleCSS
         }}
       >
-        {[0, 1, 2].map((index) => {
-          const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
-          return (
-            <div
-              key={index}
-              className="flex-1 overflow-hidden border border-transparent"
-              style={{
-                aspectRatio: aspectValue ? aspectValue : undefined,
-                borderRadius: `${cornerRadius}px`,
-                boxShadow: computedShadow(),
-                transform: animStyle.transform,
-                opacity: animStyle.opacity,
-                transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
-                ...styleCSS
-              }}
-            >
-              <MediaContainer index={index} />
-            </div>
-          );
-        })}
+        <MediaContainer index={0} />
       </div>
     </div>
   );

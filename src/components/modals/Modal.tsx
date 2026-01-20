@@ -1,6 +1,6 @@
 import { useRef, useEffect, ReactNode } from 'react';
-import gsap from 'gsap';
 import { X } from 'lucide-react';
+import { ANIMATION_PRESETS } from '../../constants/animations';
 
 type ModalProps = {
   isOpen: boolean;
@@ -28,21 +28,16 @@ export const Modal = ({
 
     if (position === 'center' && overlayRef.current && modalRef.current) {
       // Animate overlay
-      gsap.fromTo(overlayRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: 'power2.out' }
-      );
+      const { keyframes: overlayKf, options: overlayOpts } = ANIMATION_PRESETS.modalOverlay;
+      overlayRef.current.animate([...overlayKf], overlayOpts);
+
       // Animate modal
-      gsap.fromTo(modalRef.current,
-        { opacity: 0, scale: 0.9, y: 20 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: 'back.out(1.7)' }
-      );
+      const { keyframes: modalKf, options: modalOpts } = ANIMATION_PRESETS.modalCenter;
+      modalRef.current.animate([...modalKf], modalOpts);
     } else if (modalRef.current) {
       // Dropdown animation
-      gsap.fromTo(modalRef.current,
-        { opacity: 0, y: -10, scale: 0.95 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.4)' }
-      );
+      const { keyframes, options } = ANIMATION_PRESETS.modalDropdown;
+      modalRef.current.animate([...keyframes], options);
     }
   }, [isOpen, position]);
 

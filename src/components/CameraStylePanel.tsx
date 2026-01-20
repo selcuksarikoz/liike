@@ -1,5 +1,4 @@
-import { useRef, useEffect, useState, type ReactNode } from 'react';
-import gsap from 'gsap';
+import { useRef, useEffect, type ReactNode } from 'react';
 import {
   ArrowUpDown,
   ArrowLeftRight,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { STYLE_PRESETS, SHADOW_TYPES } from '../constants/styles';
+import { DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
 
 const SliderControl = ({
   label,
@@ -40,17 +40,15 @@ const SliderControl = ({
   onChange: (value: number) => void;
   icon?: ReactNode;
 }) => {
-  const sliderRef = useRef<HTMLInputElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (fillRef.current) {
       const percent = ((value - min) / (max - min)) * 100;
-      gsap.to(fillRef.current, {
-        width: `${percent}%`,
-        duration: 0.2,
-        ease: 'power2.out',
-      });
+      fillRef.current.animate(
+        [{ width: `${percent}%` }],
+        { duration: DURATIONS.fast, easing: EASINGS.easeOut, fill: 'forwards' }
+      );
     }
   }, [value, min, max]);
 
@@ -77,7 +75,6 @@ const SliderControl = ({
           />
         </div>
         <input
-          ref={sliderRef}
           type="range"
           min={min}
           max={max}
@@ -108,27 +105,38 @@ export const CameraStylePanel = () => {
   } = useRenderStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   useEffect(() => {
     if (containerRef.current) {
-      const sections = containerRef.current.querySelectorAll('.style-section');
-      gsap.fromTo(
-        sections,
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: 'power2.out' }
-      );
+      const sections = Array.from(containerRef.current.querySelectorAll('.style-section'));
+      sections.forEach((section, i) => {
+        (section as HTMLElement).animate(
+          [
+            { opacity: 0, transform: 'translateY(15px)' },
+            { opacity: 1, transform: 'translateY(0)' }
+          ],
+          {
+            duration: DURATIONS.standard,
+            easing: EASINGS.easeOut,
+            fill: 'forwards',
+            delay: i * STAGGER_DEFAULTS.cards * 2
+          }
+        );
+      });
     }
   }, []);
 
   const handleReset = (section: string) => {
-    gsap.to(containerRef.current, {
-      scale: 0.98,
-      duration: 0.1,
-      yoyo: true,
-      repeat: 1,
-      ease: 'power2.inOut',
-    });
+    if (containerRef.current) {
+      containerRef.current.animate(
+        [
+          { transform: 'scale(1)' },
+          { transform: 'scale(0.98)' },
+          { transform: 'scale(1)' }
+        ],
+        { duration: DURATIONS.fast, easing: EASINGS.easeInOut }
+      );
+    }
 
     switch (section) {
       case 'rotation':
@@ -330,12 +338,16 @@ export const CameraStylePanel = () => {
             <button
               key={preset.label}
               onClick={() => {
-                gsap.to(containerRef.current, {
-                  scale: 0.98,
-                  duration: 0.1,
-                  yoyo: true,
-                  repeat: 1,
-                });
+                if (containerRef.current) {
+                  containerRef.current.animate(
+                    [
+                      { transform: 'scale(1)' },
+                      { transform: 'scale(0.98)' },
+                      { transform: 'scale(1)' }
+                    ],
+                    { duration: DURATIONS.fast, easing: EASINGS.easeInOut }
+                  );
+                }
                 preset.action();
               }}
               className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-ui-border bg-ui-panel/30 hover:bg-accent/10 hover:border-accent/50 transition-all hover:scale-105 active:scale-95"

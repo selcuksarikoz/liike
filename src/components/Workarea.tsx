@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
-import gsap from 'gsap';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { DeviceRenderer } from './DeviceRenderer';
-import { useTimelinePlayback, combineAnimations } from '../hooks/useTimelinePlayback';
+import { useTimelinePlayback } from '../hooks/useTimelinePlayback';
+import { combineAnimations, ANIMATION_PRESETS, DURATIONS, EASINGS } from '../constants/animations';
 import { LAYOUT_PRESETS } from '../constants/styles';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
@@ -178,37 +178,21 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     return { width: displayWidth, height: displayHeight, scale, innerPadding };
   }, [canvasWidth, canvasHeight, containerSize]);
 
-  const zoomDisplay = `${Math.round(displayDimensions.scale * 100)}%`;
-
-  // GSAP animation on rotation changes
-  useEffect(() => {
-    if (deviceContainerRef.current) {
-      gsap.to(deviceContainerRef.current, {
-        duration: 0.6,
-        ease: 'power2.out'
-      });
-    }
-  }, [rotationX, rotationY, rotationZ]);
-
-  // GSAP entrance animation
+  // Entrance animation
   useEffect(() => {
     if (canvasRef.current) {
-      gsap.fromTo(canvasRef.current,
-        { opacity: 0, scale: 0.95, y: 20 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'back.out(1.4)' }
-      );
+      const { keyframes, options } = ANIMATION_PRESETS.scaleIn;
+      canvasRef.current.animate([...keyframes], options);
     }
   }, []);
 
   // Animate canvas size changes
   useEffect(() => {
     if (canvasRef.current && displayDimensions.width && displayDimensions.height) {
-      gsap.to(canvasRef.current, {
-        width: displayDimensions.width,
-        height: displayDimensions.height,
-        duration: 0.4,
-        ease: 'power2.out'
-      });
+      canvasRef.current.animate(
+        [{ width: `${displayDimensions.width}px`, height: `${displayDimensions.height}px` }],
+        { duration: DURATIONS.quick, easing: EASINGS.easeOut, fill: 'forwards' }
+      );
     }
   }, [displayDimensions.width, displayDimensions.height]);
 
@@ -217,17 +201,16 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     if (!backgroundRef.current || !prevBackgroundRef.current) return;
     if (prevGradient === backgroundGradient) return;
 
-    // Crossfade animation
-    gsap.fromTo(backgroundRef.current,
-      { opacity: 0 },
-      { opacity: 1, duration: 0.5, ease: 'power2.out' }
-    );
-    gsap.fromTo(prevBackgroundRef.current,
-      { opacity: 1 },
-      { opacity: 0, duration: 0.5, ease: 'power2.out', onComplete: () => {
-        setPrevGradient(backgroundGradient);
-      }}
-    );
+    // Smooth crossfade animation
+    const { keyframes: fadeInKeyframes, options: fadeInOptions } = ANIMATION_PRESETS.backgroundFadeIn;
+    const { keyframes: fadeOutKeyframes, options: fadeOutOptions } = ANIMATION_PRESETS.backgroundFadeOut;
+
+    backgroundRef.current.animate([...fadeInKeyframes], fadeInOptions);
+    const fadeOutAnim = prevBackgroundRef.current.animate([...fadeOutKeyframes], fadeOutOptions);
+
+    fadeOutAnim.onfinish = () => {
+      setPrevGradient(backgroundGradient);
+    };
   }, [backgroundGradient, prevGradient]);
 
   return (

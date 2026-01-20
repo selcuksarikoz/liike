@@ -726,57 +726,6 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     durationMs: 2000,
   },
 
-  // ═══════════════════════════════════════════════════════════════
-  // STATIC LAYOUTS
-  // ═══════════════════════════════════════════════════════════════
-  {
-    id: 'static-clean',
-    name: 'Clean',
-    rotationX: 0,
-    rotationY: 0,
-    rotationZ: 0,
-    backgroundGradient: 'from-slate-100 via-white to-slate-100',
-    icon: 'crop_square',
-    color: '#64748B',
-    animations: [{ type: 'none', duration: 0, easing: 'linear' }],
-    durationMs: 2000,
-  },
-  {
-    id: 'static-dark',
-    name: 'Dark Mode',
-    rotationX: 0,
-    rotationY: 0,
-    rotationZ: 0,
-    backgroundGradient: 'from-zinc-950 via-neutral-900 to-zinc-950',
-    icon: 'dark_mode',
-    color: '#27272A',
-    animations: [{ type: 'none', duration: 0, easing: 'linear' }],
-    durationMs: 2000,
-  },
-  {
-    id: 'static-isometric-r',
-    name: 'Perspective R',
-    rotationX: 18,
-    rotationY: -20,
-    rotationZ: 8,
-    backgroundGradient: 'from-orange-500 via-amber-500 to-yellow-400',
-    icon: 'view_in_ar',
-    color: '#F97316',
-    animations: [{ type: 'none', duration: 0, easing: 'linear' }],
-    durationMs: 2000,
-  },
-  {
-    id: 'static-isometric-l',
-    name: 'Perspective L',
-    rotationX: 18,
-    rotationY: 20,
-    rotationZ: -8,
-    backgroundGradient: 'from-blue-600 via-indigo-600 to-violet-600',
-    icon: 'view_in_ar',
-    color: '#3B82F6',
-    animations: [{ type: 'none', duration: 0, easing: 'linear' }],
-    durationMs: 2000,
-  },
 ];
 
 export const getShadowStyle = (

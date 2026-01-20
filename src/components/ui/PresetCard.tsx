@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
-import gsap from 'gsap';
 import { DeviceRenderer } from '../DeviceRenderer';
 import type { MediaAsset, AspectRatio, ImageLayout } from '../../store/renderStore';
+import { DURATIONS, EASINGS } from '../../constants/animations';
 
 type PresetCardProps = {
   preset: {
@@ -43,36 +43,35 @@ export const PresetCard = ({
     const card = cardRef.current;
 
     const handleMouseEnter = () => {
-      gsap.to(card, {
-        scale: 1.02,
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
-        duration: 0.3,
-        ease: 'power2.out'
-      });
+      card.animate(
+        [
+          { transform: 'scale(1)', boxShadow: '0 0 0 rgba(0, 0, 0, 0)' },
+          { transform: 'scale(1.02)', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)' }
+        ],
+        { duration: DURATIONS.normal, easing: EASINGS.easeOut, fill: 'forwards' }
+      );
 
       if (deviceRef.current) {
-        gsap.to(deviceRef.current, {
-          scale: 0.95,
-          duration: 0.5,
-          ease: 'back.out(1.7)'
-        });
+        deviceRef.current.animate(
+          [{ transform: 'scale(0.95)' }],
+          { duration: DURATIONS.entrance, easing: EASINGS.bounce, fill: 'forwards' }
+        );
       }
     };
 
     const handleMouseLeave = () => {
-      gsap.to(card, {
-        scale: 1,
-        boxShadow: '0 0 0 rgba(0, 0, 0, 0)',
-        duration: 0.3,
-        ease: 'power2.out'
-      });
+      card.animate(
+        [
+          { transform: 'scale(1)', boxShadow: '0 0 0 rgba(0, 0, 0, 0)' }
+        ],
+        { duration: DURATIONS.normal, easing: EASINGS.easeOut, fill: 'forwards' }
+      );
 
       if (deviceRef.current) {
-        gsap.to(deviceRef.current, {
-          scale: 0.85,
-          duration: 0.4,
-          ease: 'power2.out'
-        });
+        deviceRef.current.animate(
+          [{ transform: 'scale(0.85)' }],
+          { duration: DURATIONS.standard, easing: EASINGS.easeOut, fill: 'forwards' }
+        );
       }
     };
 
@@ -92,14 +91,16 @@ export const PresetCard = ({
     }
 
     // Click animation
-    gsap.to(cardRef.current, {
-      scale: 0.95,
-      duration: 0.1,
-      yoyo: true,
-      repeat: 1,
-      ease: 'power2.inOut',
-      onComplete: onClick
-    });
+    const anim = cardRef.current.animate(
+      [
+        { transform: 'scale(1)' },
+        { transform: 'scale(0.95)' },
+        { transform: 'scale(1)' }
+      ],
+      { duration: DURATIONS.fast, easing: EASINGS.easeInOut }
+    );
+
+    anim.onfinish = onClick;
   };
 
   return (

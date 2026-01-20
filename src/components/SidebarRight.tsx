@@ -1,83 +1,104 @@
 import { useState, useRef, useEffect } from 'react';
-import gsap from 'gsap';
 import { ChevronRight } from 'lucide-react';
 import { CameraStylePanel } from './CameraStylePanel';
 import { LayoutsPanel } from './LayoutsPanel';
 import { BackgroundModal } from './BackgroundModal';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
+import { ANIMATION_PRESETS, STAGGER_DEFAULTS } from '../constants/animations';
 
-export type LayoutFilter = 'single' | 'duo' | 'trio';
+export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad';
 
 const FILTER_OPTIONS: { id: LayoutFilter; label: string; icon: string }[] = [
   { id: 'single', label: 'Single', icon: 'crop_square' },
   { id: 'duo', label: 'Duo', icon: 'view_column_2' },
   { id: 'trio', label: 'Trio', icon: 'view_week' },
+  { id: 'quad', label: 'Quad', icon: 'grid_view' },
 ];
 
 // Mini preview animation component
 const FilterPreview = ({ filter, isActive }: { filter: LayoutFilter; isActive: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const elementsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const animationsRef = useRef<Animation[]>([]);
 
   useEffect(() => {
     if (!isActive || !containerRef.current) return;
 
-    const elements = elementsRef.current.filter(Boolean);
+    const elements = elementsRef.current.filter(Boolean) as Element[];
     if (elements.length === 0) return;
 
-    // Kill any existing animations
-    gsap.killTweensOf(elements);
+    // Cancel previous animations
+    animationsRef.current.forEach(anim => anim.cancel());
+    animationsRef.current = [];
 
-    // Reset elements first
-    gsap.set(elements, { opacity: 0, scale: 0.3, y: 8, rotationX: -30 });
-
-    // Staggered entrance animation with 3D effect
-    gsap.to(elements, {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      rotationX: 0,
-      duration: 0.5,
-      stagger: 0.12,
-      ease: 'back.out(2)',
-    });
-
-    // Continuous subtle breathing animation
-    const breatheTl = gsap.timeline({ repeat: -1, yoyo: true, delay: 0.6 });
+    // Animate with stagger using Web Animations API
+    const { keyframes, options } = ANIMATION_PRESETS.filterPreview;
     elements.forEach((el, i) => {
-      breatheTl.to(el, {
-        y: -1.5,
-        scale: 1.05,
-        duration: 1 + i * 0.15,
-        ease: 'sine.inOut',
-      }, 0);
+      const anim = el.animate([...keyframes], {
+        ...options,
+        delay: i * STAGGER_DEFAULTS.filters,
+      });
+      animationsRef.current.push(anim);
     });
 
     return () => {
-      breatheTl.kill();
-      gsap.killTweensOf(elements);
+      animationsRef.current.forEach(anim => anim.cancel());
     };
   }, [isActive, filter]);
 
-  const count = filter === 'single' ? 1 : filter === 'duo' ? 2 : 3;
+  // Different layouts for each filter type
+  if (filter === 'single') {
+    return (
+      <div ref={containerRef} className="flex items-center justify-center w-6 h-5">
+        <div
+          ref={(el) => { elementsRef.current[0] = el; }}
+          className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
+          style={{ width: 16, height: 16 }}
+        />
+      </div>
+    );
+  }
 
+  if (filter === 'duo') {
+    return (
+      <div ref={containerRef} className="flex items-center justify-center gap-0.5 w-6 h-5">
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            ref={(el) => { elementsRef.current[i] = el; }}
+            className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
+            style={{ width: 7, height: 14 }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (filter === 'trio') {
+    return (
+      <div ref={containerRef} className="flex items-center justify-center gap-0.5 w-6 h-5">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            ref={(el) => { elementsRef.current[i] = el; }}
+            className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
+            style={{ width: 5, height: 12 }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Quad - 2x2 grid
   return (
-    <div ref={containerRef} className="flex items-center justify-center gap-1 h-5" style={{ perspective: '100px' }}>
-      {Array.from({ length: count }).map((_, i) => (
+    <div ref={containerRef} className="grid grid-cols-2 gap-0.5 w-6 h-5 place-items-center">
+      {[0, 1, 2, 3].map((i) => (
         <div
           key={i}
           ref={(el) => { elementsRef.current[i] = el; }}
-          className={`rounded transition-all ${
-            isActive
-              ? 'bg-black/90 shadow-sm'
-              : 'bg-current opacity-60'
-          }`}
-          style={{
-            width: filter === 'single' ? 14 : filter === 'duo' ? 10 : 7,
-            height: filter === 'single' ? 14 : filter === 'duo' ? 12 : 10,
-            transformStyle: 'preserve-3d',
-          }}
+          className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
+          style={{ width: 7, height: 7 }}
         />
       ))}
     </div>
@@ -92,7 +113,11 @@ const getFilterFromLayout = (layout: string): LayoutFilter => {
       return 'duo';
     case 'trio-row':
     case 'trio-column':
+    case 'overlap':
+    case 'fan':
       return 'trio';
+    case 'grid':
+      return 'quad';
     default:
       return 'single';
   }
@@ -125,6 +150,9 @@ export const SidebarRight = () => {
         break;
       case 'trio':
         setImageLayout('trio-row');
+        break;
+      case 'quad':
+        setImageLayout('grid');
         break;
     }
   };

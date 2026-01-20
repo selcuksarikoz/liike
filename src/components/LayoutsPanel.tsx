@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import gsap from 'gsap';
-import { Sparkles, Columns2, LayoutGrid, Image } from 'lucide-react';
+import { Sparkles, Columns2, LayoutGrid } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { LAYOUT_PRESETS, type LayoutPreset } from '../constants/styles';
 import { DeviceRenderer } from './DeviceRenderer';
+import { ANIMATION_PRESETS, createLayoutAnimation, DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
 
 const AnimatedLayoutCard = ({
   preset,
@@ -41,7 +41,7 @@ const AnimatedLayoutCard = ({
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const deviceRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<gsap.core.Tween | gsap.core.Timeline | null>(null);
+  const animationsRef = useRef<Animation[]>([]);
 
   const hasAnimation = preset.animations.some(a => a.type !== 'none');
   const isCombo = preset.animations.filter(a => a.type !== 'none').length > 1;
@@ -53,196 +53,54 @@ const AnimatedLayoutCard = ({
     const device = deviceRef.current;
 
     const runAnimation = () => {
-      if (animationRef.current) {
-        animationRef.current.kill();
-      }
-
-      const tl = gsap.timeline({ repeat: -1 });
+      // Cancel previous animations
+      animationsRef.current.forEach(anim => anim.cancel());
+      animationsRef.current = [];
 
       preset.animations.forEach((anim) => {
         if (anim.type === 'none') return;
 
         const intensity = anim.intensity || 10;
+        const config = createLayoutAnimation(anim.type, intensity, anim.duration, anim.easing);
 
-        switch (anim.type) {
-          case 'float':
-            tl.to(device, {
-              y: -intensity,
-              duration: anim.duration / 1000 / 2,
-              ease: 'sine.inOut',
-              yoyo: true,
-              repeat: 1,
-            }, 0);
-            break;
-          case 'bounce':
-            tl.to(device, {
-              y: -intensity,
-              duration: anim.duration / 1000 / 4,
-              ease: 'power2.out',
-              yoyo: true,
-              repeat: 3,
-            }, 0);
-            break;
-          case 'rotate':
-            tl.to(device, {
-              rotationY: `+=${intensity}`,
-              duration: anim.duration / 1000,
-              ease: anim.easing === 'linear' ? 'none' : anim.easing,
-            }, 0);
-            break;
-          case 'zoom':
-          case 'zoom-in':
-            tl.to(device, {
-              scale: intensity,
-              duration: anim.duration / 1000 / 2,
-              ease: 'power2.inOut',
-              yoyo: true,
-              repeat: 1,
-            }, 0);
-            break;
-          case 'zoom-up':
-            tl.fromTo(device,
-              { scale: 0.7, y: 30, opacity: 0 },
-              { scale: 1, y: 0, opacity: 1, duration: anim.duration / 1000, ease: 'back.out(1.7)' },
-            0);
-            break;
-          case 'zoom-down':
-            tl.fromTo(device,
-              { scale: 0.7, y: -30, opacity: 0 },
-              { scale: 1, y: 0, opacity: 1, duration: anim.duration / 1000, ease: 'back.out(1.7)' },
-            0);
-            break;
-          case 'zoom-out':
-            tl.fromTo(device,
-              { scale: 1.3, opacity: 0.5 },
-              { scale: 1, opacity: 1, duration: anim.duration / 1000, ease: 'power2.out' },
-            0);
-            break;
-          case 'slide':
-          case 'slide-right':
-            tl.fromTo(device,
-              { x: intensity, opacity: 0 },
-              { x: 0, opacity: 1, duration: anim.duration / 1000, ease: 'power2.out' },
-            0);
-            break;
-          case 'slide-left':
-            tl.fromTo(device,
-              { x: -intensity, opacity: 0 },
-              { x: 0, opacity: 1, duration: anim.duration / 1000, ease: 'power2.out' },
-            0);
-            break;
-          case 'slide-up':
-            tl.fromTo(device,
-              { y: intensity, opacity: 0 },
-              { y: 0, opacity: 1, duration: anim.duration / 1000, ease: 'power2.out' },
-            0);
-            break;
-          case 'slide-down':
-            tl.fromTo(device,
-              { y: -intensity, opacity: 0 },
-              { y: 0, opacity: 1, duration: anim.duration / 1000, ease: 'power2.out' },
-            0);
-            break;
-          case 'pulse':
-            tl.to(device, {
-              scale: intensity,
-              duration: anim.duration / 1000 / 2,
-              ease: 'power2.inOut',
-              yoyo: true,
-              repeat: 1,
-            }, 0);
-            break;
-          case 'swing':
-            tl.to(device, {
-              rotation: intensity,
-              duration: anim.duration / 1000 / 2,
-              ease: 'sine.inOut',
-              yoyo: true,
-              repeat: 1,
-            }, 0);
-            break;
-          case 'flip':
-            tl.to(device, {
-              rotationY: 180,
-              duration: anim.duration / 1000 / 2,
-              ease: 'power2.inOut',
-              yoyo: true,
-              repeat: 1,
-            }, 0);
-            break;
-          case 'shake':
-            tl.to(device, {
-              x: intensity,
-              duration: anim.duration / 1000 / 8,
-              ease: 'power1.inOut',
-              yoyo: true,
-              repeat: 7,
-            }, 0);
-            break;
-          case 'spiral':
-            tl.fromTo(device,
-              { scale: 0, rotation: -intensity, opacity: 0 },
-              { scale: 1, rotation: 0, opacity: 1, duration: anim.duration / 1000, ease: 'back.out(1.7)' },
-            0);
-            break;
-          case 'fan':
-            tl.fromTo(device,
-              { rotationZ: -intensity, scale: 0.5, opacity: 0 },
-              { rotationZ: 0, scale: 1, opacity: 1, duration: anim.duration / 1000, ease: 'back.out(1.4)' },
-            0);
-            break;
-          case 'domino':
-            tl.fromTo(device,
-              { rotationX: -90, y: -20, opacity: 0 },
-              { rotationX: 0, y: 0, opacity: 1, duration: anim.duration / 1000, ease: 'back.out(1.2)' },
-            0);
-            break;
-        }
+        const animation = device.animate(config.keyframes, config.options);
+        animationsRef.current.push(animation);
       });
-
-      animationRef.current = tl;
     };
 
     const handleMouseEnter = () => {
-      gsap.to(card, {
-        scale: 1.02,
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
-        duration: 0.3,
-        ease: 'power2.out',
-      });
+      // Card hover effect
+      card.animate(
+        [...ANIMATION_PRESETS.cardHoverIn.keyframes],
+        ANIMATION_PRESETS.cardHoverIn.options
+      );
 
       if (hasAnimation) {
         runAnimation();
       } else {
-        gsap.to(device, {
-          scale: 0.95,
-          duration: 0.5,
-          ease: 'back.out(1.7)',
-        });
+        device.animate(
+          [{ transform: 'scale(0.9)' }],
+          { duration: DURATIONS.medium, easing: EASINGS.easeOut, fill: 'forwards' }
+        );
       }
     };
 
     const handleMouseLeave = () => {
-      gsap.to(card, {
-        scale: 1,
-        boxShadow: '0 0 0 rgba(0, 0, 0, 0)',
-        duration: 0.3,
-        ease: 'power2.out',
-      });
+      // Card hover out
+      card.animate(
+        [...ANIMATION_PRESETS.cardHoverOut.keyframes],
+        ANIMATION_PRESETS.cardHoverOut.options
+      );
 
-      if (animationRef.current) {
-        animationRef.current.kill();
-      }
-      gsap.to(device, {
-        x: 0,
-        y: 0,
-        scale: 0.85,
-        rotation: 0,
-        rotationY: 0,
-        opacity: 1,
-        duration: 0.4,
-        ease: 'power2.out',
-      });
+      // Cancel running animations
+      animationsRef.current.forEach(anim => anim.cancel());
+      animationsRef.current = [];
+
+      // Reset device
+      device.animate(
+        [...ANIMATION_PRESETS.deviceReset.keyframes],
+        ANIMATION_PRESETS.deviceReset.options
+      );
     };
 
     card.addEventListener('mouseenter', handleMouseEnter);
@@ -251,9 +109,7 @@ const AnimatedLayoutCard = ({
     return () => {
       card.removeEventListener('mouseenter', handleMouseEnter);
       card.removeEventListener('mouseleave', handleMouseLeave);
-      if (animationRef.current) {
-        animationRef.current.kill();
-      }
+      animationsRef.current.forEach(anim => anim.cancel());
     };
   }, [preset, hasAnimation]);
 
@@ -281,8 +137,8 @@ const AnimatedLayoutCard = ({
       {/* Device Preview */}
       <div
         ref={deviceRef}
-        className="absolute inset-0 flex items-center justify-center p-4 scale-[0.85] transition-transform duration-500"
-        style={{ perspective: '1000px' }}
+        className="absolute inset-0 flex items-center justify-center p-4 scale-[0.85]"
+        style={{ perspective: '1000px', willChange: 'transform, opacity' }}
       >
         <DeviceRenderer
           rotationX={preset.rotationX}
@@ -320,16 +176,11 @@ const AnimatedLayoutCard = ({
         </div>
       </div>
 
-      {/* Active indicator */}
-      {isActive && !hasAnimation && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-accent" />
-      )}
-
     </div>
   );
 };
 
-type LayoutFilter = 'single' | 'duo' | 'trio';
+type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad';
 
 export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) => {
   const {
@@ -339,7 +190,6 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
     shadowOpacity,
     stylePreset,
     imageAspectRatio,
-    imageLayout,
     applyPreset,
     setDurationMs,
     backgroundType,
@@ -355,12 +205,15 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
 
   useEffect(() => {
     if (presetsContainerRef.current) {
-      const cards = presetsContainerRef.current.children;
-      gsap.fromTo(
-        cards,
-        { opacity: 0, y: 20, scale: 0.95 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: 0.05, ease: 'back.out(1.7)' }
-      );
+      const cards = Array.from(presetsContainerRef.current.children);
+      const { keyframes, options } = ANIMATION_PRESETS.fadeInUp;
+
+      cards.forEach((card, i) => {
+        card.animate([...keyframes], {
+          ...options,
+          delay: i * STAGGER_DEFAULTS.cards,
+        });
+      });
     }
   }, []);
 
@@ -429,13 +282,9 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
     e.dataTransfer.effectAllowed = 'copy';
   };
 
-  // Categorize presets
-  const staticPresets = LAYOUT_PRESETS.filter(p => p.id.startsWith('static-'));
+  // Categorize presets (all have animations now)
   const singleAnimations = LAYOUT_PRESETS.filter(p =>
-    p.animations.some(a => a.type !== 'none') &&
-    !p.id.startsWith('duo-') &&
-    !p.id.startsWith('trio-') &&
-    !p.id.startsWith('static-')
+    !p.id.startsWith('duo-') && !p.id.startsWith('trio-')
   );
   const dualAnimations = LAYOUT_PRESETS.filter(p => p.id.startsWith('duo-'));
   const trioAnimations = LAYOUT_PRESETS.filter(p => p.id.startsWith('trio-'));
@@ -443,6 +292,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
   const showSingle = filter === 'single';
   const showDuo = filter === 'duo';
   const showTrio = filter === 'trio';
+  const showQuad = filter === 'quad';
 
   return (
     <div className="p-4">
@@ -467,12 +317,12 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
                 onApply={() => handleApplyPreset(preset)}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
-                mediaAssets={mediaAssets}
+                mediaAssets={mediaAssets.length > 0 ? [mediaAssets[0]] : [null]}
                 stylePreset={stylePreset}
                 shadowType={shadowType}
                 shadowOpacity={shadowOpacity}
                 aspectRatio={imageAspectRatio}
-                layout={imageLayout}
+                layout="single"
                 backgroundType={backgroundType}
                 backgroundGradient={backgroundGradient}
                 backgroundColor={backgroundColor}
@@ -504,12 +354,12 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
                 onApply={() => handleApplyPreset(preset)}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
-                mediaAssets={mediaAssets}
+                mediaAssets={[mediaAssets[0] || null, mediaAssets[1] || null]}
                 stylePreset={stylePreset}
                 shadowType={shadowType}
                 shadowOpacity={shadowOpacity}
                 aspectRatio={imageAspectRatio}
-                layout={imageLayout}
+                layout="side-by-side"
                 backgroundType={backgroundType}
                 backgroundGradient={backgroundGradient}
                 backgroundColor={backgroundColor}
@@ -541,12 +391,12 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
                 onApply={() => handleApplyPreset(preset)}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
-                mediaAssets={mediaAssets}
+                mediaAssets={[mediaAssets[0] || null, mediaAssets[1] || null, mediaAssets[2] || null]}
                 stylePreset={stylePreset}
                 shadowType={shadowType}
                 shadowOpacity={shadowOpacity}
                 aspectRatio={imageAspectRatio}
-                layout={imageLayout}
+                layout="trio-row"
                 backgroundType={backgroundType}
                 backgroundGradient={backgroundGradient}
                 backgroundColor={backgroundColor}
@@ -557,37 +407,43 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
         </div>
       )}
 
-      {/* Static Layouts Section - always show */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Image className="w-4 h-4 text-ui-muted" />
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
-            Static
-          </h3>
+      {/* Quad Image Animations */}
+      {showQuad && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <LayoutGrid className="w-4 h-4 text-sky-400" />
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+              Grid Layout
+            </h3>
+          </div>
+          <p className="text-[9px] text-ui-muted/70 mb-3">
+            2x2 grid with synchronized effects
+          </p>
+          <div className="space-y-3">
+            {singleAnimations.slice(0, 6).map((preset) => (
+              <AnimatedLayoutCard
+                key={preset.id}
+                preset={preset}
+                isActive={activePresetId === preset.id}
+                onApply={() => handleApplyPreset(preset)}
+                onDragStart={(e) => handlePresetDragStart(e, preset)}
+                cornerRadius={cornerRadius}
+                mediaAssets={[mediaAssets[0] || null, mediaAssets[1] || null, mediaAssets[2] || null, mediaAssets[3] || null]}
+                stylePreset={stylePreset}
+                shadowType={shadowType}
+                shadowOpacity={shadowOpacity}
+                aspectRatio={imageAspectRatio}
+                layout="grid"
+                backgroundType={backgroundType}
+                backgroundGradient={backgroundGradient}
+                backgroundColor={backgroundColor}
+                backgroundImage={backgroundImage}
+              />
+            ))}
+          </div>
         </div>
-        <div className="space-y-3">
-          {staticPresets.map((preset) => (
-            <AnimatedLayoutCard
-              key={preset.id}
-              preset={preset}
-              isActive={activePresetId === preset.id}
-              onApply={() => handleApplyPreset(preset)}
-              onDragStart={(e) => handlePresetDragStart(e, preset)}
-              cornerRadius={cornerRadius}
-              mediaAssets={mediaAssets}
-              stylePreset={stylePreset}
-              shadowType={shadowType}
-              shadowOpacity={shadowOpacity}
-              aspectRatio={imageAspectRatio}
-              layout={imageLayout}
-              backgroundType={backgroundType}
-              backgroundGradient={backgroundGradient}
-              backgroundColor={backgroundColor}
-              backgroundImage={backgroundImage}
-            />
-          ))}
-        </div>
-      </div>
+      )}
+
     </div>
   );
 };
