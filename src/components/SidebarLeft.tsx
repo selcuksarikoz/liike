@@ -42,6 +42,7 @@ export const SidebarLeft = () => {
     deviceModel, 
     rotationX, setRotationX,
     rotationY, setRotationY,
+    rotationZ, setRotationZ,
     cornerRadius, setCornerRadius,
     setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight, setCanvasSize
@@ -111,7 +112,10 @@ export const SidebarLeft = () => {
              >
                  <span className="flex items-center gap-2">
                      <span className="material-symbols-outlined text-[16px]">smartphone</span>
-                     {deviceModel || 'Select Device'}
+                     <span>
+                        {/* Dynamic Label based on deviceModel or mapped from mockupType if deviceModel isn't set properly elsewhere yet */}
+                         {deviceModel || 'Select Device'}
+                     </span>
                  </span>
                  <span className="material-symbols-outlined text-[16px] text-[#9fb2bc]">expand_more</span>
              </button>
@@ -152,6 +156,22 @@ export const SidebarLeft = () => {
                   title="Rotation Y"
                   style={{
                     backgroundImage: `linear-gradient(to right, #d4ff3f 0%, #d4ff3f ${((rotationY + 180) / 360) * 100}%, #2c393f ${((rotationY + 180) / 360) * 100}%, #2c393f 100%)`
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between">
+                  <span className="text-xs font-medium text-[#9fb2bc]">3D Rotation Z</span>
+                  <span className="text-[10px] font-mono text-[#d4ff3f]">{rotationZ}°</span>
+                </div>
+                <input 
+                  type="range" min="-180" max="180" value={rotationZ}
+                  onChange={(e) => setRotationZ(Number(e.target.value))}
+                  className="w-full h-1 bg-[#2c393f] rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg"
+                  title="Rotation Z"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, #d4ff3f 0%, #d4ff3f ${((rotationZ + 180) / 360) * 100}%, #2c393f ${((rotationZ + 180) / 360) * 100}%, #2c393f 100%)`
                   }}
                 />
               </div>

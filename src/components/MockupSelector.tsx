@@ -137,6 +137,10 @@ export const MockupSelector = ({ onClose }: { onClose: () => void }) => {
                                 key={mockup.id}
                                 onClick={() => {
                                     setMockupType(mockup.id as any);
+                                    // You need to expose setDeviceModel in MockupSelector first or just import store
+                                    // But since we are inside a component using the store hook already
+                                    // We need to add setDeviceModel to destructuring at top of component
+                                    useRenderStore.getState().setDeviceModel(mockup.label);
                                     onClose();
                                 }}
                                 className={`group relative aspect-[4/3] rounded-xl border p-4 flex flex-col items-center justify-center gap-2 transition-all ${

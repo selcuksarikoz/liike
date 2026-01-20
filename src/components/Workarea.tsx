@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useRenderStore } from '../store/renderStore';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
-  const { rotationX, rotationY, cornerRadius, backgroundGradient, mockupType, setMediaAssets, mediaAssets, canvasWidth, canvasHeight } = useRenderStore();
+  const { rotationX, rotationY, rotationZ, cornerRadius, backgroundGradient, mockupType, setMediaAssets, mediaAssets, canvasWidth, canvasHeight } = useRenderStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
@@ -20,10 +20,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
       setMediaAssets(newAssets); 
     }
   };
-  
+
   // Render content based on mockup type
   const renderFrame = () => {
-      // Common media container
+      // ... (MediaContainer definition)
       const MediaContainer = ({ index }: { index: number }) => {
           const media = mediaAssets[index] || null;
           return (
@@ -52,14 +52,17 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           );
       };
 
+      // Common 3D Transform
+      const transformStyle = {
+          transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ || 0}deg)`,
+      };
+
       if (mockupType === 'dual-phone') {
             return (
                 <div
                     ref={stageRef}
                     className="relative flex items-center justify-center gap-12"
-                    style={{
-                        transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`,
-                    }}
+                    style={transformStyle}
                 >
                     {[0, 1].map((i) => (
                         <div
@@ -90,7 +93,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 ref={stageRef}
                 className="relative bg-[#1e1e1e] rounded-lg shadow-2xl flex flex-col overflow-hidden w-[600px] h-[400px]"
                 style={{
-                    transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(0deg)`,
+                    ...transformStyle,
                     boxShadow: '-20px 40px 60px rgba(0, 0, 0, 0.5)'
                 }}
              >
@@ -115,33 +118,27 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           );
       }
       
-      // --- Render Logic Grouped by Category/Type ---
-      
-      // Watches (Apple Watch Ultra etc)
+      // Watches
       if (mockupType.includes('watch')) {
           return (
              <div 
                 ref={stageRef}
                 className="relative flex flex-col items-center justify-center"
-                style={{
-                  transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`,
-                }}
+                style={transformStyle}
              >
                  <div className="relative bg-[#262626] rounded-[48px] border-[6px] border-[#444] w-[320px] h-[390px] shadow-2xl flex items-center justify-center">
-                    {/* Watch Side Button */}
                     <div className="absolute -right-[10px] h-16 w-3 bg-[#333] rounded-r-md top-24" />
                     <div className="w-[300px] h-[370px] bg-black rounded-[42px] overflow-hidden">
                         <MediaContainer index={0} />
                     </div>
                  </div>
-                 {/* Watch Band Stubs */}
                  <div className="absolute -top-12 w-[220px] h-16 bg-[#333] rounded-t-xl -z-10" />
                  <div className="absolute -bottom-12 w-[220px] h-16 bg-[#333] rounded-b-xl -z-10" />
              </div>
           );
       }
       
-      // Tablets (iPads)
+      // Tablets
       if (mockupType.includes('ipad')) {
           return (
              <div 
@@ -149,9 +146,9 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 className="relative flex flex-col items-center justify-center bg-black border-[12px] border-[#1c1c1c] shadow-2xl"
                 style={{
                     width: '600px',
-                    height: '450px', // Landscape default
+                    height: '450px',
                     borderRadius: '24px',
-                    transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`,
+                    ...transformStyle,
                     boxShadow: '-20px 40px 60px rgba(0, 0, 0, 0.4)'
                 }}
              >
@@ -162,15 +159,13 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           );
       }
 
-      // Desktops (iMac, Monitors) - Simplified Stand Logic
+      // Desktops
       if (mockupType.includes('imac') || mockupType.includes('display')) {
           return (
              <div 
                 ref={stageRef}
                 className="relative flex flex-col items-center justify-center"
-                style={{
-                  transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`,
-                }}
+                style={transformStyle}
              >
                  <div className="relative bg-white border-[12px] border-white w-[640px] h-[380px] shadow-2xl rounded-xl overflow-hidden flex flex-col mb-0 z-10">
                     <div className="w-full h-full bg-black">
@@ -184,15 +179,13 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           );
       }
 
-      // Laptops (MacBooks)
+      // Laptops
       if (mockupType.includes('macbook') || mockupType === 'laptop') {
           return (
              <div 
                 ref={stageRef}
                 className="relative flex flex-col items-center justify-center"
-                style={{
-                  transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`,
-                }}
+                style={transformStyle}
              >
                  <div className="relative bg-[#1a1a1a] rounded-t-xl border-[4px] border-zinc-700 w-[560px] h-[360px] shadow-2xl overflow-hidden flex flex-col">
                     <div className="absolute top-1 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-b-md z-20" /> {/* Notch */}
@@ -213,7 +206,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           ref={stageRef}
           className="relative flex h-[600px] w-[300px] flex-col items-center justify-center bg-black border-[8px] border-[#2c393f] transition-all duration-700 ease-out"
           style={{
-            transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(5deg)`,
+            transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ || 0}deg)`,
             borderRadius: `${cornerRadius}px`,
             boxShadow: '-20px 40px 60px rgba(0, 0, 0, 0.5)'
           }}

@@ -10,6 +10,7 @@ type RenderStore = RenderSettings & {
   deviceModel: string;
   rotationX: number;
   rotationY: number;
+  rotationZ: number;
   cornerRadius: number;
   backgroundGradient: string;
   mockupType: string;
@@ -19,9 +20,10 @@ type RenderStore = RenderSettings & {
   setDeviceModel: (model: string) => void;
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
+  setRotationZ: (deg: number) => void;
   setCornerRadius: (px: number) => void;
   setBackgroundGradient: (gradient: string) => void;
-  setMockupType: (type: string) => void;
+  setMockupType: (type: string) => void; //... rest of store
   setMediaAssets: (assets: string[]) => void;
   setCanvasSize: (width: number, height: number) => void;
   setDurationMs: (durationMs: number) => void;
@@ -34,9 +36,10 @@ export const useRenderStore = create<RenderStore>((set) => ({
   fps: 30,
   outputName: 'liike_render',
   deviceModel: 'iPhone 15 Pro Max',
-  rotationX: 15,
-  rotationY: -25,
-  cornerRadius: 40,
+  rotationX: 0,
+  rotationY: 0,
+  rotationZ: 0,
+  cornerRadius: 0,
   backgroundGradient: 'from-[#1c3b4a] via-[#141b1e] to-[#0a0f12]',
   mockupType: 'iphone',
   mediaAssets: [],
@@ -45,6 +48,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setDeviceModel: (deviceModel) => set({ deviceModel }),
   setRotationX: (rotationX) => set({ rotationX }),
   setRotationY: (rotationY) => set({ rotationY }),
+  setRotationZ: (rotationZ) => set({ rotationZ }),
   setCornerRadius: (cornerRadius) => set({ cornerRadius }),
   setBackgroundGradient: (backgroundGradient) => set({ backgroundGradient }),
   setMockupType: (mockupType) => set({ mockupType }),
