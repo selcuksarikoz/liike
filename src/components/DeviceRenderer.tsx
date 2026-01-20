@@ -26,7 +26,12 @@ type ImageRendererProps = {
   onScreenClick?: (index: number) => void;
   stylePreset?: string;
   shadowType?: string;
+  shadowColor?: string;
   shadowOpacity?: number;
+  shadowBlur?: number;
+  shadowSpread?: number;
+  shadowX?: number;
+  shadowY?: number;
   layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative';
   animationInfo?: AnimationInfo;
 };
@@ -60,18 +65,17 @@ const MediaContainer = memo(({
       className={`relative flex h-full w-full items-center justify-center overflow-hidden ${isPreview ? '' : 'cursor-pointer group'}`}
       onClick={handleClick}
       style={{
-        borderRadius: `${cornerRadius}px`,
-        transition: 'border-radius 0.3s ease',
+        borderRadius: 'inherit',
+        // Removing transition here to ensure it updates instantly with parent
       }}
     >
       {media ? (
         media.type === 'video' ? (
           <video
             src={media.url}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover block"
             style={{
-              borderRadius: `${cornerRadius}px`,
-              transition: 'border-radius 0.3s ease',
+              borderRadius: 'inherit',
             }}
             autoPlay
             loop
@@ -81,10 +85,9 @@ const MediaContainer = memo(({
         ) : (
           <img
             src={media.url}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover block"
             style={{
-              borderRadius: `${cornerRadius}px`,
-              transition: 'border-radius 0.3s ease',
+              borderRadius: 'inherit',
             }}
             alt="Media"
           />
@@ -93,7 +96,7 @@ const MediaContainer = memo(({
         <div
           className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-8'} ${!isPreview && 'group-hover:brightness-110'}`}
           style={{
-            borderRadius: `${cornerRadius}px`,
+            borderRadius: 'inherit',
             background: styleCSS.background || 'rgba(24, 24, 27, 0.8)',
             border: styleCSS.border || '2px dashed rgba(255, 255, 255, 0.2)',
             boxShadow: styleCSS.boxShadow,
@@ -110,9 +113,9 @@ const MediaContainer = memo(({
       {/* Hover overlay */}
       {media && !isPreview && (
         <div
-          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center"
+          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center pointer-events-none"
           style={{
-            borderRadius: `${cornerRadius}px`,
+            borderRadius: 'inherit',
             transition: 'opacity 0.3s ease',
           }}
         >
@@ -184,6 +187,11 @@ const DeviceRendererComponent = ({
   stylePreset = 'default',
   shadowType = 'spread',
   shadowOpacity = 40,
+  shadowColor = '#000000',
+  shadowBlur = 30,
+  shadowSpread = 0,
+  shadowX = 0,
+  shadowY = 20,
   layout = 'single',
   animationInfo,
 }: ImageRendererProps) => {
@@ -199,30 +207,17 @@ const DeviceRendererComponent = ({
   // Memoized computed shadow
   const computedShadow = useMemo(() => {
     if (isPreview) return 'none';
+    if (shadowType === 'none') return 'none';
     
-    // Map shadow types to CSS box-shadow
-    let shadow = 'none';
-    const intensity = (shadowOpacity || 50) / 100;
-    
-    switch (shadowType) {
-      case 'soft':
-        shadow = `0 ${10 * intensity}px ${30 * intensity}px rgba(0,0,0,${0.3 * intensity})`;
-        break;
-      case 'float':
-        shadow = `0 ${20 * intensity}px ${50 * intensity}px rgba(0,0,0,${0.4 * intensity})`;
-        break;
-      case 'dream':
-        shadow = `0 ${20 * intensity}px ${60 * intensity}px rgba(80,80,255,${0.25 * intensity})`;
-        break;
-      case 'glow':
-        shadow = `0 0 ${40 * intensity}px rgba(255,255,255,${0.4 * intensity})`;
-        break;
-      default:
-        shadow = 'none';
-    }
-    
-    return shadow;
-  }, [isPreview, shadowType, shadowOpacity, rotationX, rotationY]);
+    // Construct exact box-shadow string from granular props
+    const hex = shadowColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const alpha = (shadowOpacity / 100);
+
+    return `${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowSpread, shadowX, shadowY]);
 
   const aspectValue = getAspectRatioValue(aspectRatio);
 
@@ -644,6 +639,11 @@ export const DeviceRenderer = memo(DeviceRendererComponent, (prev, next) => {
   if (prev.stylePreset !== next.stylePreset) return false;
   if (prev.shadowType !== next.shadowType) return false;
   if (prev.shadowOpacity !== next.shadowOpacity) return false;
+  if (prev.shadowColor !== next.shadowColor) return false;
+  if (prev.shadowBlur !== next.shadowBlur) return false;
+  if (prev.shadowSpread !== next.shadowSpread) return false;
+  if (prev.shadowX !== next.shadowX) return false;
+  if (prev.shadowY !== next.shadowY) return false;
   if (prev.isPreview !== next.isPreview) return false;
 
   // Reference comparison for arrays/objects

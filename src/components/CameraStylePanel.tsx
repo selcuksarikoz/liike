@@ -271,54 +271,142 @@ export const CameraStylePanel = () => {
       </div>
 
       {/* Shadow */}
+      {/* Shadow & Glow */}
       <div className="style-section group">
         <SectionHeader title="Shadow & Glow" section="shadow" icon={<CloudFog className="w-4 h-4" />} />
-        <div className="grid grid-cols-5 gap-2 mb-3">
+        
+        {/* Shadow Presets */}
+        <div className="grid grid-cols-5 gap-2 mb-4">
           {SHADOW_TYPES.map((type) => {
             const isActive = shadowType === type.id;
             return (
               <button
                 key={type.id}
-                onClick={() => setShadowType(type.id)}
+                onClick={() => {
+                  setShadowType(type.id);
+                  // Apply preset values
+                  if (type.id === 'none') {
+                    setShadowOpacity(0);
+                  } else if (type.id === 'soft') {
+                    setShadowColor('#000000');
+                    setShadowOpacity(40);
+                    setShadowBlur(30);
+                    setShadowSpread(0);
+                    setShadowX(0);
+                    setShadowY(20);
+                  } else if (type.id === 'float') {
+                    setShadowColor('#000000');
+                    setShadowOpacity(50);
+                    setShadowBlur(50);
+                    setShadowSpread(-5);
+                    setShadowX(0);
+                    setShadowY(30);
+                  } else if (type.id === 'dream') {
+                    setShadowColor('#4f46e5');
+                    setShadowOpacity(30);
+                    setShadowBlur(60);
+                    setShadowSpread(0);
+                    setShadowX(0);
+                    setShadowY(25);
+                  } else if (type.id === 'glow') {
+                    setShadowColor('#ffffff');
+                    setShadowOpacity(50);
+                    setShadowBlur(40);
+                    setShadowSpread(5);
+                    setShadowX(0);
+                    setShadowY(0);
+                  }
+                }}
                 className={`relative flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
                   isActive ? 'bg-accent/10 border-accent' : 'border-ui-border hover:border-ui-muted bg-ui-panel/30'
                 }`}
               >
                 <div className="w-6 h-6 flex items-center justify-center">
                   <div
-                    className="w-4 h-4 rounded bg-white/90 transition-transform"
+                    className="w-4 h-4 rounded-full bg-white/90 transition-transform"
                     style={{
                       boxShadow: type.id === 'none' ? 'none'
                         : type.id === 'soft' ? '0 4px 12px rgba(0,0,0,0.5)'
                         : type.id === 'float' ? '0 10px 25px rgba(0,0,0,0.6)'
-                        : type.id === 'dream' ? '0 15px 35px rgba(100,100,255,0.3)'
-                        : '0 0 15px rgba(255,255,255,0.6)'
+                        : type.id === 'dream' ? '0 10px 20px rgba(80,80,255,0.4)'
+                        : '0 0 10px rgba(255,255,255,0.8)'
                     }}
                   />
                 </div>
                 <span className={`text-[7px] font-medium transition-colors ${isActive ? 'text-accent' : 'text-ui-muted'}`}>
                   {type.label}
                 </span>
-                {isActive && (
-                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-accent rounded-full flex items-center justify-center">
-                    <Check className="w-1.5 h-1.5 text-white" />
-                  </div>
-                )}
               </button>
             );
           })}
         </div>
+
+        {/* Manual Controls */}
         {shadowType !== 'none' && (
-          <div className="bg-ui-panel/50 rounded-xl p-3">
+          <div className="bg-ui-panel/50 rounded-xl p-3 space-y-3">
+             <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-ui-muted" />
+                  <span className="text-[10px] text-ui-muted">Color</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={useRenderStore(state => state.shadowColor)}
+                    onChange={(e) => useRenderStore.getState().setShadowColor(e.target.value)}
+                    className="w-5 h-5 rounded cursor-pointer border-none p-0 bg-transparent"
+                  />
+                  <span className="text-[10px] font-mono text-accent uppercase">{useRenderStore(state => state.shadowColor)}</span>
+                </div>
+             </div>
+
             <SliderControl
-              label="Intensity"
+              label="Opacity"
               icon={<Contrast className="w-3.5 h-3.5" />}
-              value={shadowOpacity}
+              value={useRenderStore(state => state.shadowOpacity)}
               min={0}
               max={100}
               unit="%"
               onChange={setShadowOpacity}
             />
+            <SliderControl
+              label="Blur"
+              icon={<CloudFog className="w-3.5 h-3.5" />}
+              value={useRenderStore(state => state.shadowBlur)}
+              min={0}
+              max={200}
+              unit="px"
+              onChange={setShadowBlur}
+            />
+            <SliderControl
+              label="Spread"
+              icon={<Maximize2 className="w-3.5 h-3.5" />}
+              value={useRenderStore(state => state.shadowSpread)}
+              min={-50}
+              max={50}
+              unit="px"
+              onChange={setShadowSpread}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <SliderControl
+                label="X Offset"
+                icon={<ArrowLeftRight className="w-3.5 h-3.5" />}
+                value={useRenderStore(state => state.shadowX)}
+                min={-100}
+                max={100}
+                unit="px"
+                onChange={setShadowX}
+              />
+              <SliderControl
+                label="Y Offset"
+                icon={<ArrowUpDown className="w-3.5 h-3.5" />}
+                value={useRenderStore(state => state.shadowY)}
+                min={-100}
+                max={100}
+                unit="px"
+                onChange={setShadowY}
+              />
+            </div>
           </div>
         )}
       </div>

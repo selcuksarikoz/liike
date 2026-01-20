@@ -44,7 +44,12 @@ type RenderStore = RenderSettings & {
   deviceScale: number;
   stylePreset: StylePreset;
   shadowType: ShadowType;
+  shadowColor: string;
   shadowOpacity: number;
+  shadowBlur: number;
+  shadowSpread: number;
+  shadowX: number;
+  shadowY: number;
   imageAspectRatio: AspectRatio;
   imageLayout: ImageLayout;
   // Render status
@@ -67,7 +72,12 @@ type RenderStore = RenderSettings & {
   setOutputName: (outputName: string) => void;
   setStylePreset: (preset: StylePreset) => void;
   setShadowType: (type: ShadowType) => void;
+  setShadowColor: (color: string) => void;
   setShadowOpacity: (opacity: number) => void;
+  setShadowBlur: (px: number) => void;
+  setShadowSpread: (px: number) => void;
+  setShadowX: (px: number) => void;
+  setShadowY: (px: number) => void;
   setImageAspectRatio: (ratio: AspectRatio) => void;
   setImageLayout: (layout: ImageLayout) => void;
   applyPreset: (preset: Partial<RenderStore>) => void;
@@ -102,8 +112,13 @@ export const useRenderStore = create<RenderStore>((set) => ({
   canvasCornerRadius: 20,
   deviceScale: 1,
   stylePreset: 'default',
-  shadowType: 'spread',
-  shadowOpacity: 40,
+  shadowType: 'soft',
+  shadowColor: '#000000',
+  shadowOpacity: 50,
+  shadowBlur: 30,
+  shadowSpread: 0,
+  shadowX: 0,
+  shadowY: 20,
   imageAspectRatio: 'free',
   imageLayout: 'single',
   renderStatus: initialRenderStatus,
@@ -125,7 +140,12 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setOutputName: (outputName) => set({ outputName }),
   setStylePreset: (stylePreset) => set({ stylePreset }),
   setShadowType: (shadowType) => set({ shadowType }),
+  setShadowColor: (shadowColor) => set({ shadowColor }),
   setShadowOpacity: (shadowOpacity) => set({ shadowOpacity }),
+  setShadowBlur: (shadowBlur) => set({ shadowBlur }),
+  setShadowSpread: (shadowSpread) => set({ shadowSpread }),
+  setShadowX: (shadowX) => set({ shadowX }),
+  setShadowY: (shadowY) => set({ shadowY }),
   setImageAspectRatio: (imageAspectRatio) => set({ imageAspectRatio }),
   setImageLayout: (imageLayout) => set({ imageLayout }),
   applyPreset: (preset) => set((state) => ({ ...state, ...preset })),
