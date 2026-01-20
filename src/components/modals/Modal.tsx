@@ -1,4 +1,5 @@
 import { useRef, useEffect, ReactNode } from 'react';
+import gsap from 'gsap';
 
 type ModalProps = {
   isOpen: boolean;
@@ -18,6 +19,31 @@ export const Modal = ({
   className = ''
 }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Entrance animation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (position === 'center' && overlayRef.current && modalRef.current) {
+      // Animate overlay
+      gsap.fromTo(overlayRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+      );
+      // Animate modal
+      gsap.fromTo(modalRef.current,
+        { opacity: 0, scale: 0.9, y: 20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: 'back.out(1.7)' }
+      );
+    } else if (modalRef.current) {
+      // Dropdown animation
+      gsap.fromTo(modalRef.current,
+        { opacity: 0, y: -10, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.4)' }
+      );
+    }
+  }, [isOpen, position]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -47,10 +73,10 @@ export const Modal = ({
 
   if (position === 'center') {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div ref={overlayRef} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div
           ref={modalRef}
-          className={`relative max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 ${className}`}
+          className={`relative max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl ${className}`}
         >
           {title && (
             <div className="flex items-center justify-between border-b border-ui-border px-6 py-4">
@@ -74,7 +100,7 @@ export const Modal = ({
   return (
     <div
       ref={modalRef}
-      className={`absolute top-14 left-0 right-0 z-[9999] mx-4 overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200 ${className}`}
+      className={`absolute top-14 left-0 right-0 z-[9999] mx-4 overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl ${className}`}
     >
       {title && (
         <div className="flex items-center justify-between border-b border-ui-border px-4 py-3">

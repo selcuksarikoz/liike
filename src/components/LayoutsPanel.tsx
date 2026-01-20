@@ -178,6 +178,24 @@ const AnimatedLayoutCard = ({
               repeat: 7,
             }, 0);
             break;
+          case 'spiral':
+            tl.fromTo(device,
+              { scale: 0, rotation: -intensity, opacity: 0 },
+              { scale: 1, rotation: 0, opacity: 1, duration: anim.duration / 1000, ease: 'back.out(1.7)' },
+            0);
+            break;
+          case 'fan':
+            tl.fromTo(device,
+              { rotationZ: -intensity, scale: 0.5, opacity: 0 },
+              { rotationZ: 0, scale: 1, opacity: 1, duration: anim.duration / 1000, ease: 'back.out(1.4)' },
+            0);
+            break;
+          case 'domino':
+            tl.fromTo(device,
+              { rotationX: -90, y: -20, opacity: 0 },
+              { rotationX: 0, y: 0, opacity: 1, duration: anim.duration / 1000, ease: 'back.out(1.2)' },
+            0);
+            break;
         }
       });
 
@@ -310,7 +328,9 @@ const AnimatedLayoutCard = ({
   );
 };
 
-export const LayoutsPanel = () => {
+type LayoutFilter = 'single' | 'duo' | 'trio';
+
+export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) => {
   const {
     cornerRadius,
     mediaAssets,
@@ -412,83 +432,130 @@ export const LayoutsPanel = () => {
   const singleAnimations = LAYOUT_PRESETS.filter(p =>
     p.animations.some(a => a.type !== 'none') &&
     !p.id.startsWith('duo-') &&
+    !p.id.startsWith('trio-') &&
     !p.id.startsWith('static-')
   );
   const dualAnimations = LAYOUT_PRESETS.filter(p => p.id.startsWith('duo-'));
+  const trioAnimations = LAYOUT_PRESETS.filter(p => p.id.startsWith('trio-'));
+
+  const showSingle = filter === 'single';
+  const showDuo = filter === 'duo';
+  const showTrio = filter === 'trio';
 
   return (
     <div className="p-4">
       {/* Single Image Animations */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="material-symbols-outlined text-[16px] text-accent">auto_awesome</span>
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
-            Single Image
-          </h3>
+      {showSingle && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-[16px] text-accent">auto_awesome</span>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+              Single Image
+            </h3>
+          </div>
+          <p className="text-[9px] text-ui-muted/70 mb-3">
+            Hero shots, intros & attention grabbers
+          </p>
+          <div ref={presetsContainerRef} className="space-y-3">
+            {singleAnimations.map((preset) => (
+              <AnimatedLayoutCard
+                key={preset.id}
+                preset={preset}
+                isActive={activePresetId === preset.id}
+                onApply={() => handleApplyPreset(preset)}
+                onDragStart={(e) => handlePresetDragStart(e, preset)}
+                cornerRadius={cornerRadius}
+                mediaAssets={mediaAssets}
+                stylePreset={stylePreset}
+                shadowType={shadowType}
+                shadowOpacity={shadowOpacity}
+                aspectRatio={imageAspectRatio}
+                layout={imageLayout}
+                backgroundType={backgroundType}
+                backgroundGradient={backgroundGradient}
+                backgroundColor={backgroundColor}
+                backgroundImage={backgroundImage}
+              />
+            ))}
+          </div>
         </div>
-        <p className="text-[9px] text-ui-muted/70 mb-3">
-          Hero shots, intros & attention grabbers
-        </p>
-        <div ref={presetsContainerRef} className="space-y-3">
-          {singleAnimations.map((preset) => (
-            <AnimatedLayoutCard
-              key={preset.id}
-              preset={preset}
-              isActive={activePresetId === preset.id}
-              onApply={() => handleApplyPreset(preset)}
-              onDragStart={(e) => handlePresetDragStart(e, preset)}
-              cornerRadius={cornerRadius}
-              mediaAssets={mediaAssets}
-              stylePreset={stylePreset}
-              shadowType={shadowType}
-              shadowOpacity={shadowOpacity}
-              aspectRatio={imageAspectRatio}
-              layout={imageLayout}
-              backgroundType={backgroundType}
-              backgroundGradient={backgroundGradient}
-              backgroundColor={backgroundColor}
-              backgroundImage={backgroundImage}
-            />
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Dual Image Animations */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="material-symbols-outlined text-[16px] text-purple-400">compare</span>
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
-            Dual Images
-          </h3>
+      {showDuo && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-[16px] text-purple-400">compare</span>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+              Dual Images
+            </h3>
+          </div>
+          <p className="text-[9px] text-ui-muted/70 mb-3">
+            Comparisons, reveals & synchronized effects
+          </p>
+          <div className="space-y-3">
+            {dualAnimations.map((preset) => (
+              <AnimatedLayoutCard
+                key={preset.id}
+                preset={preset}
+                isActive={activePresetId === preset.id}
+                onApply={() => handleApplyPreset(preset)}
+                onDragStart={(e) => handlePresetDragStart(e, preset)}
+                cornerRadius={cornerRadius}
+                mediaAssets={mediaAssets}
+                stylePreset={stylePreset}
+                shadowType={shadowType}
+                shadowOpacity={shadowOpacity}
+                aspectRatio={imageAspectRatio}
+                layout={imageLayout}
+                backgroundType={backgroundType}
+                backgroundGradient={backgroundGradient}
+                backgroundColor={backgroundColor}
+                backgroundImage={backgroundImage}
+              />
+            ))}
+          </div>
         </div>
-        <p className="text-[9px] text-ui-muted/70 mb-3">
-          Comparisons, reveals & synchronized effects
-        </p>
-        <div className="space-y-3">
-          {dualAnimations.map((preset) => (
-            <AnimatedLayoutCard
-              key={preset.id}
-              preset={preset}
-              isActive={activePresetId === preset.id}
-              onApply={() => handleApplyPreset(preset)}
-              onDragStart={(e) => handlePresetDragStart(e, preset)}
-              cornerRadius={cornerRadius}
-              mediaAssets={mediaAssets}
-              stylePreset={stylePreset}
-              shadowType={shadowType}
-              shadowOpacity={shadowOpacity}
-              aspectRatio={imageAspectRatio}
-              layout={imageLayout}
-              backgroundType={backgroundType}
-              backgroundGradient={backgroundGradient}
-              backgroundColor={backgroundColor}
-              backgroundImage={backgroundImage}
-            />
-          ))}
-        </div>
-      </div>
+      )}
 
-      {/* Static Layouts Section */}
+      {/* Trio Image Animations */}
+      {showTrio && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-[16px] text-emerald-400">stacked_bar_chart</span>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+              Trio Sequences
+            </h3>
+          </div>
+          <p className="text-[9px] text-ui-muted/70 mb-3">
+            Staggered reveals, one by one entrances
+          </p>
+          <div className="space-y-3">
+            {trioAnimations.map((preset) => (
+              <AnimatedLayoutCard
+                key={preset.id}
+                preset={preset}
+                isActive={activePresetId === preset.id}
+                onApply={() => handleApplyPreset(preset)}
+                onDragStart={(e) => handlePresetDragStart(e, preset)}
+                cornerRadius={cornerRadius}
+                mediaAssets={mediaAssets}
+                stylePreset={stylePreset}
+                shadowType={shadowType}
+                shadowOpacity={shadowOpacity}
+                aspectRatio={imageAspectRatio}
+                layout={imageLayout}
+                backgroundType={backgroundType}
+                backgroundGradient={backgroundGradient}
+                backgroundColor={backgroundColor}
+                backgroundImage={backgroundImage}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Static Layouts Section - always show */}
       <div>
         <div className="flex items-center gap-2 mb-3">
           <span className="material-symbols-outlined text-[16px] text-ui-muted">photo_frame</span>

@@ -33,13 +33,13 @@ export const TimelinePanel = ({ loop }: Props) => {
   }, [tracks, playheadMs]);
 
   return (
-    <div className="rounded-2xl border border-slate-800/70 bg-slate-950/70 p-4 backdrop-blur">
-      <div className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-300">
+    <div className="rounded-2xl border border-ui-border/70 bg-ui-bg/70 p-4 backdrop-blur">
+      <div className="mb-3 flex items-center justify-between text-xs font-semibold text-ui-text">
         <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-accent'} shadow-[0_0_0_3px_rgba(212,255,63,0.2)]`} />
+          <span className={`h-2 w-2 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-accent'} shadow-[0_0_0_3px_var(--color-accent-20)]`} />
           <span>Timeline</span>
         </div>
-        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+        <div className="flex items-center gap-3 text-[11px] text-ui-muted">
           <span>{runtimeLabel}</span>
           <span>Frame {state.currentFrame}/{totalFrames || '–'}</span>
         </div>
@@ -47,7 +47,7 @@ export const TimelinePanel = ({ loop }: Props) => {
 
       <div
         ref={timelineContainerRef}
-        className="relative h-24 overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900/70 cursor-pointer"
+        className="relative h-24 overflow-hidden rounded-xl border border-ui-border/80 bg-ui-panel/70 cursor-pointer"
         onMouseMove={(e) => {
           if (!timelineContainerRef.current) return;
           const rect = timelineContainerRef.current.getBoundingClientRect();
@@ -64,11 +64,11 @@ export const TimelinePanel = ({ loop }: Props) => {
           setPlayhead(Math.max(0, Math.min(durationMs, ms)));
         }}
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(212,255,63,0.06),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(59,130,246,0.06),transparent_40%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,var(--color-accent-06),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(59,130,246,0.06),transparent_40%)]" />
         <div className="relative z-10 h-full px-3 py-3">
           <div className="flex h-full items-center gap-2">
             {tracks.map((track) => (
-              <div key={track.id} className="group relative h-10 flex-1 rounded-lg bg-slate-800/60">
+              <div key={track.id} className="group relative h-10 flex-1 rounded-lg bg-ui-panel/60">
                 {/* Track clips preview */}
                 {track.clips.map((clip) => {
                   const startPercent = (clip.startMs / durationMs) * 100;
@@ -76,7 +76,7 @@ export const TimelinePanel = ({ loop }: Props) => {
                   return (
                     <div
                       key={clip.id}
-                      className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full group-hover:shadow-[0_0_0_6px_rgba(212,255,63,0.18)] transition-shadow"
+                      className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full group-hover:shadow-[0_0_0_6px_var(--color-accent-18)] transition-shadow"
                       style={{
                         left: `${startPercent}%`,
                         width: `${Math.max(widthPercent, 2)}%`,
@@ -85,7 +85,7 @@ export const TimelinePanel = ({ loop }: Props) => {
                     />
                   );
                 })}
-                <span className="absolute left-2 top-2 text-[10px] font-semibold text-slate-200 opacity-80">
+                <span className="absolute left-2 top-2 text-[10px] font-semibold text-ui-text opacity-80">
                   {track.name}
                 </span>
               </div>
@@ -99,7 +99,7 @@ export const TimelinePanel = ({ loop }: Props) => {
             className="absolute inset-y-0 w-px bg-white/30 pointer-events-none z-20"
             style={{ left: `${hoverPosition}%` }}
           >
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-slate-700 text-[9px] font-mono text-white whitespace-nowrap">
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-ui-panel text-[9px] font-mono text-white whitespace-nowrap">
               {((hoverPosition / 100) * durationMs / 1000).toFixed(2)}s
             </div>
           </div>

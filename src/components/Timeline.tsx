@@ -34,7 +34,7 @@ const TimelineClipComponent = ({
   return (
     <div
       className={`absolute top-1 bottom-1 rounded-lg cursor-pointer group ${
-        isSelected ? 'ring-2 ring-accent ring-offset-1 ring-offset-[#1c2529] z-20' : 'z-10'
+        isSelected ? 'ring-2 ring-accent ring-offset-1 ring-offset-ui-panel z-20' : 'z-10'
       }`}
       style={{
         left: `${left}px`,
@@ -312,19 +312,19 @@ export const Timeline = () => {
   return (
     <footer className="col-span-3 flex h-64 flex-col border-t border-ui-border bg-ui-bg">
       {/* Toolbar */}
-      <div className="flex h-12 items-center justify-between border-b border-[#2c393f] bg-[#1c2529]/30 px-4">
+      <div className="flex h-12 items-center justify-between border-b border-ui-border bg-ui-panel/30 px-4">
         <div className="flex items-center gap-4">
           {/* Playback Controls */}
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPlayhead(0)}
-              className="rounded p-1.5 hover:bg-[#1c3b4a]/40 flex items-center justify-center"
+              className="rounded p-1.5 hover:bg-ui-highlight/40 flex items-center justify-center"
             >
               <span className="material-symbols-outlined text-[20px]">skip_previous</span>
             </button>
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="flex w-8 h-8 items-center justify-center rounded-full bg-[#d4ff3f] text-black"
+              className="flex w-8 h-8 items-center justify-center rounded-full bg-accent text-black"
             >
               <span className="material-symbols-outlined">
                 {isPlaying ? 'pause' : 'play_arrow'}
@@ -332,22 +332,22 @@ export const Timeline = () => {
             </button>
             <button
               onClick={() => setPlayhead(durationMs)}
-              className="rounded p-1.5 hover:bg-[#1c3b4a]/40 flex items-center justify-center"
+              className="rounded p-1.5 hover:bg-ui-highlight/40 flex items-center justify-center"
             >
               <span className="material-symbols-outlined text-[20px]">skip_next</span>
             </button>
           </div>
 
           {/* Time Display */}
-          <div className="text-[13px] font-mono text-[#d4ff3f]">
-            {currentTimeFormatted}s <span className="text-[#9fb2bc]">/ {totalTimeFormatted}s</span>
+          <div className="text-[13px] font-mono text-accent">
+            {currentTimeFormatted}s <span className="text-ui-text">/ {totalTimeFormatted}s</span>
           </div>
 
           {/* Toggle Presets Panel */}
           <button
             onClick={() => setShowPresets(!showPresets)}
             className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors ${
-              showPresets ? 'bg-accent/20 text-accent' : 'text-[#9fb2bc] hover:text-white'
+              showPresets ? 'bg-accent/20 text-accent' : 'text-ui-text hover:text-white'
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">animation</span>
@@ -358,19 +358,19 @@ export const Timeline = () => {
         {/* Zoom Controls */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <button onClick={() => setZoom(zoom - 0.25)} className="hover:text-white text-[#9fb2bc]">
+            <button onClick={() => setZoom(zoom - 0.25)} className="hover:text-white text-ui-muted">
               <span className="material-symbols-outlined text-[18px]">zoom_out</span>
             </button>
-            <div className="h-1 w-32 overflow-hidden rounded-full bg-[#2c393f]">
+            <div className="h-1 w-32 overflow-hidden rounded-full bg-ui-border">
               <div
                 className="h-full bg-accent transition-all"
                 style={{ width: `${((zoom - 0.25) / 3.75) * 100}%` }}
               />
             </div>
-            <button onClick={() => setZoom(zoom + 0.25)} className="hover:text-white text-[#9fb2bc]">
+            <button onClick={() => setZoom(zoom + 0.25)} className="hover:text-white text-ui-muted">
               <span className="material-symbols-outlined text-[18px]">zoom_in</span>
             </button>
-            <span className="text-[10px] text-[#9fb2bc] font-mono w-10">{Math.round(zoom * 100)}%</span>
+            <span className="text-[10px] text-ui-muted font-mono w-10">{Math.round(zoom * 100)}%</span>
           </div>
         </div>
       </div>
@@ -378,7 +378,7 @@ export const Timeline = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Animation Presets Panel */}
         {showPresets && (
-          <div className="w-48 border-r border-[#2c393f] bg-[#1c2529]/20 overflow-y-auto no-scrollbar">
+          <div className="w-48 border-r border-ui-border bg-ui-panel/20 overflow-y-auto no-scrollbar">
             <div className="p-2">
               <h3 className="text-[9px] font-bold uppercase tracking-widest text-ui-muted mb-2 px-1">
                 Drag to Timeline
@@ -397,15 +397,15 @@ export const Timeline = () => {
         )}
 
         {/* Track Labels */}
-        <div className="flex w-28 flex-col text-[11px] font-medium uppercase text-[#9fb2bc] flex-shrink-0">
-          <div className="flex h-8 items-center border-b border-[#2c393f] px-3 text-[9px] tracking-widest">
+        <div className="flex w-28 flex-col text-[11px] font-medium uppercase text-ui-text flex-shrink-0">
+          <div className="flex h-8 items-center border-b border-ui-border px-3 text-[9px] tracking-widest">
             Tracks
           </div>
           <div className="flex-1 overflow-hidden">
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="flex h-12 items-center border-b border-[#2c393f] px-3 hover:bg-[#1c3b4a]/10"
+                className="flex h-12 items-center border-b border-ui-border px-3 hover:bg-ui-highlight/10"
               >
                 <span className="text-[10px]">{track.name}</span>
               </div>
@@ -420,12 +420,12 @@ export const Timeline = () => {
           onClick={handleTimelineClick}
         >
           {/* Time Ruler */}
-          <div className="relative flex h-8 items-center border-b border-[#2c393f] bg-[#1c2529]/20">
+          <div className="relative flex h-8 items-center border-b border-ui-border bg-ui-panel/20">
             <div className="absolute inset-0 flex" style={{ width: `${totalWidth}px` }}>
               {timeMarkers.map((second) => (
                 <div
                   key={second}
-                  className="flex items-center border-r border-[#2c393f]/50 px-2 text-[10px] font-mono text-[#9fb2bc]/60"
+                  className="flex items-center border-r border-ui-border/50 px-2 text-[10px] font-mono text-ui-text/60"
                   style={{ width: `${PIXELS_PER_SECOND * zoom}px` }}
                 >
                   {formatTime(second)}
@@ -439,7 +439,7 @@ export const Timeline = () => {
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="relative h-12 left-2 border-b border-[#2c393f] bg-[#1c2529]/10"
+                className="relative h-12 left-2 border-b border-ui-border bg-ui-panel/10"
                 onDrop={(e) => handleTrackDrop(e, track.id)}
                 onDragOver={handleTrackDragOver}
               >
@@ -448,7 +448,7 @@ export const Timeline = () => {
                   {timeMarkers.map((second) => (
                     <div
                       key={second}
-                      className="absolute top-0 bottom-0 border-l border-[#2c393f]/30"
+                      className="absolute top-0 bottom-0 border-l border-ui-border/30"
                       style={{ left: `${second * PIXELS_PER_SECOND * zoom}px` }}
                     />
                   ))}
@@ -469,7 +469,7 @@ export const Timeline = () => {
 
                 {/* Drop zone indicator */}
                 {track.clips.length === 0 && (
-                  <div className="absolute inset-2 flex items-center justify-center border border-dashed border-[#2c393f] rounded-lg text-[10px] text-[#2c393f] uppercase tracking-widest">
+                  <div className="absolute inset-2 flex items-center justify-center border border-dashed border-ui-border rounded-lg text-[10px] text-ui-muted uppercase tracking-widest">
                     Drop {track.type} here
                   </div>
                 )}
@@ -478,10 +478,10 @@ export const Timeline = () => {
 
             {/* Playhead */}
             <div
-              className="absolute top-0 bottom-0 z-40 w-0.5 bg-[#d4ff3f] shadow-[0_0_10px_rgba(212,255,63,0.5)] pointer-events-none"
+              className="absolute top-0 bottom-0 z-40 w-0.5 bg-accent shadow-[0_0_10px_var(--color-accent)] pointer-events-none"
               style={{ left: `${playheadPosition}px` }}
             >
-              <div className="absolute -top-8 -left-2 flex h-6 w-4.5 items-center justify-center rounded-b-sm bg-[#d4ff3f]">
+              <div className="absolute -top-8 -left-2 flex h-6 w-4.5 items-center justify-center rounded-b-sm bg-accent">
                 <div className="h-3 w-0.5 bg-black/50" />
               </div>
             </div>

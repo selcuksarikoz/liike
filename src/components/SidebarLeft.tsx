@@ -12,6 +12,8 @@ const LAYOUTS: { value: ImageLayout; label: string; icon: string }[] = [
   { value: 'stacked', label: 'Stacked', icon: 'table_rows' },
 ];
 
+const IMAGE_SLOTS = [0, 1, 2];
+
 export const SidebarLeft = () => {
   const {
     setMediaAssets, mediaAssets,
@@ -22,8 +24,11 @@ export const SidebarLeft = () => {
 
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
   const [isAspectRatioModalOpen, setIsAspectRatioModalOpen] = useState(false);
-  const fileInput1Ref = useRef<HTMLInputElement>(null);
-  const fileInput2Ref = useRef<HTMLInputElement>(null);
+  const fileInputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
@@ -58,15 +63,15 @@ export const SidebarLeft = () => {
         {/* Media Selection */}
         <div>
           <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Images</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {[0, 1].map((index) => (
+          <div className="grid grid-cols-3 gap-2">
+            {IMAGE_SLOTS.map((index) => (
               <div
                 key={index}
-                onClick={() => (index === 0 ? fileInput1Ref : fileInput2Ref).current?.click()}
-                className="aspect-video rounded-lg border border-dashed border-ui-border bg-ui-panel hover:bg-ui-highlight hover:border-accent/50 cursor-pointer flex flex-col items-center justify-center transition-colors group overflow-hidden relative"
+                onClick={() => fileInputRefs[index].current?.click()}
+                className="aspect-square rounded-lg border border-dashed border-ui-border bg-ui-panel hover:bg-ui-highlight hover:border-accent/50 cursor-pointer flex flex-col items-center justify-center transition-colors group overflow-hidden relative"
               >
                 <input
-                  ref={index === 0 ? fileInput1Ref : fileInput2Ref}
+                  ref={fileInputRefs[index]}
                   type="file"
                   className="hidden"
                   accept="image/*,video/*"
@@ -80,20 +85,20 @@ export const SidebarLeft = () => {
                   )
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-ui-text group-hover:text-accent mb-1 text-[20px]">add_photo_alternate</span>
-                    <span className="text-[9px] text-ui-text group-hover:text-white uppercase font-medium">Image {index + 1}</span>
+                    <span className="material-symbols-outlined text-ui-text group-hover:text-accent text-[18px]">add</span>
+                    <span className="text-[8px] text-ui-muted group-hover:text-white uppercase font-medium mt-0.5">{index + 1}</span>
                   </>
                 )}
                 {mediaAssets[index] && (
                   <>
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <span className="text-[10px] text-white font-medium">Change</span>
+                      <span className="text-[9px] text-white font-medium">Change</span>
                     </div>
                     <button
                       onClick={(e) => handleRemoveMedia(index, e)}
-                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-500"
+                      className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-500"
                     >
-                      <span className="material-symbols-outlined text-[14px]">close</span>
+                      <span className="material-symbols-outlined text-[12px]">close</span>
                     </button>
                   </>
                 )}
@@ -135,7 +140,7 @@ export const SidebarLeft = () => {
                 onClick={() => setImageLayout(value)}
                 className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all ${
                   imageLayout === value
-                    ? 'bg-accent text-ui-text'
+                    ? 'bg-accent text-black'
                     : 'bg-ui-panel text-ui-text hover:bg-ui-highlight hover:text-white'
                 }`}
               >

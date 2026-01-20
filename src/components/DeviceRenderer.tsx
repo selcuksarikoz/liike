@@ -70,6 +70,13 @@ export const DeviceRenderer = ({
     });
   }, [rotationX, rotationY, rotationZ, scale, isPreview]);
 
+  // Get style preset CSS (moved up for use in MediaContainer)
+  const styleCSS = (() => {
+    const preset = STYLE_PRESETS.find(p => p.id === stylePreset);
+    if (!preset || stylePreset === 'default') return {};
+    return preset.css;
+  })();
+
   const MediaContainer = ({ index }: { index: number }) => {
     const media = mediaAssets[index];
     const mediaRef = useRef<HTMLDivElement>(null);
@@ -110,12 +117,18 @@ export const DeviceRenderer = ({
           )
         ) : (
           <div
-            className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-4'} transition-all duration-300 bg-zinc-900/80 ${!isPreview && 'group-hover:bg-zinc-800/80'}`}
-            style={{ borderRadius: `${cornerRadius}px` }}
+            className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-8'} transition-all duration-300 ${!isPreview && 'group-hover:brightness-110'}`}
+            style={{
+              borderRadius: `${cornerRadius}px`,
+              background: styleCSS.background || 'rgba(24, 24, 27, 0.8)',
+              border: styleCSS.border || '2px dashed rgba(255, 255, 255, 0.2)',
+              boxShadow: styleCSS.boxShadow,
+              backdropFilter: styleCSS.backdropFilter,
+            }}
           >
-            <div className={`flex flex-col items-center gap-2 text-ui-text ${!isPreview && 'group-hover:text-accent group-hover:scale-110'} transition-all duration-300`}>
-              <span className={`material-symbols-outlined ${isPreview ? 'text-lg' : 'text-4xl'}`}>add_photo_alternate</span>
-              {!isPreview && <span className="text-[10px] uppercase tracking-widest text-center font-bold">Add Image</span>}
+            <div className={`flex flex-col items-center gap-4 text-ui-text ${!isPreview && 'group-hover:text-accent group-hover:scale-110'} transition-all duration-300`}>
+              <span className={`material-symbols-outlined ${isPreview ? 'text-lg' : 'text-7xl'}`}>add_photo_alternate</span>
+              {!isPreview && <span className="text-sm uppercase tracking-widest text-center font-bold">Add Image</span>}
             </div>
           </div>
         )}
@@ -135,14 +148,6 @@ export const DeviceRenderer = ({
     return getShadowStyle(shadowType, shadowOpacity, rotationX, rotationY);
   };
 
-  // Get style preset CSS
-  const getStyleCSS = () => {
-    const preset = STYLE_PRESETS.find(p => p.id === stylePreset);
-    if (!preset || stylePreset === 'default') return {};
-    return preset.css;
-  };
-
-  const styleCSS = getStyleCSS();
   const aspectValue = getAspectRatioValue(aspectRatio);
 
   const containerStyle = {

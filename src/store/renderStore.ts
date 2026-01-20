@@ -6,7 +6,7 @@ type RenderSettings = {
   outputName: string;
 };
 
-type StylePreset = 'default' | 'glass-light' | 'glass-dark' | 'liquid' | 'inset-light' | 'inset-dark' | 'outline' | 'border';
+type StylePreset = 'default' | 'glass-light' | 'glass-dark' | 'neon-glow' | 'cyber' | 'gradient-border' | 'frost' | 'liquid' | 'hologram' | 'inset-dark' | 'outline' | 'border' | 'double-border';
 type ShadowType = 'none' | 'spread' | 'hug' | 'adaptive';
 export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3';
 export type ImageLayout = 'single' | 'side-by-side' | 'stacked';

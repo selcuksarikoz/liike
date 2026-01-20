@@ -216,8 +216,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   }, [backgroundGradient, prevGradient]);
 
   return (
-    <section className="relative flex flex-1 flex-col overflow-hidden bg-[#111618]">
-      <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle,#2c393f_1px,transparent_1px)] [background-size:32px_32px]" />
+    <section className="relative flex flex-1 flex-col overflow-hidden bg-canvas">
+      <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle,var(--color-ui-border)_1px,transparent_1px)] [background-size:32px_32px]" />
 
       {/* Hidden File Input */}
       <input
@@ -228,7 +228,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         onChange={handleFileChange}
       />
 
-      <div ref={containerRef} className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-[#0a0f12]">
+      <div ref={containerRef} className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-ui-bg-secondary">
         {/* Background Gradient / Canvas Area */}
         <div
             ref={(el) => {
@@ -245,7 +245,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         >
              {/* Canvas Background with Crossfade */}
              <div
-                className="absolute inset-0 border border-[#2c393f] overflow-hidden"
+                className="absolute inset-0 border border-ui-border overflow-hidden"
                 style={{ borderRadius: `${canvasCornerRadius}px`, clipPath: `inset(0 round ${canvasCornerRadius}px)` }}
              >
                {/* Previous background (fades out) */}

@@ -16,6 +16,9 @@
   /* Accent */
   --color-accent: #d4ff3f;
   --color-accent-hover: #e5ff7a;
+  --color-accent-06: rgba(212, 255, 63, 0.06);
+  --color-accent-18: rgba(212, 255, 63, 0.18);
+  --color-accent-20: rgba(212, 255, 63, 0.2);
 
   /* Scrollbar */
   --color-scrollbar: rgba(148, 163, 184, 0.35);

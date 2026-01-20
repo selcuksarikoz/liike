@@ -22,38 +22,38 @@ export const Header = ({ onRender }: HeaderProps) => {
     <header className="col-span-3 flex h-14 items-center justify-between border-b border-ui-border bg-ui-bg px-6">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
-          <div className="flex w-8 h-8 items-center justify-center rounded bg-[#d4ff3f] text-black font-bold">
+          <div className="flex w-8 h-8 items-center justify-center rounded bg-accent text-black font-bold">
             <span className="material-symbols-outlined text-lg">video_camera_back</span>
           </div>
           <h1 className="text-sm font-bold tracking-tight uppercase text-white">
-            ShotGen <span className="text-[#d4ff3f]/80 font-normal">v1.2</span>
+            ShotGen <span className="text-accent/80 font-normal">v1.2</span>
           </h1>
         </div>
-        <nav className="flex items-center gap-4 border-l border-[#2c393f] pl-6">
-          <button className="text-xs text-[#9fb2bc] hover:text-white transition-colors">Project_Final_v2.mp4</button>
+        <nav className="flex items-center gap-4 border-l border-ui-border pl-6">
+          <button className="text-xs text-ui-text hover:text-white transition-colors">Project_Final_v2.mp4</button>
           <div className="flex gap-1">
-            <button className="p-1 rounded text-[#9fb2bc] hover:bg-[#1c3b4a]/30 transition-all">
+            <button className="p-1 rounded text-ui-muted hover:bg-ui-highlight/30 transition-all">
               <span className="material-symbols-outlined text-[20px]">undo</span>
             </button>
-            <button className="p-1 rounded text-[#9fb2bc] hover:bg-[#1c3b4a]/30 transition-all">
+            <button className="p-1 rounded text-ui-muted hover:bg-ui-highlight/30 transition-all">
               <span className="material-symbols-outlined text-[20px]">redo</span>
             </button>
           </div>
         </nav>
       </div>
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 rounded-lg border border-[#1c3b4a]/40 bg-[#1c3b4a]/20 px-3 py-1.5">
-          <div className="w-2 h-2 rounded-full bg-[#d4ff3f] animate-pulse" />
-          <span className="text-[10px] font-mono text-[#d4ff3f]">{statusLabel}</span>
+        <div className="flex items-center gap-2 rounded-lg border border-ui-highlight/40 bg-ui-highlight/20 px-3 py-1.5">
+          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <span className="text-[10px] font-mono text-accent">{statusLabel}</span>
         </div>
         <button
-          className="flex h-9 items-center justify-center rounded-lg bg-[#d4ff3f] px-6 text-sm font-bold text-black hover:bg-[#c2eb30] transition-colors"
+          className="flex h-9 items-center justify-center rounded-lg bg-accent px-6 text-sm font-bold text-black hover:bg-accent-hover transition-colors"
           onClick={onRender}
           disabled={loop.state.isRendering}
         >
           {loop.state.isRendering ? 'Rendering…' : 'Export'}
         </button>
-        <div className="w-9 h-9 overflow-hidden rounded-full border border-[#2c393f] bg-[#1c3b4a]/40">
+        <div className="w-9 h-9 overflow-hidden rounded-full border border-ui-border bg-ui-highlight/40">
           <img className="h-full w-full object-cover" src={avatar} alt="User avatar" />
         </div>
       </div>

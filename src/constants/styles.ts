@@ -31,44 +31,83 @@ export const STYLE_PRESETS: StylePreset[] = [
   },
   {
     id: 'glass-light',
-    label: 'Glass Light',
+    label: 'Glass',
     css: {
       background: 'rgba(255, 255, 255, 0.15)',
       backdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
+      border: '1px solid rgba(255, 255, 255, 0.25)',
     },
   },
   {
     id: 'glass-dark',
-    label: 'Glass Dark',
+    label: 'Smoke',
     css: {
-      background: 'rgba(0, 0, 0, 0.3)',
+      background: 'rgba(0, 0, 0, 0.4)',
       backdropFilter: 'blur(20px)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
+    },
+  },
+  {
+    id: 'neon-glow',
+    label: 'Neon',
+    css: {
+      background: 'rgba(0, 0, 0, 0.8)',
+      border: '2px solid #00ff88',
+      boxShadow: '0 0 20px rgba(0, 255, 136, 0.5), inset 0 0 20px rgba(0, 255, 136, 0.1)',
+    },
+  },
+  {
+    id: 'cyber',
+    label: 'Cyber',
+    css: {
+      background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(148, 0, 211, 0.2) 100%)',
+      border: '2px solid rgba(0, 212, 255, 0.6)',
+      boxShadow: '0 0 30px rgba(148, 0, 211, 0.3)',
+    },
+  },
+  {
+    id: 'gradient-border',
+    label: 'Rainbow',
+    css: {
+      background: 'linear-gradient(#18181b, #18181b) padding-box, linear-gradient(135deg, #ff0080, #ff8c00, #40e0d0, #8a2be2) border-box',
+      border: '3px solid transparent',
+    },
+  },
+  {
+    id: 'frost',
+    label: 'Frost',
+    css: {
+      background: 'rgba(255, 255, 255, 0.1)',
+      backdropFilter: 'blur(30px) saturate(180%)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: 'inset 0 0 30px rgba(255, 255, 255, 0.1)',
     },
   },
   {
     id: 'liquid',
     label: 'Liquid',
     css: {
-      background: 'linear-gradient(135deg, rgba(255,165,0,0.8) 0%, rgba(255,100,50,0.8) 100%)',
+      background: 'linear-gradient(135deg, rgba(255, 100, 50, 0.8) 0%, rgba(255, 50, 100, 0.8) 100%)',
       border: '2px solid rgba(255, 200, 100, 0.5)',
+      boxShadow: '0 10px 40px rgba(255, 100, 50, 0.3)',
     },
   },
   {
-    id: 'inset-light',
-    label: 'Inset Light',
+    id: 'hologram',
+    label: 'Holo',
     css: {
-      background: 'linear-gradient(145deg, #f0f0f0, #cacaca)',
-      boxShadow: 'inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff',
+      background: 'linear-gradient(135deg, rgba(120, 200, 255, 0.3) 0%, rgba(200, 120, 255, 0.3) 50%, rgba(255, 180, 120, 0.3) 100%)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.4)',
+      boxShadow: '0 0 40px rgba(120, 200, 255, 0.2)',
     },
   },
   {
     id: 'inset-dark',
-    label: 'Inset Dark',
+    label: 'Inset',
     css: {
       background: 'linear-gradient(145deg, #1a1a1a, #2d2d2d)',
-      boxShadow: 'inset 5px 5px 10px #0d0d0d, inset -5px -5px 10px #333333',
+      boxShadow: 'inset 5px 5px 15px #0d0d0d, inset -5px -5px 15px #333333',
     },
   },
   {
@@ -76,16 +115,25 @@ export const STYLE_PRESETS: StylePreset[] = [
     label: 'Outline',
     css: {
       background: 'transparent',
-      border: '3px solid currentColor',
+      border: '3px solid rgba(255, 255, 255, 0.8)',
     },
   },
   {
     id: 'border',
-    label: 'Border',
+    label: 'Frame',
     css: {
       background: 'transparent',
       border: '8px solid #ffffff',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+      boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4)',
+    },
+  },
+  {
+    id: 'double-border',
+    label: 'Double',
+    css: {
+      background: 'transparent',
+      border: '4px double rgba(255, 255, 255, 0.8)',
+      boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.2)',
     },
   },
 ];
@@ -139,10 +187,11 @@ export const FRAMES_DATA = [
 ];
 
 export type LayoutAnimation = {
-  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'flip' | 'none';
+  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'flip' | 'spiral' | 'fan' | 'domino' | 'none';
   duration: number;
   easing: string;
   intensity?: number;
+  stagger?: number; // Delay between elements in ms for sequential animations
 };
 
 export type LayoutPreset = {
@@ -511,6 +560,170 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     color: '#A855F7',
     animations: [{ type: 'float', duration: 2500, easing: 'ease-in-out', intensity: 18 }],
     durationMs: 4000,
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // TRIO IMAGES - SEQUENTIAL & STAGGERED ANIMATIONS
+  // ═══════════════════════════════════════════════════════════════
+
+  // One by One Reveals
+  {
+    id: 'trio-cascade-fall',
+    name: 'Cascade Fall',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-indigo-900 via-purple-800 to-pink-700',
+    icon: 'stacked_bar_chart',
+    color: '#A855F7',
+    animations: [{ type: 'slide-down', duration: 600, easing: 'ease-out', intensity: 100, stagger: 200 }],
+    durationMs: 2500,
+  },
+  {
+    id: 'trio-domino',
+    name: 'Domino',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-slate-900 via-zinc-800 to-neutral-900',
+    icon: 'view_column',
+    color: '#64748B',
+    animations: [{ type: 'domino', duration: 800, easing: 'ease-out', intensity: 15, stagger: 150 }],
+    durationMs: 2800,
+  },
+  {
+    id: 'trio-pop-sequence',
+    name: 'Pop Sequence',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-rose-600 via-pink-500 to-fuchsia-500',
+    icon: 'bubble_chart',
+    color: '#EC4899',
+    animations: [{ type: 'zoom-out', duration: 500, easing: 'ease-out', intensity: 1.5, stagger: 180 }],
+    durationMs: 2200,
+  },
+  {
+    id: 'trio-wave-rise',
+    name: 'Wave Rise',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-cyan-600 via-teal-500 to-emerald-500',
+    icon: 'waves',
+    color: '#14B8A6',
+    animations: [{ type: 'slide-up', duration: 700, easing: 'ease-out', intensity: 120, stagger: 150 }],
+    durationMs: 2600,
+  },
+
+  // Fan & Spiral Effects
+  {
+    id: 'trio-fan-out',
+    name: 'Fan Out',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-amber-600 via-orange-500 to-red-500',
+    icon: 'open_with',
+    color: '#F59E0B',
+    animations: [{ type: 'fan', duration: 900, easing: 'ease-out', intensity: 30, stagger: 120 }],
+    durationMs: 2500,
+  },
+  {
+    id: 'trio-spiral-in',
+    name: 'Spiral In',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-violet-700 via-purple-600 to-indigo-600',
+    icon: 'rotate_right',
+    color: '#7C3AED',
+    animations: [{ type: 'spiral', duration: 1000, easing: 'ease-out', intensity: 360, stagger: 200 }],
+    durationMs: 3000,
+  },
+
+  // Bounce & Playful Sequences
+  {
+    id: 'trio-bounce-chain',
+    name: 'Bounce Chain',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-lime-500 via-green-500 to-emerald-600',
+    icon: 'sports_basketball',
+    color: '#84CC16',
+    animations: [{ type: 'bounce', duration: 600, easing: 'ease-out', intensity: 30, stagger: 200 }],
+    durationMs: 2400,
+  },
+  {
+    id: 'trio-swing-parade',
+    name: 'Swing Parade',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-yellow-500 via-amber-500 to-orange-500',
+    icon: 'emoji_people',
+    color: '#FBBF24',
+    animations: [{ type: 'swing', duration: 800, easing: 'ease-in-out', intensity: 20, stagger: 180 }],
+    durationMs: 2800,
+  },
+
+  // Dramatic Entrances
+  {
+    id: 'trio-spotlight-reveal',
+    name: 'Spotlight Reveal',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-black via-zinc-900 to-black',
+    icon: 'flare',
+    color: '#FBBF24',
+    animations: [
+      { type: 'zoom-up', duration: 800, easing: 'ease-out', intensity: 1.3, stagger: 250 },
+      { type: 'pulse', duration: 600, easing: 'ease-in-out', intensity: 1.08 },
+    ],
+    durationMs: 3200,
+  },
+  {
+    id: 'trio-flip-chain',
+    name: 'Flip Chain',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-sky-600 via-blue-600 to-indigo-700',
+    icon: 'flip',
+    color: '#0EA5E9',
+    animations: [{ type: 'flip', duration: 900, easing: 'ease-in-out', intensity: 180, stagger: 200 }],
+    durationMs: 3000,
+  },
+
+  // Slide Combos
+  {
+    id: 'trio-slide-stack',
+    name: 'Stack Up',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-blue-700 via-blue-600 to-cyan-500',
+    icon: 'layers',
+    color: '#3B82F6',
+    animations: [{ type: 'slide-up', duration: 600, easing: 'ease-out', intensity: 150, stagger: 180 }],
+    durationMs: 2400,
+  },
+  {
+    id: 'trio-scatter',
+    name: 'Scatter',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-fuchsia-600 via-pink-600 to-rose-600',
+    icon: 'scatter_plot',
+    color: '#D946EF',
+    animations: [
+      { type: 'slide-left', duration: 500, easing: 'ease-out', intensity: 80, stagger: 100 },
+      { type: 'slide-right', duration: 500, easing: 'ease-out', intensity: 80, stagger: 100 },
+    ],
+    durationMs: 2000,
   },
 
   // ═══════════════════════════════════════════════════════════════

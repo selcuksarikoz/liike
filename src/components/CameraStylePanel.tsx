@@ -227,7 +227,7 @@ export const CameraStylePanel = () => {
                 <div
                   className="absolute inset-0 flex items-center justify-center p-2"
                   style={{
-                    background: preset.css.background || 'linear-gradient(135deg, #333 0%, #222 100%)',
+                    background: preset.css.background || 'linear-gradient(135deg, var(--color-ui-panel) 0%, var(--color-ui-bg) 100%)',
                   }}
                 >
                   <div

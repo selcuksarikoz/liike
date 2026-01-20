@@ -252,6 +252,30 @@ export const calculateAnimationValue = (
         transform: `rotateY(${halfLoopProgress * 180}deg)`,
       };
 
+    case 'spiral':
+      const spiralScale = easedProgress;
+      const spiralRotation = (1 - easedProgress) * -intensity;
+      return {
+        transform: `scale(${spiralScale}) rotate(${spiralRotation}deg)`,
+        opacity: easedProgress,
+      };
+
+    case 'fan':
+      const fanRotation = (1 - easedProgress) * -intensity;
+      const fanScale = 0.5 + easedProgress * 0.5;
+      return {
+        transform: `rotate(${fanRotation}deg) scale(${fanScale})`,
+        opacity: easedProgress,
+      };
+
+    case 'domino':
+      const dominoRotateX = (1 - easedProgress) * -90;
+      const dominoY = (1 - easedProgress) * -20;
+      return {
+        transform: `perspective(500px) rotateX(${dominoRotateX}deg) translateY(${dominoY}px)`,
+        opacity: easedProgress,
+      };
+
     default:
       return { transform: 'none' };
   }
@@ -307,6 +331,9 @@ const getDefaultIntensity = (type: string): number => {
     case 'shake': return 5;
     case 'swing': return 15;
     case 'flip': return 180;
+    case 'spiral': return 360;
+    case 'fan': return 30;
+    case 'domino': return 15;
     default: return 1;
   }
 };
