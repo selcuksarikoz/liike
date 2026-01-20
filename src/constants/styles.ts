@@ -187,7 +187,7 @@ export const FRAMES_DATA = [
 ];
 
 export type LayoutAnimation = {
-  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'flip' | 'spiral' | 'fan' | 'domino' | 'none';
+  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'flip' | 'spiral' | 'fan' | 'domino' | 'elastic-rotate' | 'converge' | 'diverge' | 'glitch' | 'wobble-3d' | 'none';
   duration: number;
   easing: string;
   intensity?: number;
@@ -726,6 +726,75 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     durationMs: 2000,
   },
 
+  // ═══════════════════════════════════════════════════════════════
+  // NEW CREATIVE PRESETS
+  // ═══════════════════════════════════════════════════════════════
+
+  // Single - Glitchy
+  {
+    id: 'hero-glitch',
+    name: 'Cyber Glitch',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-gray-900 via-gray-800 to-black',
+    icon: 'broken_image',
+    color: '#22d3ee',
+    animations: [
+      { type: 'glitch', duration: 400, easing: 'linear', intensity: 5 },
+      { type: 'zoom-in', duration: 200, easing: 'ease-out', intensity: 1.05 },
+    ],
+    durationMs: 2000,
+  },
+
+  // Duo - Converge
+  {
+    id: 'duo-converge',
+    name: 'Magnetic',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-indigo-500 via-purple-500 to-pink-500',
+    icon: 'join_inner',
+    color: '#818cf8',
+    animations: [
+      { type: 'converge', duration: 800, easing: 'ease-out', intensity: 100 },
+    ],
+    durationMs: 2500,
+  },
+
+  // Trio - Wobble 3D
+  {
+    id: 'trio-wobble',
+    name: '3D Float',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-teal-400 via-emerald-400 to-green-400',
+    icon: '3d_rotation',
+    color: '#34d399',
+    animations: [
+      { type: 'wobble-3d', duration: 2000, easing: 'ease-in-out', intensity: 10, stagger: 300 },
+    ],
+    durationMs: 4000,
+  },
+
+  // Quad - Elastic
+  {
+    id: 'quad-elastic',
+    name: 'Elastic Grid',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-orange-400 via-red-400 to-pink-400',
+    icon: 'grid_view',
+    color: '#fb923c',
+    animations: [
+      { type: 'elastic-rotate', duration: 1200, easing: 'ease-out', intensity: 5, stagger: 100 },
+      { type: 'zoom-in', duration: 800, easing: 'ease-out', intensity: 1.1, stagger: 100 },
+    ],
+    durationMs: 3000,
+  },
 ];
 
 export const getShadowStyle = (

@@ -99,6 +99,11 @@ export const DEFAULT_INTENSITIES: Record<string, number> = {
   'slide-left': 100,
   'slide-up': 60,
   'slide-down': 60,
+  'elastic-rotate': 15,
+  'converge': 50,
+  'diverge': 20,
+  'glitch': 5,
+  'wobble-3d': 15,
 } as const;
 
 export const getDefaultIntensity = (type: string): number => {
@@ -479,6 +484,58 @@ export const createLayoutAnimation = (
           { transform: 'perspective(500px) rotateX(0deg) translateY(0)', opacity: 1 },
         ],
         options: { duration, easing: EASINGS.bounceSubtle, fill: 'forwards' as FillMode },
+      };
+
+    case 'elastic-rotate':
+      return {
+        keyframes: [
+          { transform: 'rotate(0deg)' },
+          { transform: `rotate(${intensity}deg)` },
+        ],
+        options: { duration, easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)', iterations: Infinity, direction: 'alternate' },
+      };
+
+    case 'converge':
+      return {
+        keyframes: [
+          { transform: `translate(${intensity}px, ${intensity}px) scale(0.8)`, opacity: 0 },
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        ],
+        options: { duration, easing: EASINGS.smoothOut, fill: 'forwards' as FillMode },
+      };
+
+    case 'diverge':
+      return {
+        keyframes: [
+          { transform: 'scale(0)', opacity: 0 },
+          { transform: `scale(${1 + intensity/100})`, opacity: 1 },
+        ],
+        options: { duration, easing: EASINGS.smoothOut, fill: 'forwards' as FillMode },
+      };
+
+    case 'glitch':
+      return {
+        keyframes: [
+          { transform: 'translate(0, 0)' },
+          { transform: `translate(-${intensity}px, ${intensity}px)` },
+          { transform: `translate(${intensity}px, -${intensity}px)` },
+          { transform: 'translate(0, 0)' },
+          { transform: `translate(${intensity}px, 0)` },
+          { transform: `translate(0, -${intensity}px)` },
+          { transform: 'translate(0, 0)' },
+        ],
+        options: { duration: duration / 2, easing: 'steps(2)', iterations: Infinity },
+      };
+
+    case 'wobble-3d':
+      return {
+        keyframes: [
+          { transform: 'rotateX(0deg) rotateY(0deg)' },
+          { transform: `rotateX(${intensity}deg) rotateY(-${intensity}deg)` },
+          { transform: `rotateX(-${intensity}deg) rotateY(${intensity}deg)` },
+          { transform: 'rotateX(0deg) rotateY(0deg)' },
+        ],
+        options: { duration, easing: EASINGS.sineInOut, iterations: Infinity },
       };
 
     default:

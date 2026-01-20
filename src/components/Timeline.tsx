@@ -38,7 +38,7 @@ const TimelineClipComponent = ({
         isSelected ? 'ring-2 ring-accent ring-offset-1 ring-offset-ui-panel z-20' : 'z-10'
       }`}
       style={{
-        left: `${left+8}px`,
+        left: `${left}px`,
         width: `${Math.max(width, 40)}px`,
         backgroundColor: clip.color,
       }}
@@ -431,12 +431,12 @@ export const Timeline = () => {
             </div>
           </div>
 
-          {/* Track Rows */}
-          <div className="relative" style={{ width: `${Math.max(totalWidth, 2000)}px` }}>
+        {/* Track Rows */}
+          <div className="relative min-w-full" style={{ width: `${Math.max(totalWidth, 2000)}px` }}>
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="relative h-12 border-b border-ui-border bg-ui-panel/10"
+                className="relative h-14 border-b border-ui-border bg-ui-panel/5 hover:bg-ui-panel/10 transition-colors group/track"
                 onDrop={(e) => handleTrackDrop(e, track.id)}
                 onDragOver={handleTrackDragOver}
               >
@@ -445,28 +445,30 @@ export const Timeline = () => {
                   {timeMarkers.map((second) => (
                     <div
                       key={second}
-                      className="absolute top-0 bottom-0 border-l border-ui-border/30"
+                      className="absolute top-0 bottom-0 border-l border-ui-border/20 group-hover/track:border-ui-border/30"
                       style={{ left: `${second * PIXELS_PER_SECOND * zoom}px` }}
                     />
                   ))}
                 </div>
 
-                {/* Clips */}
-                {track.clips.map((clip) => (
-                  <TimelineClipComponent
-                    key={clip.id}
-                    clip={clip}
-                    zoom={zoom}
-                    isSelected={selectedClipId === clip.id}
-                    onSelect={() => selectClip(clip.id)}
-                    onDragStart={(e, type) => handleClipDragStart(e, clip, type)}
-                    onDelete={() => removeClip(clip.id)}
-                  />
-                ))}
+                {/* Clips container with slight padding */}
+                <div className="absolute inset-y-0 left-0 right-0">
+                  {track.clips.map((clip) => (
+                    <TimelineClipComponent
+                      key={clip.id}
+                      clip={clip}
+                      zoom={zoom}
+                      isSelected={selectedClipId === clip.id}
+                      onSelect={() => selectClip(clip.id)}
+                      onDragStart={(e, type) => handleClipDragStart(e, clip, type)}
+                      onDelete={() => removeClip(clip.id)}
+                    />
+                  ))}
+                </div>
 
-                {/* Drop zone indicator */}
+                {/* Drop zone indicator - visible when empty */}
                 {track.clips.length === 0 && (
-                  <div className="absolute inset-2 flex items-center justify-center border border-dashed border-ui-border rounded-lg text-[10px] text-ui-muted uppercase tracking-widest">
+                  <div className="absolute inset-2 flex items-center justify-center border-2 border-dashed border-ui-border/40 rounded-lg text-[10px] text-ui-muted uppercase tracking-widest font-medium group-hover/track:border-ui-border/60 group-hover/track:text-ui-text/60 transition-all pointer-events-none">
                     Drop {track.type} here
                   </div>
                 )}
@@ -480,9 +482,10 @@ export const Timeline = () => {
             style={{ transform: `translateX(${playheadPosition}px)` }}
           >
             {/* Playhead line */}
-            <div className="absolute top-0 bottom-0 left-0 w-0.5 -translate-x-1/2 bg-accent shadow-[0_0_8px_var(--color-accent)]" />
+            <div className="absolute top-0 bottom-0 left-0 w-0.5 -translate-x-1/2 bg-accent shadow-[0_0_8px_var(--color-accent)] opacity-80" />
+            
             {/* Playhead handle */}
-            <div className="absolute top-0 left-0 -translate-x-1/2 w-3 h-5 bg-accent rounded-b-sm flex items-center justify-center">
+            <div className="absolute -top-1 left-0 -translate-x-1/2 w-4 h-5 bg-accent rounded-b-md flex items-center justify-center shadow-lg cursor-ew-resize pointer-events-auto hover:bg-accent-hover transition-colors">
               <div className="w-0.5 h-2.5 bg-black/40 rounded-full" />
             </div>
           </div>

@@ -35,12 +35,19 @@ export const TimelinePanel = ({ loop }: Props) => {
   return (
     <div className="rounded-2xl border border-ui-border/70 bg-ui-bg/70 p-4 backdrop-blur">
       <div className="mb-3 flex items-center justify-between text-xs font-semibold text-ui-text">
-        <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-accent'} shadow-[0_0_0_3px_var(--color-accent-20)]`} />
-          <span>Timeline</span>
+        <div 
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => loop.toggle()}
+        >
+          <div className="relative flex items-center justify-center w-4 h-4">
+            <span className={`absolute h-2 w-2 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-accent'} shadow-[0_0_0_3px_var(--color-accent-20)]`} />
+            {!isPlaying && <span className="absolute inset-0 rounded-full border border-ui-border/50" />}
+          </div>
+          <span>Timeline Overview</span>
         </div>
-        <div className="flex items-center gap-3 text-[11px] text-ui-muted">
+        <div className="flex items-center gap-3 text-[11px] text-ui-muted font-mono bg-ui-panel/40 px-2 py-0.5 rounded">
           <span>{runtimeLabel}</span>
+          <span className="opacity-50">|</span>
           <span>Frame {state.currentFrame}/{totalFrames || '–'}</span>
         </div>
       </div>
