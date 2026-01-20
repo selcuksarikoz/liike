@@ -27,7 +27,7 @@ type ImageRendererProps = {
   stylePreset?: string;
   shadowType?: string;
   shadowOpacity?: number;
-  layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan';
+  layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative';
   animationInfo?: AnimationInfo;
 };
 
@@ -439,9 +439,10 @@ const DeviceRendererComponent = ({
   // Overlap layout (stacked cards with offset)
   if (layout === 'overlap') {
     const offsets = [
-      { x: 0, y: 0, rotate: -8, zIndex: 30 },
-      { x: 25, y: 15, rotate: 0, zIndex: 20 },
-      { x: 50, y: 30, rotate: 8, zIndex: 10 },
+      { x: 0, y: 0, rotate: -8, zIndex: 40 },
+      { x: 15, y: 10, rotate: -2, zIndex: 30 },
+      { x: 30, y: 20, rotate: 4, zIndex: 20 },
+      { x: 45, y: 30, rotate: 10, zIndex: 10 },
     ];
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -454,15 +455,15 @@ const DeviceRendererComponent = ({
             height: '70%',
           }}
         >
-          {[0, 1, 2].map((index) => {
+          {[0, 1, 2, 3].map((index) => {
             const offset = offsets[index];
-            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
             return (
               <div
                 key={index}
                 className="absolute overflow-hidden"
                 style={{
-                  width: '65%',
+                  width: '60%',
                   aspectRatio: aspectValue ? aspectValue : 3/4,
                   left: `${offset.x}%`,
                   top: `${offset.y}%`,
@@ -470,6 +471,50 @@ const DeviceRendererComponent = ({
                   borderRadius: `${cornerRadius}px`,
                   boxShadow: computedShadow,
                   transform: `rotate(${offset.rotate}deg) ${animStyle.transform}`,
+                  opacity: animStyle.opacity,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  willChange: 'transform, opacity',
+                  ...styleCSS
+                }}
+              >
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Creative layout (scattered/collage style)
+  if (layout === 'creative') {
+    const positions = [
+      { left: '0%', top: '0%', width: '60%', height: '60%', zIndex: 10 },
+      { right: '0%', bottom: '0%', width: '55%', height: '55%', zIndex: 20 },
+      { right: '5%', top: '10%', width: '35%', height: '35%', zIndex: 30 },
+      { left: '5%', bottom: '5%', width: '40%', height: '40%', zIndex: 40 },
+    ];
+    
+    return (
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div
+          ref={containerRef}
+          className="relative w-full h-full transition-[transform,box-shadow] duration-300 ease-out"
+          style={containerStyle}
+        >
+          {[0, 1, 2, 3].map((index) => {
+            const pos = positions[index];
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+            return (
+              <div
+                key={index}
+                className="absolute overflow-hidden"
+                style={{
+                  ...pos,
+                  aspectRatio: aspectValue ? aspectValue : undefined, // Keep free aspect ratio if set on container or square
+                  borderRadius: `${cornerRadius}px`,
+                  boxShadow: computedShadow,
+                  transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
                   willChange: 'transform, opacity',

@@ -14,6 +14,7 @@ const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = 
   { value: 'grid', label: 'Grid', icon: <LayoutGrid className="w-5 h-5" /> },
   { value: 'overlap', label: 'Overlap', icon: <Layers className="w-5 h-5" /> },
   { value: 'fan', label: 'Fan', icon: <CircleDot className="w-5 h-5" /> },
+  { value: 'creative', label: 'Mix', icon: <LayoutGrid className="w-5 h-5 rotate-45" /> },
 ];
 
 const IMAGE_SLOTS = [0, 1, 2, 3];
@@ -130,7 +131,7 @@ export const SidebarLeft = () => {
 
         {/* Aspect Ratio */}
         <div className="border-t border-ui-border pt-6">
-          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Image Aspect Ratio</h2>
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Image   Aspect Ratio</h2>
           <DropdownTrigger
             icon="aspect_ratio"
             label={imageAspectRatio === 'free' ? 'Free' : imageAspectRatio}
