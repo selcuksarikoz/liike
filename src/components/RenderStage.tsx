@@ -58,7 +58,7 @@ export const RenderStage = ({ stageRef, className }: Props) => {
     <div
       ref={stageRef}
       className={cx(
-        'relative aspect-video w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 shadow-xl dark:border-slate-800 dark:from-slate-950 dark:via-slate-900 dark:to-black',
+        'relative aspect-video w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-800/70 bg-gradient-to-br from-slate-900 via-slate-950 to-black shadow-2xl shadow-black/50',
         className
       )}
     >

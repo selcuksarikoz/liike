@@ -174,3 +174,5 @@ export const useRenderLoop = () => {
 
   return api;
 };
+
+export type RenderLoopApi = ReturnType<typeof useRenderLoop>;
