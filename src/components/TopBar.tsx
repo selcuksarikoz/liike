@@ -13,7 +13,7 @@ export const TopBar = ({ onRender, loop, theme, toggleTheme }: Props) => {
   const statusLabel = useMemo(() => {
     if (state.error) return 'ERROR';
     if (state.isRendering) return 'RENDERING';
-    return 'FFMPEG READY';
+    return 'READY';
   }, [state.error, state.isRendering]);
 
   const statusTone = useMemo(() => {

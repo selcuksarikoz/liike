@@ -15,7 +15,7 @@ export const Header = ({ onRender }: HeaderProps) => {
   const statusLabel = useMemo(() => {
     if (loop.state.error) return 'ERROR';
     if (loop.state.isRendering) return 'RENDERING';
-    return 'FFMPEG READY';
+    return 'READY';
   }, [loop.state.error, loop.state.isRendering]);
 
   return (

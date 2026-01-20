@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useRenderStore } from '../store/renderStore';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
-  const { rotationX, rotationY, cornerRadius, backgroundGradient, mockupType, setMediaAssets, mediaAssets } = useRenderStore();
+  const { rotationX, rotationY, cornerRadius, backgroundGradient, mockupType, setMediaAssets, mediaAssets, canvasWidth, canvasHeight } = useRenderStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
@@ -264,14 +264,25 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         </button>
       </div>
 
-      <div className="relative flex flex-1 items-center justify-center">
-        {/* Background Gradient Element */}
-        <div className="absolute inset-0 m-12 overflow-hidden rounded-3xl shadow-2xl">
-          <div className={`h-full w-full border border-[#2c393f] bg-gradient-to-br ${backgroundGradient} opacity-80`} />
+      <div className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-[#0a0f12]">
+        {/* Background Gradient / Canvas Area */}
+        <div 
+            className="relative shadow-2xl transition-all duration-300 ease-in-out flex items-center justify-center bg-transparent"
+            style={{
+                width: `${canvasWidth}px`,
+                height: `${canvasHeight}px`,
+                transform: `scale(${Math.min(1, (window.innerHeight - 100) / canvasHeight, (window.innerWidth - 400) / canvasWidth)})`, // Simple responsive scaling
+                transformOrigin: 'center center'
+            }}
+        >
+             {/* Canvas Background */}
+             <div className={`absolute inset-0 border border-[#2c393f] bg-gradient-to-br ${backgroundGradient} opacity-100 overflow-hidden`} />
+             
+             {/* Dynamic Mockup Render - Centered in Canvas */}
+            <div className="relative z-10 w-full h-full flex items-center justify-center">
+                {renderFrame()}
+            </div>
         </div>
-
-        {/* Dynamic Mockup Render */}
-        {renderFrame()}
 
         {/* Transform Handles (Simplified, only showing for iPhone for now or wrapping standard box) */}
         {/* ...Handles logic can be improved later for dynamic sizes... */}

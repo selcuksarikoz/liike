@@ -14,6 +14,8 @@ type RenderStore = RenderSettings & {
   backgroundGradient: string;
   mockupType: string;
   mediaAssets: string[];
+  canvasWidth: number;
+  canvasHeight: number;
   setDeviceModel: (model: string) => void;
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
@@ -21,6 +23,7 @@ type RenderStore = RenderSettings & {
   setBackgroundGradient: (gradient: string) => void;
   setMockupType: (type: string) => void;
   setMediaAssets: (assets: string[]) => void;
+  setCanvasSize: (width: number, height: number) => void;
   setDurationMs: (durationMs: number) => void;
   setFps: (fps: number) => void;
   setOutputName: (outputName: string) => void;
@@ -37,6 +40,8 @@ export const useRenderStore = create<RenderStore>((set) => ({
   backgroundGradient: 'from-[#1c3b4a] via-[#141b1e] to-[#0a0f12]',
   mockupType: 'iphone',
   mediaAssets: [],
+  canvasWidth: 1080, // Default to a standard size
+  canvasHeight: 1080,
   setDeviceModel: (deviceModel) => set({ deviceModel }),
   setRotationX: (rotationX) => set({ rotationX }),
   setRotationY: (rotationY) => set({ rotationY }),
@@ -44,6 +49,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setBackgroundGradient: (backgroundGradient) => set({ backgroundGradient }),
   setMockupType: (mockupType) => set({ mockupType }),
   setMediaAssets: (mediaAssets) => set({ mediaAssets }),
+  setCanvasSize: (width, height) => set({ canvasWidth: width, canvasHeight: height }),
   setDurationMs: (durationMs) => set({ durationMs }),
   setFps: (fps) => set({ fps }),
   setOutputName: (outputName) => set({ outputName }),

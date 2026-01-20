@@ -60,15 +60,7 @@ export const SidePanel = () => {
           </div>
         </section>
 
-        <section className="mt-auto rounded-xl border border-slate-800/80 bg-slate-900/80 p-4">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-            <span>RAM Usage</span>
-            <span className="text-accent">1.2GB / 4GB</span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
-            <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-accent to-lime-400" />
-          </div>
-        </section>
+        
       </div>
     </aside>
   );
