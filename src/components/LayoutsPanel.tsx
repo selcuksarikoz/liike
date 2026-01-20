@@ -348,7 +348,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
     backgroundImage,
   } = useRenderStore();
 
-  const { addClip, clearTrack, setPlayhead } = useTimelineStore();
+  const { addClip, clearTrack, setPlayhead, setIsPlaying } = useTimelineStore();
 
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const presetsContainerRef = useRef<HTMLDivElement>(null);
@@ -367,12 +367,11 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
   const handleApplyPreset = (preset: LayoutPreset) => {
     setActivePresetId(preset.id);
 
-    // Apply layout to canvas
+    // Apply layout to canvas (keep current background, only apply rotation)
     applyPreset({
       rotationX: preset.rotationX,
       rotationY: preset.rotationY,
       rotationZ: preset.rotationZ,
-      backgroundGradient: preset.backgroundGradient,
     });
 
     // Add to timeline if it has animations (replace existing)
@@ -403,6 +402,9 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
           },
         },
       });
+
+      // Auto-play the animation after selecting
+      setTimeout(() => setIsPlaying(true), 50);
     }
   };
 
@@ -421,7 +423,6 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
           rotationX: preset.rotationX,
           rotationY: preset.rotationY,
           rotationZ: preset.rotationZ,
-          backgroundGradient: preset.backgroundGradient,
         },
       })
     );

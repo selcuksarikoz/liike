@@ -5,6 +5,7 @@ import { CameraStylePanel } from './CameraStylePanel';
 import { LayoutsPanel } from './LayoutsPanel';
 import { BackgroundModal } from './BackgroundModal';
 import { useRenderStore } from '../store/renderStore';
+import { useTimelineStore } from '../store/timelineStore';
 
 export type LayoutFilter = 'single' | 'duo' | 'trio';
 
@@ -83,12 +84,50 @@ const FilterPreview = ({ filter, isActive }: { filter: LayoutFilter; isActive: b
   );
 };
 
+// Map imageLayout from store to filter type
+const getFilterFromLayout = (layout: string): LayoutFilter => {
+  switch (layout) {
+    case 'side-by-side':
+    case 'stacked':
+      return 'duo';
+    case 'trio-row':
+    case 'trio-column':
+      return 'trio';
+    default:
+      return 'single';
+  }
+};
+
 export const SidebarRight = () => {
   const [activeTab, setActiveTab] = useState<'layouts' | 'style'>('layouts');
   const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
-  const [layoutFilter, setLayoutFilter] = useState<LayoutFilter>('single');
 
-  const { backgroundType, backgroundGradient, backgroundColor, backgroundImage } = useRenderStore();
+  const { backgroundType, backgroundGradient, backgroundColor, backgroundImage, setImageLayout, imageLayout } = useRenderStore();
+  const { setIsPlaying, setPlayhead, clearTrack } = useTimelineStore();
+
+  // Derive layoutFilter from store's imageLayout
+  const layoutFilter = getFilterFromLayout(imageLayout);
+
+  // Handle filter change - update canvas layout (filter will auto-derive)
+  const handleFilterChange = (filter: LayoutFilter) => {
+    // Pause video and reset timeline
+    setIsPlaying(false);
+    setPlayhead(0);
+    clearTrack('track-animation');
+
+    // Update canvas layout based on filter
+    switch (filter) {
+      case 'single':
+        setImageLayout('single');
+        break;
+      case 'duo':
+        setImageLayout('side-by-side');
+        break;
+      case 'trio':
+        setImageLayout('trio-row');
+        break;
+    }
+  };
 
   // Generate preview style for background button
   const getBackgroundPreviewStyle = () => {
@@ -172,7 +211,7 @@ export const SidebarRight = () => {
             {FILTER_OPTIONS.map((option) => (
               <button
                 key={option.id}
-                onClick={() => setLayoutFilter(option.id)}
+                onClick={() => handleFilterChange(option.id)}
                 className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-md transition-colors duration-200 ${
                   layoutFilter === option.id
                     ? 'text-black'

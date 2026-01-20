@@ -1,15 +1,26 @@
 import { create } from 'zustand';
 
+export type ExportFormat = 'mp4' | 'webm' | 'mov' | 'png';
+
 type RenderSettings = {
   durationMs: number;
   fps: number;
   outputName: string;
 };
 
+export type RenderStatus = {
+  isRendering: boolean;
+  progress: number;
+  currentFrame: number;
+  totalFrames: number;
+  error: string | null;
+  phase: 'idle' | 'capturing' | 'encoding' | 'done';
+};
+
 type StylePreset = 'default' | 'glass-light' | 'glass-dark' | 'neon-glow' | 'cyber' | 'gradient-border' | 'frost' | 'liquid' | 'hologram' | 'inset-dark' | 'outline' | 'border' | 'double-border';
 type ShadowType = 'none' | 'spread' | 'hug' | 'adaptive';
 export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3';
-export type ImageLayout = 'single' | 'side-by-side' | 'stacked';
+export type ImageLayout = 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column';
 export type BackgroundType = 'gradient' | 'solid' | 'image';
 
 export type MediaAsset = {
@@ -36,6 +47,8 @@ type RenderStore = RenderSettings & {
   shadowOpacity: number;
   imageAspectRatio: AspectRatio;
   imageLayout: ImageLayout;
+  // Render status
+  renderStatus: RenderStatus;
   // Setters
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
@@ -58,6 +71,17 @@ type RenderStore = RenderSettings & {
   setImageAspectRatio: (ratio: AspectRatio) => void;
   setImageLayout: (layout: ImageLayout) => void;
   applyPreset: (preset: Partial<RenderStore>) => void;
+  setRenderStatus: (status: Partial<RenderStatus>) => void;
+  resetRenderStatus: () => void;
+};
+
+const initialRenderStatus: RenderStatus = {
+  isRendering: false,
+  progress: 0,
+  currentFrame: 0,
+  totalFrames: 0,
+  error: null,
+  phase: 'idle',
 };
 
 export const useRenderStore = create<RenderStore>((set) => ({
@@ -82,6 +106,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   shadowOpacity: 40,
   imageAspectRatio: 'free',
   imageLayout: 'single',
+  renderStatus: initialRenderStatus,
   // Setters
   setRotationX: (rotationX) => set({ rotationX }),
   setRotationY: (rotationY) => set({ rotationY }),
@@ -104,4 +129,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setImageAspectRatio: (imageAspectRatio) => set({ imageAspectRatio }),
   setImageLayout: (imageLayout) => set({ imageLayout }),
   applyPreset: (preset) => set((state) => ({ ...state, ...preset })),
+  setRenderStatus: (status) => set((state) => ({ renderStatus: { ...state.renderStatus, ...status } })),
+  resetRenderStatus: () => set({ renderStatus: initialRenderStatus }),
 }));

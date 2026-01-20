@@ -85,10 +85,14 @@ export const SidebarLeft = () => {
                     <img src={mediaAssets[index]?.url} className="w-full h-full object-cover" alt="" />
                   )
                 ) : (
-                  <>
-                    <Plus className="w-4.5 h-4.5 text-ui-text group-hover:text-accent" />
-                    <span className="text-[8px] text-ui-muted group-hover:text-white uppercase font-medium mt-0.5">{index + 1}</span>
-                  </>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-6 h-6 rounded bg-ui-highlight/50 flex items-center justify-center">
+                      <Plus className="w-3.5 h-3.5 text-ui-muted group-hover:text-accent transition-colors" />
+                    </div>
+                    <span className="text-[8px] text-ui-muted group-hover:text-white font-medium">
+                      {index === 0 ? 'Main' : index === 1 ? 'Left' : 'Right'}
+                    </span>
+                  </div>
                 )}
                 {mediaAssets[index] && (
                   <>
@@ -133,7 +137,7 @@ export const SidebarLeft = () => {
 
         {/* Layout */}
         <div className="border-t border-ui-border pt-6">
-          <h2 className="mb-4 text-[11px] font-bofld uppercase tracking-widest text-ui-text">Layout</h2>
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Layout</h2>
           <div className="flex gap-2">
             {LAYOUTS.map(({ value, label, icon }) => (
               <button

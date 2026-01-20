@@ -24,3 +24,4 @@ log = "0.4"
 tauri = { version = "2.9.5", features = [] }
 tauri-plugin-fs = "2.4.5"
 tauri-plugin-shell = "2.3.4"
+tauri-plugin-dialog = "2"

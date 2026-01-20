@@ -26,13 +26,52 @@ fn parse_out_time(line: &str) -> Option<f32> {
 }
 
 #[tauri::command]
+async fn copy_file(src: String, dest: String) -> Result<(), String> {
+  std::fs::copy(&src, &dest).map_err(|e| format!("Failed to copy file: {e}"))?;
+  Ok(())
+}
+
+fn get_encoder_args(format: &str) -> Vec<String> {
+  match format {
+    "webm" => vec![
+      "-c:v".to_string(), "libvpx-vp9".to_string(),
+      "-crf".to_string(), "18".to_string(),
+      "-b:v".to_string(), "0".to_string(),
+      "-pix_fmt".to_string(), "yuv420p".to_string(),
+      "-row-mt".to_string(), "1".to_string(),
+      "-threads".to_string(), "4".to_string(),
+    ],
+    "mov" => vec![
+      "-c:v".to_string(), "prores_ks".to_string(),
+      "-profile:v".to_string(), "3".to_string(),
+      "-pix_fmt".to_string(), "yuv422p10le".to_string(),
+      "-vendor".to_string(), "apl0".to_string(),
+    ],
+    _ => vec![
+      "-c:v".to_string(), "libx264".to_string(),
+      "-pix_fmt".to_string(), "yuv420p".to_string(),
+      "-preset".to_string(), "medium".to_string(),
+      "-crf".to_string(), "18".to_string(),
+      "-movflags".to_string(), "+faststart".to_string(),
+    ],
+  }
+}
+
+#[tauri::command]
 async fn encode_video(
   app: tauri::AppHandle,
   frames_dir: String,
   output_path: String,
   fps: Option<u32>,
+  format: Option<String>,
+  width: Option<u32>,
+  height: Option<u32>,
 ) -> Result<(), String> {
   let fps = fps.unwrap_or(30);
+  let format = format.unwrap_or_else(|| "mp4".to_string());
+  let _width = width.unwrap_or(1080);
+  let _height = height.unwrap_or(1080);
+
   let input_pattern = PathBuf::from(&frames_dir).join("frame_%03d.png");
   let input_pattern_str = input_pattern.to_string_lossy().to_string();
   let output_path_owned = output_path.clone();
@@ -45,31 +84,27 @@ async fn encode_video(
 
   let mut exit_code: Option<i32> = None;
 
+  let mut args = vec![
+    "-y".to_string(),
+    "-hide_banner".to_string(),
+    "-progress".to_string(),
+    "pipe:1".to_string(),
+    "-framerate".to_string(),
+    fps.to_string(),
+    "-i".to_string(),
+    input_pattern_str.clone(),
+  ];
+
+  args.extend(get_encoder_args(&format));
+  args.push(output_path_owned.clone());
+
+  let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+
   let (mut rx, _child) = app
     .shell()
     .sidecar("ffmpeg")
     .map_err(|e| format!("Could not resolve ffmpeg sidecar: {e}"))?
-    .args([
-      "-y",
-      "-hide_banner",
-      "-progress",
-      "pipe:1",
-      "-framerate",
-      &fps.to_string(),
-      "-i",
-      input_pattern_str.as_str(),
-      "-c:v",
-      "libx264",
-      "-pix_fmt",
-      "yuv420p",
-      "-preset",
-      "medium",
-      "-crf",
-      "18",
-      "-movflags",
-      "+faststart",
-      output_path_owned.as_str(),
-    ])
+    .args(&args_refs)
     .spawn()
     .map_err(|e| format!("Failed to spawn ffmpeg: {e}"))?;
 
@@ -143,12 +178,19 @@ async fn encode_video(
   Ok(())
 }
 
+#[tauri::command]
+async fn cleanup_temp_dir(dir_path: String) -> Result<(), String> {
+  std::fs::remove_dir_all(&dir_path).map_err(|e| format!("Failed to cleanup temp dir: {e}"))?;
+  Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_shell::init())
     .plugin(tauri_plugin_fs::init())
-    .invoke_handler(tauri::generate_handler![encode_video])
+    .plugin(tauri_plugin_dialog::init())
+    .invoke_handler(tauri::generate_handler![encode_video, copy_file, cleanup_temp_dir])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useRenderLoop } from './hooks/useRenderLoop';
-import { useRenderStore } from './store/renderStore';
+import { useRenderStore, type ExportFormat } from './store/renderStore';
 import { Header } from './components/Header';
 import { SidebarLeft } from './components/SidebarLeft';
 import { SidebarRight } from './components/SidebarRight';
@@ -10,14 +10,17 @@ import { Timeline } from './components/Timeline';
 const App = () => {
   const stageRef = useRef<HTMLDivElement>(null);
   const loop = useRenderLoop();
-  const { durationMs, fps, outputName } = useRenderStore();
+  const { durationMs, fps, outputName, canvasWidth, canvasHeight } = useRenderStore();
 
-  const handleRender = () => {
+  const handleRender = (format: ExportFormat) => {
     loop.render({
       node: stageRef.current,
       durationMs,
       fps,
       outputName,
+      format,
+      width: canvasWidth,
+      height: canvasHeight,
     });
   };
 

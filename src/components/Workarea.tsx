@@ -9,12 +9,13 @@ import { LAYOUT_PRESETS } from '../constants/styles';
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
   const {
     rotationX, rotationY, rotationZ,
-    cornerRadius, backgroundGradient,
+    backgroundGradient,
     backgroundType, backgroundColor, backgroundImage,
     setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight, canvasCornerRadius,
     shadowType, shadowOpacity, stylePreset,
     deviceScale, imageAspectRatio, imageLayout,
+    cornerRadius,
     applyPreset,
   } = useRenderStore();
 
@@ -30,10 +31,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   const prevBackgroundRef = useRef<HTMLDivElement>(null);
   const [prevGradient, setPrevGradient] = useState<string>(backgroundGradient);
 
-  // Calculate animation transform based on active clips
-  const animationStyle = useMemo(() => {
+  // Calculate animation info for DeviceRenderer (staggered animations for duo/trio)
+  const animationInfo = useMemo(() => {
     if (activeClips.length === 0) {
-      return { transform: 'none', opacity: 1 };
+      return undefined;
     }
 
     // Get animations from all active clips
@@ -48,14 +49,27 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     });
 
     if (allAnimations.length === 0) {
-      return { transform: 'none', opacity: 1 };
+      return undefined;
     }
 
-    // Use the first clip's progress for now
+    // Use the first clip's progress
     const progress = activeClips[0].progress;
 
-    return combineAnimations(allAnimations, progress, easing);
+    return {
+      animations: allAnimations,
+      progress,
+      easing,
+      stagger: 0.2, // 20% stagger between each image
+    };
   }, [activeClips]);
+
+  // Calculate animation transform for single layout (no stagger)
+  const animationStyle = useMemo(() => {
+    if (!animationInfo) {
+      return { transform: 'none', opacity: 1 };
+    }
+    return combineAnimations(animationInfo.animations, animationInfo.progress, animationInfo.easing);
+  }, [animationInfo]);
 
   // Apply animation style to device
   useEffect(() => {
@@ -80,12 +94,11 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             // Find matching layout preset
             const layoutPreset = LAYOUT_PRESETS.find(p => p.id === presetData.id);
             if (layoutPreset) {
-              // Apply rotation and background from layout preset
+              // Apply only rotation from layout preset (keep current background)
               applyPreset({
                 rotationX: layoutPreset.rotationX,
                 rotationY: layoutPreset.rotationY,
                 rotationZ: layoutPreset.rotationZ,
-                backgroundGradient: layoutPreset.backgroundGradient,
               });
             }
           }
@@ -132,7 +145,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   // Calculate display dimensions to fit canvas in view while maintaining aspect ratio
   const displayDimensions = useMemo(() => {
     if (!canvasWidth || !canvasHeight || !containerSize.width || !containerSize.height) {
-      return { width: 400, height: 400, scale: 0.5 };
+      return { width: 400, height: 400, scale: 0.5, innerPadding: 20 };
     }
 
     const padding = 80;
@@ -140,7 +153,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     const availableHeight = containerSize.height - padding;
 
     if (availableWidth <= 0 || availableHeight <= 0) {
-      return { width: 400, height: 400, scale: 0.5 };
+      return { width: 400, height: 400, scale: 0.5, innerPadding: 20 };
     }
 
     const aspectRatio = canvasWidth / canvasHeight;
@@ -159,8 +172,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     }
 
     const scale = displayWidth / canvasWidth;
+    // Calculate inner padding (5% of smaller dimension) for smooth concentric corners
+    const innerPadding = Math.min(displayWidth, displayHeight) * 0.05;
 
-    return { width: displayWidth, height: displayHeight, scale };
+    return { width: displayWidth, height: displayHeight, scale, innerPadding };
   }, [canvasWidth, canvasHeight, containerSize]);
 
   const zoomDisplay = `${Math.round(displayDimensions.scale * 100)}%`;
@@ -272,13 +287,13 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
               ref={deviceContainerRef}
               className="relative z-10 w-full h-full flex items-center justify-center p-[5%] overflow-hidden"
             >
-              {/* Animation wrapper */}
+              {/* Animation wrapper - only apply outer animation for single layout */}
               <div
                 ref={animatedDeviceRef}
-                className="transition-none"
+                className="transition-none w-full h-full"
                 style={{
-                  transform: animationStyle.transform,
-                  opacity: animationStyle.opacity ?? 1,
+                  transform: imageLayout === 'single' ? animationStyle.transform : 'none',
+                  opacity: imageLayout === 'single' ? (animationStyle.opacity ?? 1) : 1,
                 }}
               >
                 <DeviceRenderer
@@ -294,6 +309,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   scale={deviceScale}
                   aspectRatio={imageAspectRatio}
                   layout={imageLayout}
+                  animationInfo={imageLayout !== 'single' ? animationInfo : undefined}
                 />
               </div>
             </div>

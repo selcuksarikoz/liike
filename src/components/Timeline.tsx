@@ -38,7 +38,7 @@ const TimelineClipComponent = ({
         isSelected ? 'ring-2 ring-accent ring-offset-1 ring-offset-ui-panel z-20' : 'z-10'
       }`}
       style={{
-        left: `${left}px`,
+        left: `${left+8}px`,
         width: `${Math.max(width, 40)}px`,
         backgroundColor: clip.color,
       }}
@@ -309,7 +309,7 @@ export const Timeline = () => {
   const totalTimeFormatted = `${(durationMs / 1000).toFixed(2)}`;
 
   return (
-    <footer className="col-span-3 flex h-64 flex-col border-t border-ui-border bg-ui-bg">
+    <footer className="col-span-3 flex h-64 flex-col border-t border-ui-border bg-ui-bg cursor-pointer">
       {/* Toolbar */}
       <div className="flex h-12 items-center justify-between border-b border-ui-border bg-ui-panel/30 px-4">
         <div className="flex items-center gap-4">
@@ -436,7 +436,7 @@ export const Timeline = () => {
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="relative h-12 left-2 border-b border-ui-border bg-ui-panel/10"
+                className="relative h-12 border-b border-ui-border bg-ui-panel/10"
                 onDrop={(e) => handleTrackDrop(e, track.id)}
                 onDragOver={handleTrackDragOver}
               >
@@ -472,15 +472,18 @@ export const Timeline = () => {
                 )}
               </div>
             ))}
+          </div>
 
-            {/* Playhead */}
-            <div
-              className="absolute top-0 bottom-0 z-40 w-0.5 bg-accent shadow-[0_0_10px_var(--color-accent)] pointer-events-none"
-              style={{ left: `${playheadPosition}px` }}
-            >
-              <div className="absolute -top-8 -left-2 flex h-6 w-4.5 items-center justify-center rounded-b-sm bg-accent">
-                <div className="h-3 w-0.5 bg-black/50" />
-              </div>
+          {/* Playhead - GPU accelerated with transform */}
+          <div
+            className="absolute top-0 bottom-0 z-40 pointer-events-none will-change-transform"
+            style={{ transform: `translateX(${playheadPosition}px)` }}
+          >
+            {/* Playhead line */}
+            <div className="absolute top-0 bottom-0 left-0 w-0.5 -translate-x-1/2 bg-accent shadow-[0_0_8px_var(--color-accent)]" />
+            {/* Playhead handle */}
+            <div className="absolute top-0 left-0 -translate-x-1/2 w-3 h-5 bg-accent rounded-b-sm flex items-center justify-center">
+              <div className="w-0.5 h-2.5 bg-black/40 rounded-full" />
             </div>
           </div>
         </div>
