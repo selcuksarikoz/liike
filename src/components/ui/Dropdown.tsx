@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, ReactNode } from 'react';
+import { ChevronRight, Crop, RatioIcon } from 'lucide-react';
 
 type DropdownProps = {
   trigger: ReactNode;
@@ -55,18 +56,29 @@ type DropdownTriggerProps = {
   onClick?: () => void;
 };
 
+const getIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'crop':
+      return <Crop className="w-4.5 h-4.5" />;
+    case 'aspect_ratio':
+      return <RatioIcon className="w-4.5 h-4.5" />;
+    default:
+      return <Crop className="w-4.5 h-4.5" />;
+  }
+};
+
 export const DropdownTrigger = ({ icon, label, value, onClick }: DropdownTriggerProps) => (
   <button
     onClick={onClick}
     className="w-full flex items-center justify-between bg-ui-panel border border-ui-border rounded-lg px-3 py-3 text-xs text-white hover:border-accent/50 transition-colors group"
   >
     <span className="flex items-center gap-3">
-      <span className="material-symbols-outlined text-[18px] text-ui-text group-hover:text-accent">{icon}</span>
+      <span className="text-ui-text group-hover:text-accent">{getIcon(icon)}</span>
       <div className="flex flex-col items-start">
         <span className="font-medium">{label}</span>
         <span className="text-[10px] text-ui-muted">{value}</span>
       </div>
     </span>
-    <span className="material-symbols-outlined text-[16px] text-ui-muted">chevron_right</span>
+    <ChevronRight className="w-4 h-4 text-ui-muted" />
   </button>
 );

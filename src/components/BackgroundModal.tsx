@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
+import { Blend, Palette, Image, Upload, Trash2 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
+import { Modal } from './modals/Modal';
 
 // Import background images
 import bg1 from '../assets/bg/1.webp';
@@ -141,8 +143,6 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
     setBackgroundImage,
   } = useRenderStore();
 
-  if (!isOpen) return null;
-
   const handleGradientSelect = (gradient: string) => {
     setBackgroundGradient(gradient);
   };
@@ -169,32 +169,14 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
   };
 
   const tabs = [
-    { id: 'gradients' as TabType, label: 'Gradients', icon: 'gradient' },
-    { id: 'colors' as TabType, label: 'Colors', icon: 'palette' },
-    { id: 'images' as TabType, label: 'Images', icon: 'image' },
+    { id: 'gradients' as TabType, label: 'Gradients', icon: <Blend className="w-4 h-4" /> },
+    { id: 'colors' as TabType, label: 'Colors', icon: <Palette className="w-4 h-4" /> },
+    { id: 'images' as TabType, label: 'Images', icon: <Image className="w-4 h-4" /> },
   ];
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative w-[600px] max-h-[80vh] bg-ui-bg-secondary border border-ui-border rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-ui-border">
-          <h2 className="text-sm font-semibold text-white">Background</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-ui-panel transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px] text-ui-muted">close</span>
-          </button>
-        </div>
-
+    <Modal isOpen={isOpen} onClose={onClose} title="Background" position="center">
+      <div className="flex flex-col">
         {/* Tabs */}
         <div className="flex border-b border-ui-border">
           {tabs.map((tab) => (
@@ -207,7 +189,7 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
                   : 'text-ui-muted hover:text-ui-text'
               }`}
             >
-              <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+              {tab.icon}
               {tab.label}
             </button>
           ))}
@@ -319,7 +301,7 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full py-4 border-2 border-dashed border-ui-border rounded-xl flex flex-col items-center gap-2 hover:border-accent hover:bg-ui-panel/50 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[24px] text-ui-muted">upload</span>
+                  <Upload className="w-6 h-6 text-ui-muted" />
                   <span className="text-[11px] text-ui-muted">Click to upload image</span>
                 </button>
               </div>
@@ -366,7 +348,7 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
                       onClick={() => setBackgroundImage(null)}
                       className="absolute top-2 right-2 w-8 h-8 bg-black/60 rounded-lg flex items-center justify-center hover:bg-black/80 transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[16px] text-white">delete</span>
+                      <Trash2 className="w-4 h-4 text-white" />
                     </button>
                   </div>
                 </div>
@@ -379,12 +361,12 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
         <div className="px-5 py-4 border-t border-ui-border flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-accent text-white text-[11px] font-medium rounded-lg hover:bg-accent/90 transition-colors"
+            className="h-9 px-6 bg-accent text-black text-sm font-bold rounded-lg hover:bg-accent-hover transition-colors"
           >
             Done
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };

@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
+import { ImagePlus } from 'lucide-react';
 import { getShadowStyle, STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
 
@@ -127,7 +128,7 @@ export const DeviceRenderer = ({
             }}
           >
             <div className={`flex flex-col items-center gap-4 text-ui-text ${!isPreview && 'group-hover:text-accent group-hover:scale-110'} transition-all duration-300`}>
-              <span className={`material-symbols-outlined ${isPreview ? 'text-lg' : 'text-7xl'}`}>add_photo_alternate</span>
+              <ImagePlus className={isPreview ? 'w-5 h-5' : 'w-16 h-16'} />
               {!isPreview && <span className="text-sm uppercase tracking-widest text-center font-bold">Add Image</span>}
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { useRef, useEffect, ReactNode } from 'react';
 import gsap from 'gsap';
+import { X } from 'lucide-react';
 
 type ModalProps = {
   isOpen: boolean;
@@ -85,7 +86,7 @@ export const Modal = ({
                 onClick={onClose}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-ui-muted transition-colors hover:bg-ui-panel hover:text-white"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <X className="w-4.5 h-4.5" />
               </button>
             </div>
           )}
@@ -109,7 +110,7 @@ export const Modal = ({
             onClick={onClose}
             className="flex h-6 w-6 items-center justify-center rounded text-ui-muted transition-colors hover:bg-ui-panel hover:text-white"
           >
-            <span className="material-symbols-outlined text-[14px]">close</span>
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
+import { Sparkles, Columns2, LayoutGrid, Image } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { LAYOUT_PRESETS, type LayoutPreset } from '../constants/styles';
@@ -448,7 +449,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
       {showSingle && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className="material-symbols-outlined text-[16px] text-accent">auto_awesome</span>
+            <Sparkles className="w-4 h-4 text-accent" />
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
               Single Image
             </h3>
@@ -485,7 +486,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
       {showDuo && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className="material-symbols-outlined text-[16px] text-purple-400">compare</span>
+            <Columns2 className="w-4 h-4 text-purple-400" />
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
               Dual Images
             </h3>
@@ -522,7 +523,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
       {showTrio && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <span className="material-symbols-outlined text-[16px] text-emerald-400">stacked_bar_chart</span>
+            <LayoutGrid className="w-4 h-4 text-emerald-400" />
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
               Trio Sequences
             </h3>
@@ -558,7 +559,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
       {/* Static Layouts Section - always show */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <span className="material-symbols-outlined text-[16px] text-ui-muted">photo_frame</span>
+          <Image className="w-4 h-4 text-ui-muted" />
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
             Static
           </h3>

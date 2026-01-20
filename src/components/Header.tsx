@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
+import { Video, Undo2, Redo2 } from 'lucide-react';
 import { useRenderLoop } from '../hooks/useRenderLoop';
-// import { useRenderStore } from '../store/renderStore'; // unused for now in header
 
 const avatar =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCcsrYtTC_qy7rQZBsuZfyG4ZLH3oWBz2N86U22VRA38uY2NB4eqCVNq01tuQMIF6Ay7ZvbM9oBL7krtOJpIq6wTQ5N9zhEgR-f2yt-YxUvCEPq52WH6rfX8bW7Lu81Upf-9VY-BhEd2c8gmTrAr5qxfW23T871EUjkEv2GBGOSeRNwLnJwCSjoN4lawrs3R18HI-q7KPQUQrR5v2qJuUdCLCiUwMAjGkkc7P0mgeJ53mg-E3ZM30wLDqC5AvjNje98_pl1hjyPilY';
@@ -23,20 +23,19 @@ export const Header = ({ onRender }: HeaderProps) => {
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
           <div className="flex w-8 h-8 items-center justify-center rounded bg-accent text-black font-bold">
-            <span className="material-symbols-outlined text-lg">video_camera_back</span>
+            <Video className="w-4.5 h-4.5" />
           </div>
           <h1 className="text-sm font-bold tracking-tight uppercase text-white">
-            ShotGen <span className="text-accent/80 font-normal">v1.2</span>
+            {/* // appname */}
           </h1>
         </div>
         <nav className="flex items-center gap-4 border-l border-ui-border pl-6">
-          <button className="text-xs text-ui-text hover:text-white transition-colors">Project_Final_v2.mp4</button>
           <div className="flex gap-1">
             <button className="p-1 rounded text-ui-muted hover:bg-ui-highlight/30 transition-all">
-              <span className="material-symbols-outlined text-[20px]">undo</span>
+              <Undo2 className="w-5 h-5" />
             </button>
             <button className="p-1 rounded text-ui-muted hover:bg-ui-highlight/30 transition-all">
-              <span className="material-symbols-outlined text-[20px]">redo</span>
+              <Redo2 className="w-5 h-5" />
             </button>
           </div>
         </nav>

@@ -1,5 +1,23 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, type ReactNode } from 'react';
 import gsap from 'gsap';
+import {
+  ArrowUpDown,
+  ArrowLeftRight,
+  RotateCw,
+  Maximize2,
+  RectangleHorizontal,
+  Palette,
+  CloudFog,
+  Contrast,
+  RotateCcw,
+  Box,
+  Move3d,
+  Sparkles,
+  Square,
+  RotateCcwIcon,
+  ArrowDownToLine,
+  Check,
+} from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { STYLE_PRESETS, SHADOW_TYPES } from '../constants/styles';
 
@@ -20,7 +38,7 @@ const SliderControl = ({
   step?: number;
   unit?: string;
   onChange: (value: number) => void;
-  icon?: string;
+  icon?: ReactNode;
 }) => {
   const sliderRef = useRef<HTMLInputElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
@@ -41,7 +59,7 @@ const SliderControl = ({
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
           {icon && (
-            <span className="material-symbols-outlined text-[14px] text-ui-muted group-hover:text-accent transition-colors">
+            <span className="text-ui-muted group-hover:text-accent transition-colors">
               {icon}
             </span>
           )}
@@ -129,17 +147,17 @@ export const CameraStylePanel = () => {
     }
   };
 
-  const SectionHeader = ({ title, section, icon }: { title: string; section: string; icon: string }) => (
+  const SectionHeader = ({ title, section, icon }: { title: string; section: string; icon: ReactNode }) => (
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
-        <span className="material-symbols-outlined text-[16px] text-accent">{icon}</span>
+        <span className="text-accent">{icon}</span>
         <h3 className="text-[10px] uppercase font-bold text-ui-muted tracking-widest">{title}</h3>
       </div>
       <button
         onClick={() => handleReset(section)}
         className="text-[9px] text-ui-muted hover:text-accent transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
       >
-        <span className="material-symbols-outlined text-[12px]">restart_alt</span>
+        <RotateCcw className="w-3 h-3" />
         Reset
       </button>
     </div>
@@ -149,11 +167,11 @@ export const CameraStylePanel = () => {
     <div ref={containerRef} className="p-4 space-y-5">
       {/* 3D Rotation */}
       <div className="style-section group">
-        <SectionHeader title="3D Rotation" section="rotation" icon="3d_rotation" />
+        <SectionHeader title="3D Rotation" section="rotation" icon={<Box className="w-4 h-4" />} />
         <div className="space-y-3 bg-ui-panel/50 rounded-xl p-3">
           <SliderControl
             label="Tilt X"
-            icon="swap_vert"
+            icon={<ArrowUpDown className="w-3.5 h-3.5" />}
             value={rotationX}
             min={-60}
             max={60}
@@ -162,7 +180,7 @@ export const CameraStylePanel = () => {
           />
           <SliderControl
             label="Tilt Y"
-            icon="swap_horiz"
+            icon={<ArrowLeftRight className="w-3.5 h-3.5" />}
             value={rotationY}
             min={-60}
             max={60}
@@ -171,7 +189,7 @@ export const CameraStylePanel = () => {
           />
           <SliderControl
             label="Rotate Z"
-            icon="rotate_right"
+            icon={<RotateCw className="w-3.5 h-3.5" />}
             value={rotationZ}
             min={-45}
             max={45}
@@ -183,11 +201,11 @@ export const CameraStylePanel = () => {
 
       {/* Transform */}
       <div className="style-section group">
-        <SectionHeader title="Transform" section="transform" icon="transform" />
+        <SectionHeader title="Transform" section="transform" icon={<Move3d className="w-4 h-4" />} />
         <div className="space-y-3 bg-ui-panel/50 rounded-xl p-3">
           <SliderControl
             label="Scale"
-            icon="zoom_out_map"
+            icon={<Maximize2 className="w-3.5 h-3.5" />}
             value={deviceScale}
             min={0.5}
             max={1.5}
@@ -197,7 +215,7 @@ export const CameraStylePanel = () => {
           />
           <SliderControl
             label="Corner Radius"
-            icon="rounded_corner"
+            icon={<RectangleHorizontal className="w-3.5 h-3.5" />}
             value={cornerRadius}
             min={0}
             max={60}
@@ -210,7 +228,7 @@ export const CameraStylePanel = () => {
       {/* Style Preset */}
       <div className="style-section">
         <div className="flex items-center gap-2 mb-3">
-          <span className="material-symbols-outlined text-[16px] text-accent">style</span>
+          <Palette className="w-4 h-4 text-accent" />
           <h3 className="text-[10px] uppercase font-bold text-ui-muted tracking-widest">Frame Style</h3>
         </div>
         <div className="grid grid-cols-4 gap-2">
@@ -246,7 +264,7 @@ export const CameraStylePanel = () => {
 
       {/* Shadow */}
       <div className="style-section group">
-        <SectionHeader title="Shadow" section="shadow" icon="blur_on" />
+        <SectionHeader title="Shadow" section="shadow" icon={<CloudFog className="w-4 h-4" />} />
         <div className="grid grid-cols-4 gap-2 mb-3">
           {SHADOW_TYPES.map((type) => {
             const isActive = shadowType === type.id;
@@ -274,7 +292,7 @@ export const CameraStylePanel = () => {
                 </span>
                 {isActive && (
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[10px] text-white">check</span>
+                    <Check className="w-2 h-2 text-white" />
                   </div>
                 )}
               </button>
@@ -285,7 +303,7 @@ export const CameraStylePanel = () => {
           <div className="bg-ui-panel/50 rounded-xl p-3">
             <SliderControl
               label="Intensity"
-              icon="tonality"
+              icon={<Contrast className="w-3.5 h-3.5" />}
               value={shadowOpacity}
               min={0}
               max={100}
@@ -299,15 +317,15 @@ export const CameraStylePanel = () => {
       {/* Quick Presets */}
       <div className="style-section">
         <div className="flex items-center gap-2 mb-3">
-          <span className="material-symbols-outlined text-[16px] text-accent">auto_awesome</span>
+          <Sparkles className="w-4 h-4 text-accent" />
           <h3 className="text-[10px] uppercase font-bold text-ui-muted tracking-widest">Quick Presets</h3>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: 'Flat', icon: 'crop_square', action: () => { setRotationX(0); setRotationY(0); setRotationZ(0); } },
-            { label: 'Tilt Right', icon: 'rotate_right', action: () => { setRotationX(15); setRotationY(-20); setRotationZ(5); } },
-            { label: 'Tilt Left', icon: 'rotate_left', action: () => { setRotationX(15); setRotationY(20); setRotationZ(-5); } },
-            { label: 'Top View', icon: 'vertical_align_bottom', action: () => { setRotationX(35); setRotationY(0); setRotationZ(0); } },
+            { label: 'Flat', icon: <Square className="w-4 h-4" />, action: () => { setRotationX(0); setRotationY(0); setRotationZ(0); } },
+            { label: 'Tilt Right', icon: <RotateCw className="w-4 h-4" />, action: () => { setRotationX(15); setRotationY(-20); setRotationZ(5); } },
+            { label: 'Tilt Left', icon: <RotateCcwIcon className="w-4 h-4" />, action: () => { setRotationX(15); setRotationY(20); setRotationZ(-5); } },
+            { label: 'Top View', icon: <ArrowDownToLine className="w-4 h-4" />, action: () => { setRotationX(35); setRotationY(0); setRotationZ(0); } },
           ].map((preset) => (
             <button
               key={preset.label}
@@ -322,7 +340,7 @@ export const CameraStylePanel = () => {
               }}
               className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-ui-border bg-ui-panel/30 hover:bg-accent/10 hover:border-accent/50 transition-all hover:scale-105 active:scale-95"
             >
-              <span className="material-symbols-outlined text-[16px] text-ui-muted">{preset.icon}</span>
+              <span className="text-ui-muted">{preset.icon}</span>
               <span className="text-[10px] font-medium text-ui-text">{preset.label}</span>
             </button>
           ))}

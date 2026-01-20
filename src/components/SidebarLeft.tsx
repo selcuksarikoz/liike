@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Plus, X, Square, Columns2, Rows2 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import type { ImageLayout } from '../store/renderStore';
 import { FrameSelectorModal } from './modals/FrameSelectorModal';
@@ -6,10 +7,10 @@ import { AspectRatioModal } from './modals/AspectRatioModal';
 import { FRAMES_DATA } from '../constants/styles';
 import { DropdownTrigger } from './ui/Dropdown';
 
-const LAYOUTS: { value: ImageLayout; label: string; icon: string }[] = [
-  { value: 'single', label: 'Single', icon: 'crop_square' },
-  { value: 'side-by-side', label: 'Side by Side', icon: 'view_column_2' },
-  { value: 'stacked', label: 'Stacked', icon: 'table_rows' },
+const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = [
+  { value: 'single', label: 'Single', icon: <Square className="w-5 h-5" /> },
+  { value: 'side-by-side', label: 'Side by Side', icon: <Columns2 className="w-5 h-5" /> },
+  { value: 'stacked', label: 'Stacked', icon: <Rows2 className="w-5 h-5" /> },
 ];
 
 const IMAGE_SLOTS = [0, 1, 2];
@@ -85,7 +86,7 @@ export const SidebarLeft = () => {
                   )
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-ui-text group-hover:text-accent text-[18px]">add</span>
+                    <Plus className="w-4.5 h-4.5 text-ui-text group-hover:text-accent" />
                     <span className="text-[8px] text-ui-muted group-hover:text-white uppercase font-medium mt-0.5">{index + 1}</span>
                   </>
                 )}
@@ -98,7 +99,7 @@ export const SidebarLeft = () => {
                       onClick={(e) => handleRemoveMedia(index, e)}
                       className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-500"
                     >
-                      <span className="material-symbols-outlined text-[12px]">close</span>
+                      <X className="w-3 h-3" />
                     </button>
                   </>
                 )}
@@ -144,7 +145,7 @@ export const SidebarLeft = () => {
                     : 'bg-ui-panel text-ui-text hover:bg-ui-highlight hover:text-white'
                 }`}
               >
-                <span className="material-symbols-outlined text-[20px]">{icon}</span>
+                {icon}
                 <span className="text-[9px] font-medium uppercase">{label}</span>
               </button>
             ))}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
+import { ChevronRight } from 'lucide-react';
 import { CameraStylePanel } from './CameraStylePanel';
 import { LayoutsPanel } from './LayoutsPanel';
 import { BackgroundModal } from './BackgroundModal';
@@ -128,9 +129,7 @@ export const SidebarRight = () => {
             <div className="text-[11px] font-medium text-white">Background</div>
             <div className="text-[9px] text-ui-muted capitalize">{backgroundType}</div>
           </div>
-          <span className="material-symbols-outlined text-[18px] text-ui-muted group-hover:text-accent transition-colors">
-            chevron_right
-          </span>
+          <ChevronRight className="w-4.5 h-4.5 text-ui-muted group-hover:text-accent transition-colors" />
         </button>
       </div>
 

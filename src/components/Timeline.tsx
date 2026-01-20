@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
+import { X, SkipBack, Play, Pause, SkipForward, Clapperboard, ZoomOut, ZoomIn } from 'lucide-react';
 import { useTimelineStore, ANIMATION_PRESETS, type TimelineClip, type AnimationPreset } from '../store/timelineStore';
 import { useRenderStore } from '../store/renderStore';
 
@@ -69,7 +70,7 @@ const TimelineClipComponent = ({
           }}
           className="absolute top-0.5 right-0.5 w-4 h-4 rounded bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors z-30"
         >
-          <span className="material-symbols-outlined text-[10px] text-white">close</span>
+          <X className="w-2.5 h-2.5 text-white" />
         </button>
       )}
 
@@ -107,9 +108,7 @@ const AnimationPresetItem = ({
         className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
         style={{ backgroundColor: preset.color }}
       >
-        <span className="material-symbols-outlined text-[16px] text-white">
-          {preset.icon}
-        </span>
+        <Clapperboard className="w-4 h-4 text-white" />
       </div>
       <span className="text-[9px] text-ui-text font-medium">{preset.name}</span>
     </div>
@@ -320,21 +319,19 @@ export const Timeline = () => {
               onClick={() => setPlayhead(0)}
               className="rounded p-1.5 hover:bg-ui-highlight/40 flex items-center justify-center"
             >
-              <span className="material-symbols-outlined text-[20px]">skip_previous</span>
+              <SkipBack className="w-5 h-5" />
             </button>
             <button
               onClick={() => setIsPlaying(!isPlaying)}
               className="flex w-8 h-8 items-center justify-center rounded-full bg-accent text-black"
             >
-              <span className="material-symbols-outlined">
-                {isPlaying ? 'pause' : 'play_arrow'}
-              </span>
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
             <button
               onClick={() => setPlayhead(durationMs)}
               className="rounded p-1.5 hover:bg-ui-highlight/40 flex items-center justify-center"
             >
-              <span className="material-symbols-outlined text-[20px]">skip_next</span>
+              <SkipForward className="w-5 h-5" />
             </button>
           </div>
 
@@ -350,7 +347,7 @@ export const Timeline = () => {
               showPresets ? 'bg-accent/20 text-accent' : 'text-ui-text hover:text-white'
             }`}
           >
-            <span className="material-symbols-outlined text-[16px]">animation</span>
+            <Clapperboard className="w-4 h-4" />
             Animations
           </button>
         </div>
@@ -359,7 +356,7 @@ export const Timeline = () => {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <button onClick={() => setZoom(zoom - 0.25)} className="hover:text-white text-ui-muted">
-              <span className="material-symbols-outlined text-[18px]">zoom_out</span>
+              <ZoomOut className="w-4.5 h-4.5" />
             </button>
             <div className="h-1 w-32 overflow-hidden rounded-full bg-ui-border">
               <div
@@ -368,7 +365,7 @@ export const Timeline = () => {
               />
             </div>
             <button onClick={() => setZoom(zoom + 0.25)} className="hover:text-white text-ui-muted">
-              <span className="material-symbols-outlined text-[18px]">zoom_in</span>
+              <ZoomIn className="w-4.5 h-4.5" />
             </button>
             <span className="text-[10px] text-ui-muted font-mono w-10">{Math.round(zoom * 100)}%</span>
           </div>
