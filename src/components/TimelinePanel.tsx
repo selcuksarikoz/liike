@@ -1,30 +1,42 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import type { RenderLoopApi } from '../hooks/useRenderLoop';
 import { useRenderStore } from '../store/renderStore';
+import { useTimelineStore } from '../store/timelineStore';
 
 type Props = {
   loop: RenderLoopApi;
 };
 
-const cues = [
-  { label: 'Intro', start: 0, width: 18, tone: 'bg-blue-400/80' },
-  { label: 'Action', start: 20, width: 30, tone: 'bg-cyan-400/80' },
-  { label: 'Outro', start: 55, width: 25, tone: 'bg-lime-300/80' },
-];
-
 export const TimelinePanel = ({ loop }: Props) => {
   const { durationMs, fps } = useRenderStore();
+  const { tracks, playheadMs, isPlaying, setPlayhead } = useTimelineStore();
   const { state } = loop;
+
+  const [hoverPosition, setHoverPosition] = useState<number | null>(null);
+  const timelineContainerRef = useRef<HTMLDivElement>(null);
 
   const fallbackFrames = useMemo(() => Math.ceil((durationMs / 1000) * fps), [durationMs, fps]);
   const totalFrames = state.totalFrames || fallbackFrames;
   const runtimeLabel = useMemo(() => `${(durationMs / 1000).toFixed(2)}s @ ${fps}fps`, [durationMs, fps]);
 
+  // Get active clips at current playhead position
+  const activeClips = useMemo(() => {
+    const active: { trackName: string; clipName: string; color: string }[] = [];
+    tracks.forEach((track) => {
+      track.clips.forEach((clip) => {
+        if (playheadMs >= clip.startMs && playheadMs < clip.startMs + clip.durationMs) {
+          active.push({ trackName: track.name, clipName: clip.name, color: clip.color });
+        }
+      });
+    });
+    return active;
+  }, [tracks, playheadMs]);
+
   return (
     <div className="rounded-2xl border border-slate-800/70 bg-slate-950/70 p-4 backdrop-blur">
       <div className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-300">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_0_3px_rgba(212,255,63,0.2)]" />
+          <span className={`h-2 w-2 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-accent'} shadow-[0_0_0_3px_rgba(212,255,63,0.2)]`} />
           <span>Timeline</span>
         </div>
         <div className="flex items-center gap-3 text-[11px] text-slate-400">
@@ -33,26 +45,88 @@ export const TimelinePanel = ({ loop }: Props) => {
         </div>
       </div>
 
-      <div className="relative h-24 overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900/70">
+      <div
+        ref={timelineContainerRef}
+        className="relative h-24 overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900/70 cursor-pointer"
+        onMouseMove={(e) => {
+          if (!timelineContainerRef.current) return;
+          const rect = timelineContainerRef.current.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const percent = (x / rect.width) * 100;
+          setHoverPosition(Math.max(0, Math.min(100, percent)));
+        }}
+        onMouseLeave={() => setHoverPosition(null)}
+        onClick={(e) => {
+          if (!timelineContainerRef.current) return;
+          const rect = timelineContainerRef.current.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const ms = (x / rect.width) * durationMs;
+          setPlayhead(Math.max(0, Math.min(durationMs, ms)));
+        }}
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(212,255,63,0.06),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(59,130,246,0.06),transparent_40%)]" />
         <div className="relative z-10 h-full px-3 py-3">
           <div className="flex h-full items-center gap-2">
-            {cues.map((cue) => (
-              <div key={cue.label} className="group relative h-10 flex-1 rounded-lg bg-slate-800/60">
-                <div
-                  className={`absolute top-1/2 h-3 -translate-y-1/2 rounded-full ${cue.tone} group-hover:shadow-[0_0_0_6px_rgba(212,255,63,0.18)]`}
-                  style={{ left: `${cue.start}%`, width: `${cue.width}%` }}
-                />
-                <span className="absolute left-2 top-2 text-[10px] font-semibold text-slate-200 opacity-80">{cue.label}</span>
+            {tracks.map((track) => (
+              <div key={track.id} className="group relative h-10 flex-1 rounded-lg bg-slate-800/60">
+                {/* Track clips preview */}
+                {track.clips.map((clip) => {
+                  const startPercent = (clip.startMs / durationMs) * 100;
+                  const widthPercent = (clip.durationMs / durationMs) * 100;
+                  return (
+                    <div
+                      key={clip.id}
+                      className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full group-hover:shadow-[0_0_0_6px_rgba(212,255,63,0.18)] transition-shadow"
+                      style={{
+                        left: `${startPercent}%`,
+                        width: `${Math.max(widthPercent, 2)}%`,
+                        backgroundColor: clip.color,
+                      }}
+                    />
+                  );
+                })}
+                <span className="absolute left-2 top-2 text-[10px] font-semibold text-slate-200 opacity-80">
+                  {track.name}
+                </span>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Hover cursor indicator */}
+        {hoverPosition !== null && (
+          <div
+            className="absolute inset-y-0 w-px bg-white/30 pointer-events-none z-20"
+            style={{ left: `${hoverPosition}%` }}
+          >
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-slate-700 text-[9px] font-mono text-white whitespace-nowrap">
+              {((hoverPosition / 100) * durationMs / 1000).toFixed(2)}s
+            </div>
+          </div>
+        )}
+
+        {/* Playhead indicator */}
         <div
-          className="absolute inset-y-0 w-[2px] bg-gradient-to-b from-accent via-lime-300 to-transparent"
-          style={{ left: `${Math.min(100, state.progress * 100)}%` }}
+          className="absolute inset-y-0 w-[2px] bg-gradient-to-b from-accent via-lime-300 to-transparent z-30 pointer-events-none"
+          style={{ left: `${Math.min(100, (playheadMs / durationMs) * 100)}%` }}
         />
       </div>
+
+      {/* Active clips indicator */}
+      {activeClips.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {activeClips.map((clip, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium text-white"
+              style={{ backgroundColor: `${clip.color}40` }}
+            >
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: clip.color }} />
+              {clip.clipName}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,10 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import gsap from 'gsap';
 import { useRenderStore } from '../store/renderStore';
+import { useTimelineStore } from '../store/timelineStore';
 import { DeviceRenderer } from './DeviceRenderer';
+import { useTimelinePlayback, combineAnimations } from '../hooks/useTimelinePlayback';
+import { LAYOUT_PRESETS } from '../constants/styles';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
   const {
@@ -10,16 +13,85 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight, canvasCornerRadius,
     shadowType, shadowOpacity, stylePreset,
-    deviceScale
+    deviceScale, imageAspectRatio, imageLayout,
+    applyPreset,
   } = useRenderStore();
+
+  const { tracks, playheadMs } = useTimelineStore();
+  const { activeClips, isPlaying } = useTimelinePlayback();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const deviceContainerRef = useRef<HTMLDivElement>(null);
+  const animatedDeviceRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const backgroundRef = useRef<HTMLDivElement>(null);
   const prevBackgroundRef = useRef<HTMLDivElement>(null);
   const [prevGradient, setPrevGradient] = useState<string>(backgroundGradient);
+
+  // Calculate animation transform based on active clips
+  const animationStyle = useMemo(() => {
+    if (activeClips.length === 0) {
+      return { transform: 'none', opacity: 1 };
+    }
+
+    // Get animations from all active clips
+    const allAnimations: { type: string; intensity?: number }[] = [];
+    let easing = 'ease-in-out';
+
+    activeClips.forEach((clip) => {
+      clip.animations.forEach((animType) => {
+        allAnimations.push({ type: animType });
+      });
+      easing = clip.easing;
+    });
+
+    if (allAnimations.length === 0) {
+      return { transform: 'none', opacity: 1 };
+    }
+
+    // Use the first clip's progress for now
+    const progress = activeClips[0].progress;
+
+    return combineAnimations(allAnimations, progress, easing);
+  }, [activeClips]);
+
+  // Apply animation style to device
+  useEffect(() => {
+    if (animatedDeviceRef.current) {
+      animatedDeviceRef.current.style.transform = animationStyle.transform;
+      if (animationStyle.opacity !== undefined) {
+        animatedDeviceRef.current.style.opacity = String(animationStyle.opacity);
+      }
+    }
+  }, [animationStyle]);
+
+  // Apply layout preset from active clip if it has one
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    // Find if any active clip has layout preset data
+    tracks.forEach((track) => {
+      track.clips.forEach((clip) => {
+        if (playheadMs >= clip.startMs && playheadMs < clip.startMs + clip.durationMs) {
+          const presetData = clip.data?.animationPreset;
+          if (presetData?.id) {
+            // Find matching layout preset
+            const layoutPreset = LAYOUT_PRESETS.find(p => p.id === presetData.id);
+            if (layoutPreset) {
+              // Apply rotation and background from layout preset
+              applyPreset({
+                rotationX: layoutPreset.rotationX,
+                rotationY: layoutPreset.rotationY,
+                rotationZ: layoutPreset.rotationZ,
+                backgroundGradient: layoutPreset.backgroundGradient,
+              });
+            }
+          }
+        }
+      });
+    });
+  }, [playheadMs, tracks, isPlaying, applyPreset]);
 
   const handleScreenClick = (index: number) => {
     setActiveMediaIndex(index);
@@ -155,26 +227,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         onChange={handleFileChange}
       />
 
-      {/* Canvas Toolbar */}
-      <div className="absolute top-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-[#2c393f] bg-[#1c2529]/80 p-1 backdrop-blur-md">
-        {['zoom_in', 'pan_tool'].map((icon) => (
-          <button
-            key={icon}
-            className="flex w-8 h-8 items-center justify-center rounded-lg text-[#9fb2bc] transition-all hover:bg-[#1c3b4a]/40 hover:text-white"
-          >
-            <span className="material-symbols-outlined text-[18px]">{icon}</span>
-          </button>
-        ))}
-        <div className="mx-1 h-4 w-px bg-[#2c393f]" />
-        <button className="flex h-8 items-center gap-2 rounded-lg px-3 text-[11px] font-medium text-[#9fb2bc] transition-all hover:bg-[#1c3b4a]/40 hover:text-white">
-          <span>{zoomDisplay}</span>
-          <span className="material-symbols-outlined text-[14px]">unfold_more</span>
-        </button>
-        <button className="flex w-8 h-8 items-center justify-center rounded-lg text-[#9fb2bc] transition-all hover:bg-[#1c3b4a]/40 hover:text-white">
-          <span className="material-symbols-outlined text-[18px]">center_focus_weak</span>
-        </button>
-      </div>
-
       <div ref={containerRef} className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-[#0a0f12]">
         {/* Background Gradient / Canvas Area */}
         <div
@@ -206,6 +258,15 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
               ref={deviceContainerRef}
               className="relative z-10 w-full h-full flex items-center justify-center p-[5%]"
             >
+              {/* Animation wrapper */}
+              <div
+                ref={animatedDeviceRef}
+                className="transition-none"
+                style={{
+                  transform: animationStyle.transform,
+                  opacity: animationStyle.opacity ?? 1,
+                }}
+              >
                 <DeviceRenderer
                   rotationX={rotationX}
                   rotationY={rotationY}
@@ -217,7 +278,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   shadowOpacity={shadowOpacity}
                   stylePreset={stylePreset}
                   scale={deviceScale}
+                  aspectRatio={imageAspectRatio}
+                  layout={imageLayout}
                 />
+              </div>
             </div>
         </div>
       </div>

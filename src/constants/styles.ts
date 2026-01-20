@@ -138,42 +138,262 @@ export const FRAMES_DATA = [
   }
 ];
 
-export const LAYOUT_PRESETS = [
+export type LayoutAnimation = {
+  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'slide' | 'pulse' | 'swing' | 'none';
+  duration: number;
+  easing: string;
+  intensity?: number;
+};
+
+export type LayoutPreset = {
+  id: string;
+  name: string;
+  rotationX: number;
+  rotationY: number;
+  rotationZ: number;
+  backgroundGradient: string;
+  icon: string;
+  color: string;
+  animations: LayoutAnimation[];
+  durationMs: number;
+};
+
+export const LAYOUT_PRESETS: LayoutPreset[] = [
+  // Static Layouts
   {
+    id: 'frontal',
     name: 'Frontal',
     rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-fuchsia-600 to-purple-600',
+    icon: 'crop_square',
+    color: '#A855F7',
+    animations: [{ type: 'none', duration: 0, easing: 'linear' }],
+    durationMs: 2000,
   },
   {
+    id: 'isometric-right',
     name: 'Isometric Right',
     rotationX: 20,
     rotationY: -25,
     rotationZ: 10,
     backgroundGradient: 'from-orange-500 to-pink-500',
+    icon: 'view_in_ar',
+    color: '#F97316',
+    animations: [{ type: 'none', duration: 0, easing: 'linear' }],
+    durationMs: 2000,
   },
   {
+    id: 'isometric-left',
     name: 'Isometric Left',
     rotationX: 20,
     rotationY: 25,
     rotationZ: -10,
     backgroundGradient: 'from-blue-500 to-indigo-500',
+    icon: 'view_in_ar',
+    color: '#3B82F6',
+    animations: [{ type: 'none', duration: 0, easing: 'linear' }],
+    durationMs: 2000,
+  },
+
+  // Animated Layouts
+  {
+    id: 'float-gentle',
+    name: 'Gentle Float',
+    rotationX: 10,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-cyan-400 to-blue-500',
+    icon: 'cloud',
+    color: '#22D3EE',
+    animations: [{ type: 'float', duration: 2000, easing: 'ease-in-out', intensity: 15 }],
+    durationMs: 3000,
   },
   {
-    name: 'Floating',
+    id: 'bounce-playful',
+    name: 'Playful Bounce',
+    rotationX: 5,
+    rotationY: -10,
+    rotationZ: 0,
+    backgroundGradient: 'from-pink-500 to-rose-500',
+    icon: 'sports_basketball',
+    color: '#EC4899',
+    animations: [{ type: 'bounce', duration: 800, easing: 'ease-out', intensity: 20 }],
+    durationMs: 2500,
+  },
+  {
+    id: 'rotate-showcase',
+    name: 'Showcase Spin',
     rotationX: 15,
     rotationY: 0,
-    rotationZ: 5,
-    backgroundGradient: 'from-teal-400 to-emerald-500',
+    rotationZ: 0,
+    backgroundGradient: 'from-violet-500 to-purple-600',
+    icon: '360',
+    color: '#8B5CF6',
+    animations: [{ type: 'rotate', duration: 4000, easing: 'linear', intensity: 360 }],
+    durationMs: 4000,
   },
   {
-    name: 'Dynamic',
+    id: 'zoom-dramatic',
+    name: 'Dramatic Zoom',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-slate-800 to-slate-900',
+    icon: 'zoom_in',
+    color: '#64748B',
+    animations: [{ type: 'zoom', duration: 1500, easing: 'ease-out', intensity: 1.2 }],
+    durationMs: 2000,
+  },
+  {
+    id: 'slide-enter',
+    name: 'Slide Enter',
+    rotationX: 5,
+    rotationY: -15,
+    rotationZ: 3,
+    backgroundGradient: 'from-emerald-400 to-teal-500',
+    icon: 'swipe_right',
+    color: '#34D399',
+    animations: [{ type: 'slide', duration: 1000, easing: 'ease-out', intensity: 100 }],
+    durationMs: 2000,
+  },
+  {
+    id: 'pulse-attention',
+    name: 'Attention Pulse',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-red-500 to-orange-500',
+    icon: 'favorite',
+    color: '#EF4444',
+    animations: [{ type: 'pulse', duration: 600, easing: 'ease-in-out', intensity: 1.1 }],
+    durationMs: 2000,
+  },
+
+  // Combo Animated Layouts (max 2 animations)
+  {
+    id: 'float-rotate',
+    name: 'Float + Rotate',
     rotationX: 10,
-    rotationY: -40,
+    rotationY: 0,
     rotationZ: 5,
-    backgroundGradient: 'from-rose-500 to-orange-400',
-  }
+    backgroundGradient: 'from-sky-400 to-indigo-500',
+    icon: 'cyclone',
+    color: '#38BDF8',
+    animations: [
+      { type: 'float', duration: 2000, easing: 'ease-in-out', intensity: 12 },
+      { type: 'rotate', duration: 6000, easing: 'linear', intensity: 360 },
+    ],
+    durationMs: 6000,
+  },
+  {
+    id: 'bounce-zoom',
+    name: 'Bounce + Zoom',
+    rotationX: 5,
+    rotationY: -5,
+    rotationZ: 0,
+    backgroundGradient: 'from-amber-400 to-orange-500',
+    icon: 'rocket_launch',
+    color: '#FBBF24',
+    animations: [
+      { type: 'bounce', duration: 600, easing: 'ease-out', intensity: 15 },
+      { type: 'zoom', duration: 2000, easing: 'ease-in-out', intensity: 1.15 },
+    ],
+    durationMs: 3000,
+  },
+  {
+    id: 'slide-swing',
+    name: 'Slide + Swing',
+    rotationX: 8,
+    rotationY: 10,
+    rotationZ: -5,
+    backgroundGradient: 'from-lime-400 to-green-500',
+    icon: 'moving',
+    color: '#84CC16',
+    animations: [
+      { type: 'slide', duration: 800, easing: 'ease-out', intensity: 80 },
+      { type: 'swing', duration: 1500, easing: 'ease-in-out', intensity: 8 },
+    ],
+    durationMs: 3500,
+  },
+  {
+    id: 'pulse-float',
+    name: 'Pulse + Float',
+    rotationX: 5,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-fuchsia-500 to-pink-500',
+    icon: 'favorite',
+    color: '#D946EF',
+    animations: [
+      { type: 'pulse', duration: 800, easing: 'ease-in-out', intensity: 1.08 },
+      { type: 'float', duration: 2500, easing: 'ease-in-out', intensity: 10 },
+    ],
+    durationMs: 4000,
+  },
+
+  // Sequential Animations for Dual Images
+  {
+    id: 'sequential-reveal',
+    name: 'Sequential Reveal',
+    rotationX: 10,
+    rotationY: -5,
+    rotationZ: 0,
+    backgroundGradient: 'from-violet-600 to-indigo-600',
+    icon: 'view_carousel',
+    color: '#7C3AED',
+    animations: [
+      { type: 'slide', duration: 600, easing: 'ease-out', intensity: 80 },
+      { type: 'zoom', duration: 1000, easing: 'ease-out', intensity: 1.05 },
+    ],
+    durationMs: 2500,
+  },
+  {
+    id: 'mirror-slide',
+    name: 'Mirror Slide',
+    rotationX: 5,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-rose-500 to-pink-600',
+    icon: 'compare',
+    color: '#F43F5E',
+    animations: [
+      { type: 'slide', duration: 800, easing: 'ease-out', intensity: 60 },
+      { type: 'float', duration: 1500, easing: 'ease-in-out', intensity: 8 },
+    ],
+    durationMs: 3000,
+  },
+  {
+    id: 'stagger-bounce',
+    name: 'Stagger Bounce',
+    rotationX: 8,
+    rotationY: -8,
+    rotationZ: 2,
+    backgroundGradient: 'from-yellow-400 to-amber-500',
+    icon: 'stacked_line_chart',
+    color: '#F59E0B',
+    animations: [
+      { type: 'bounce', duration: 500, easing: 'ease-out', intensity: 25 },
+      { type: 'swing', duration: 1200, easing: 'ease-in-out', intensity: 5 },
+    ],
+    durationMs: 2800,
+  },
+  {
+    id: 'duo-zoom',
+    name: 'Duo Zoom',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-teal-500 to-cyan-600',
+    icon: 'center_focus_strong',
+    color: '#14B8A6',
+    animations: [
+      { type: 'zoom', duration: 1200, easing: 'ease-in-out', intensity: 1.15 },
+      { type: 'pulse', duration: 600, easing: 'ease-in-out', intensity: 1.05 },
+    ],
+    durationMs: 3000,
+  },
 ];
 
 export const getShadowStyle = (

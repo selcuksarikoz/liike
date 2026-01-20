@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { DeviceRenderer } from '../DeviceRenderer';
-import type { MediaAsset } from '../../store/renderStore';
+import type { MediaAsset, AspectRatio, ImageLayout } from '../../store/renderStore';
 
 type PresetCardProps = {
   preset: {
@@ -14,11 +14,12 @@ type PresetCardProps = {
   isActive?: boolean;
   onClick: () => void;
   cornerRadius: number;
-  mockupType: string;
   mediaAssets: (MediaAsset | null)[];
   stylePreset?: string;
   shadowType?: string;
   shadowOpacity?: number;
+  aspectRatio?: AspectRatio;
+  layout?: ImageLayout;
 };
 
 export const PresetCard = ({
@@ -26,11 +27,12 @@ export const PresetCard = ({
   isActive,
   onClick,
   cornerRadius,
-  mockupType,
   mediaAssets,
   stylePreset,
   shadowType,
-  shadowOpacity
+  shadowOpacity,
+  aspectRatio,
+  layout
 }: PresetCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const deviceRef = useRef<HTMLDivElement>(null);
@@ -123,11 +125,12 @@ export const PresetCard = ({
           rotationY={preset.rotationY}
           rotationZ={preset.rotationZ}
           cornerRadius={cornerRadius || 20}
-          mockupType={mockupType || 'iphone'}
           mediaAssets={mediaAssets}
           stylePreset={stylePreset}
           shadowType={shadowType}
           shadowOpacity={shadowOpacity}
+          aspectRatio={aspectRatio}
+          layout={layout}
           isPreview={true}
           scale={0.9}
         />

@@ -7,8 +7,9 @@ type RenderSettings = {
 };
 
 type StylePreset = 'default' | 'glass-light' | 'glass-dark' | 'liquid' | 'inset-light' | 'inset-dark' | 'outline' | 'border';
-type BorderType = 'sharp' | 'curved' | 'round';
 type ShadowType = 'none' | 'spread' | 'hug' | 'adaptive';
+export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3';
+export type ImageLayout = 'single' | 'side-by-side' | 'stacked';
 
 export type MediaAsset = {
   url: string;
@@ -25,22 +26,18 @@ type RenderStore = RenderSettings & {
   canvasWidth: number;
   canvasHeight: number;
   canvasCornerRadius: number;
-  shadowIntensity: number;
   deviceScale: number;
-  // New style properties
   stylePreset: StylePreset;
-  borderType: BorderType;
-  borderRadius: number;
   shadowType: ShadowType;
   shadowOpacity: number;
-  framePreset: string;
+  imageAspectRatio: AspectRatio;
+  imageLayout: ImageLayout;
   // Setters
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
   setRotationZ: (deg: number) => void;
   setCornerRadius: (px: number) => void;
   setCanvasCornerRadius: (px: number) => void;
-  setShadowIntensity: (percent: number) => void;
   setDeviceScale: (scale: number) => void;
   setBackgroundGradient: (gradient: string) => void;
   setMediaAssets: (assets: (MediaAsset | null)[]) => void;
@@ -48,13 +45,11 @@ type RenderStore = RenderSettings & {
   setDurationMs: (durationMs: number) => void;
   setFps: (fps: number) => void;
   setOutputName: (outputName: string) => void;
-  // New setters
   setStylePreset: (preset: StylePreset) => void;
-  setBorderType: (type: BorderType) => void;
-  setBorderRadius: (radius: number) => void;
   setShadowType: (type: ShadowType) => void;
   setShadowOpacity: (opacity: number) => void;
-  setFramePreset: (preset: string) => void;
+  setImageAspectRatio: (ratio: AspectRatio) => void;
+  setImageLayout: (layout: ImageLayout) => void;
   applyPreset: (preset: Partial<RenderStore>) => void;
 };
 
@@ -65,28 +60,24 @@ export const useRenderStore = create<RenderStore>((set) => ({
   rotationX: 0,
   rotationY: 0,
   rotationZ: 0,
-  cornerRadius: 0,
+  cornerRadius: 12,
   backgroundGradient: 'from-[#1c3b4a] via-[#141b1e] to-[#0a0f12]',
   mediaAssets: [],
   canvasWidth: 1080,
   canvasHeight: 1080,
   canvasCornerRadius: 20,
-  shadowIntensity: 40,
   deviceScale: 1,
-  // New style defaults
   stylePreset: 'default',
-  borderType: 'curved',
-  borderRadius: 20,
   shadowType: 'spread',
   shadowOpacity: 40,
-  framePreset: 'instagram-post',
+  imageAspectRatio: 'free',
+  imageLayout: 'single',
   // Setters
   setRotationX: (rotationX) => set({ rotationX }),
   setRotationY: (rotationY) => set({ rotationY }),
   setRotationZ: (rotationZ) => set({ rotationZ }),
   setCornerRadius: (cornerRadius) => set({ cornerRadius }),
   setCanvasCornerRadius: (canvasCornerRadius) => set({ canvasCornerRadius }),
-  setShadowIntensity: (shadowIntensity) => set({ shadowIntensity }),
   setDeviceScale: (deviceScale) => set({ deviceScale }),
   setBackgroundGradient: (backgroundGradient) => set({ backgroundGradient }),
   setMediaAssets: (mediaAssets) => set({ mediaAssets }),
@@ -94,13 +85,10 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setDurationMs: (durationMs) => set({ durationMs }),
   setFps: (fps) => set({ fps }),
   setOutputName: (outputName) => set({ outputName }),
-  // New setters
   setStylePreset: (stylePreset) => set({ stylePreset }),
-  setBorderType: (borderType) => set({ borderType }),
-  setBorderRadius: (borderRadius) => set({ borderRadius }),
   setShadowType: (shadowType) => set({ shadowType }),
   setShadowOpacity: (shadowOpacity) => set({ shadowOpacity }),
-  setFramePreset: (framePreset) => set({ framePreset }),
+  setImageAspectRatio: (imageAspectRatio) => set({ imageAspectRatio }),
+  setImageLayout: (imageLayout) => set({ imageLayout }),
   applyPreset: (preset) => set((state) => ({ ...state, ...preset })),
 }));
-

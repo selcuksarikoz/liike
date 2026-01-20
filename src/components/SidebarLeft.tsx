@@ -1,19 +1,27 @@
 import { useRef, useState } from 'react';
 import { useRenderStore } from '../store/renderStore';
+import type { ImageLayout } from '../store/renderStore';
 import { FrameSelectorModal } from './modals/FrameSelectorModal';
-import { StyleOptionsModal } from './modals/StyleOptionsModal';
+import { AspectRatioModal } from './modals/AspectRatioModal';
 import { FRAMES_DATA } from '../constants/styles';
 import { DropdownTrigger } from './ui/Dropdown';
+
+const LAYOUTS: { value: ImageLayout; label: string; icon: string }[] = [
+  { value: 'single', label: 'Single', icon: 'crop_square' },
+  { value: 'side-by-side', label: 'Side by Side', icon: 'view_column_2' },
+  { value: 'stacked', label: 'Stacked', icon: 'table_rows' },
+];
 
 export const SidebarLeft = () => {
   const {
     setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight,
-    stylePreset
+    imageAspectRatio,
+    imageLayout, setImageLayout
   } = useRenderStore();
 
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
-  const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
+  const [isAspectRatioModalOpen, setIsAspectRatioModalOpen] = useState(false);
   const fileInput1Ref = useRef<HTMLInputElement>(null);
   const fileInput2Ref = useRef<HTMLInputElement>(null);
 
@@ -28,6 +36,13 @@ export const SidebarLeft = () => {
     }
   };
 
+  const handleRemoveMedia = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newAssets = [...mediaAssets];
+    newAssets[index] = null;
+    setMediaAssets(newAssets);
+  };
+
   const getCurrentFrameLabel = () => {
     for (const group of FRAMES_DATA) {
       const frame = group.frames.find(f => f.width === canvasWidth && f.height === canvasHeight);
@@ -36,27 +51,13 @@ export const SidebarLeft = () => {
     return `${canvasWidth} × ${canvasHeight}`;
   };
 
-  const getStyleLabel = () => {
-    const labels: Record<string, string> = {
-      'default': 'Default',
-      'glass-light': 'Glass Light',
-      'glass-dark': 'Glass Dark',
-      'liquid': 'Liquid',
-      'inset-light': 'Inset Light',
-      'inset-dark': 'Inset Dark',
-      'outline': 'Outline',
-      'border': 'Border'
-    };
-    return labels[stylePreset] || 'Default';
-  };
-
   return (
     <aside className="z-20 flex w-80 flex-col border-r border-ui-border bg-ui-bg relative overflow-y-auto no-scrollbar">
       <div className="flex flex-col gap-6 p-4">
 
         {/* Media Selection */}
         <div>
-          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Media</h2>
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Images</h2>
           <div className="grid grid-cols-2 gap-3">
             {[0, 1].map((index) => (
               <div
@@ -75,43 +76,72 @@ export const SidebarLeft = () => {
                   mediaAssets[index]?.type === 'video' ? (
                     <video src={mediaAssets[index]?.url} className="w-full h-full object-cover" muted />
                   ) : (
-                    <img src={mediaAssets[index]?.url} className="w-full h-full object-cover" />
+                    <img src={mediaAssets[index]?.url} className="w-full h-full object-cover" alt="" />
                   )
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-ui-text group-hover:text-accent mb-1 text-[20px]">add_photo_alternate</span>
-                    <span className="text-[9px] text-ui-text group-hover:text-white uppercase font-medium">Media {index + 1}</span>
+                    <span className="text-[9px] text-ui-text group-hover:text-white uppercase font-medium">Image {index + 1}</span>
                   </>
                 )}
                 {mediaAssets[index] && (
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="text-[10px] text-white font-medium">Change</span>
-                  </div>
+                  <>
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <span className="text-[10px] text-white font-medium">Change</span>
+                    </div>
+                    <button
+                      onClick={(e) => handleRemoveMedia(index, e)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-500"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">close</span>
+                    </button>
+                  </>
                 )}
               </div>
             ))}
           </div>
         </div>
 
+        {/* Aspect Ratio */}
+        <div className="border-t border-ui-border pt-6">
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Aspect Ratio</h2>
+          <DropdownTrigger
+            icon="aspect_ratio"
+            label={imageAspectRatio === 'free' ? 'Free' : imageAspectRatio}
+            value={imageAspectRatio === 'free' ? 'No constraint' : `${imageAspectRatio} ratio`}
+            onClick={() => setIsAspectRatioModalOpen(true)}
+          />
+        </div>
+
+        {/* Layout */}
+        <div className="border-t border-ui-border pt-6">
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Layout</h2>
+          <div className="flex gap-2">
+            {LAYOUTS.map(({ value, label, icon }) => (
+              <button
+                key={value}
+                onClick={() => setImageLayout(value)}
+                className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all ${
+                  imageLayout === value
+                    ? 'bg-accent text-white'
+                    : 'bg-ui-panel text-ui-text hover:bg-ui-highlight hover:text-white'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[20px]">{icon}</span>
+                <span className="text-[9px] font-medium uppercase">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Frame Selection */}
         <div className="border-t border-ui-border pt-6">
-          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Frame</h2>
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Canvas</h2>
           <DropdownTrigger
             icon="crop"
             label={getCurrentFrameLabel()}
             value={`${canvasWidth} × ${canvasHeight}`}
             onClick={() => setIsFrameModalOpen(true)}
-          />
-        </div>
-
-        {/* Appearance Selection */}
-        <div className="border-t border-ui-border pt-6">
-          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Appearance</h2>
-          <DropdownTrigger
-            icon="palette"
-            label={getStyleLabel()}
-            value="Style, Border & Shadow"
-            onClick={() => setIsStyleModalOpen(true)}
           />
         </div>
       </div>
@@ -121,9 +151,9 @@ export const SidebarLeft = () => {
         isOpen={isFrameModalOpen}
         onClose={() => setIsFrameModalOpen(false)}
       />
-      <StyleOptionsModal
-        isOpen={isStyleModalOpen}
-        onClose={() => setIsStyleModalOpen(false)}
+      <AspectRatioModal
+        isOpen={isAspectRatioModalOpen}
+        onClose={() => setIsAspectRatioModalOpen(false)}
       />
     </aside>
   );

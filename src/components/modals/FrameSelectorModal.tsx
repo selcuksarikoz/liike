@@ -9,12 +9,11 @@ type FrameSelectorModalProps = {
 };
 
 export const FrameSelectorModal = ({ isOpen, onClose }: FrameSelectorModalProps) => {
-  const { canvasWidth, canvasHeight, setCanvasSize, setFramePreset } = useRenderStore();
+  const { canvasWidth, canvasHeight, setCanvasSize } = useRenderStore();
   const [activeTab, setActiveTab] = useState(FRAMES_DATA[0].category);
 
   const handleSelectFrame = (frame: { label: string; width: number; height: number }) => {
     setCanvasSize(frame.width, frame.height);
-    setFramePreset(frame.label.toLowerCase().replace(/\s+/g, '-'));
     onClose();
   };
 
