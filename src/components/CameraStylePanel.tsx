@@ -272,8 +272,8 @@ export const CameraStylePanel = () => {
 
       {/* Shadow */}
       <div className="style-section group">
-        <SectionHeader title="Shadow" section="shadow" icon={<CloudFog className="w-4 h-4" />} />
-        <div className="grid grid-cols-4 gap-2 mb-3">
+        <SectionHeader title="Shadow & Glow" section="shadow" icon={<CloudFog className="w-4 h-4" />} />
+        <div className="grid grid-cols-5 gap-2 mb-3">
           {SHADOW_TYPES.map((type) => {
             const isActive = shadowType === type.id;
             return (
@@ -284,23 +284,24 @@ export const CameraStylePanel = () => {
                   isActive ? 'bg-accent/10 border-accent' : 'border-ui-border hover:border-ui-muted bg-ui-panel/30'
                 }`}
               >
-                <div className="w-7 h-7 flex items-center justify-center">
+                <div className="w-6 h-6 flex items-center justify-center">
                   <div
-                    className="w-5 h-5 rounded bg-white/90 transition-transform"
+                    className="w-4 h-4 rounded bg-white/90 transition-transform"
                     style={{
                       boxShadow: type.id === 'none' ? 'none'
-                        : type.id === 'spread' ? '-3px 6px 12px rgba(0,0,0,0.6)'
-                        : type.id === 'hug' ? '0 3px 6px rgba(0,0,0,0.5)'
-                        : '-2px 4px 8px rgba(0,0,0,0.5)'
+                        : type.id === 'soft' ? '0 4px 12px rgba(0,0,0,0.5)'
+                        : type.id === 'float' ? '0 10px 25px rgba(0,0,0,0.6)'
+                        : type.id === 'dream' ? '0 15px 35px rgba(100,100,255,0.3)'
+                        : '0 0 15px rgba(255,255,255,0.6)'
                     }}
                   />
                 </div>
-                <span className={`text-[8px] font-medium transition-colors ${isActive ? 'text-accent' : 'text-ui-muted'}`}>
+                <span className={`text-[7px] font-medium transition-colors ${isActive ? 'text-accent' : 'text-ui-muted'}`}>
                   {type.label}
                 </span>
                 {isActive && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full flex items-center justify-center">
-                    <Check className="w-2 h-2 text-white" />
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-accent rounded-full flex items-center justify-center">
+                    <Check className="w-1.5 h-1.5 text-white" />
                   </div>
                 )}
               </button>
@@ -326,34 +327,36 @@ export const CameraStylePanel = () => {
       <div className="style-section">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-accent" />
-          <h3 className="text-[10px] uppercase font-bold text-ui-muted tracking-widest">Quick Presets</h3>
+          <h3 className="text-[10px] uppercase font-bold text-ui-muted tracking-widest">Creative Angles</h3>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {[
-            { label: 'Flat', icon: <Square className="w-4 h-4" />, action: () => { setRotationX(0); setRotationY(0); setRotationZ(0); } },
-            { label: 'Tilt Right', icon: <RotateCw className="w-4 h-4" />, action: () => { setRotationX(15); setRotationY(-20); setRotationZ(5); } },
-            { label: 'Tilt Left', icon: <RotateCcwIcon className="w-4 h-4" />, action: () => { setRotationX(15); setRotationY(20); setRotationZ(-5); } },
-            { label: 'Top View', icon: <ArrowDownToLine className="w-4 h-4" />, action: () => { setRotationX(35); setRotationY(0); setRotationZ(0); } },
+            { label: 'Isometric', icon: <Box className="w-3.5 h-3.5" />, action: () => { setRotationX(30); setRotationY(-45); setRotationZ(0); setDeviceScale(0.85); } },
+            { label: 'Floating', icon: <CloudFog className="w-3.5 h-3.5" />, action: () => { setRotationX(15); setRotationY(0); setRotationZ(-5); setDeviceScale(0.9); } },
+            { label: 'Dynamic', icon: <Move3d className="w-3.5 h-3.5" />, action: () => { setRotationX(20); setRotationY(-30); setRotationZ(10); setDeviceScale(0.9); } },
+            { label: 'Flat Lay', icon: <Square className="w-3.5 h-3.5" />, action: () => { setRotationX(0); setRotationY(0); setRotationZ(0); setDeviceScale(1); } },
+            { label: 'Cinematic', icon: <Maximize2 className="w-3.5 h-3.5" />, action: () => { setRotationX(5); setRotationY(0); setRotationZ(0); setDeviceScale(1.1); } },
+            { label: 'Phone', icon: <RectangleHorizontal className="w-3.5 h-3.5 rotate-90" />, action: () => { setRotationX(10); setRotationY(-10); setRotationZ(2); setDeviceScale(0.95); } },
           ].map((preset) => (
             <button
               key={preset.label}
               onClick={() => {
                 if (containerRef.current) {
-                  containerRef.current.animate(
+                  const anim = containerRef.current.animate(
                     [
-                      { transform: 'scale(1)' },
-                      { transform: 'scale(0.98)' },
-                      { transform: 'scale(1)' }
+                      { opacity: 1 },
+                      { opacity: 0.8 },
+                      { opacity: 1 }
                     ],
-                    { duration: DURATIONS.fast, easing: EASINGS.easeInOut }
+                    { duration: 300, easing: 'ease-out' }
                   );
                 }
                 preset.action();
               }}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-ui-border bg-ui-panel/30 hover:bg-accent/10 hover:border-accent/50 transition-all hover:scale-105 active:scale-95"
+              className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border border-ui-border bg-ui-panel/30 hover:bg-accent/10 hover:border-accent/50 transition-all hover:scale-105 active:scale-95 group"
             >
-              <span className="text-ui-muted">{preset.icon}</span>
-              <span className="text-[10px] font-medium text-ui-text">{preset.label}</span>
+              <span className="text-ui-muted group-hover:text-accent transition-colors">{preset.icon}</span>
+              <span className="text-[9px] font-medium text-ui-muted group-hover:text-white transition-colors">{preset.label}</span>
             </button>
           ))}
         </div>

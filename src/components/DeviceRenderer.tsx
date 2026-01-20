@@ -199,7 +199,29 @@ const DeviceRendererComponent = ({
   // Memoized computed shadow
   const computedShadow = useMemo(() => {
     if (isPreview) return 'none';
-    return getShadowStyle(shadowType, shadowOpacity, rotationX, rotationY);
+    
+    // Map shadow types to CSS box-shadow
+    let shadow = 'none';
+    const intensity = (shadowOpacity || 50) / 100;
+    
+    switch (shadowType) {
+      case 'soft':
+        shadow = `0 ${10 * intensity}px ${30 * intensity}px rgba(0,0,0,${0.3 * intensity})`;
+        break;
+      case 'float':
+        shadow = `0 ${20 * intensity}px ${50 * intensity}px rgba(0,0,0,${0.4 * intensity})`;
+        break;
+      case 'dream':
+        shadow = `0 ${20 * intensity}px ${60 * intensity}px rgba(80,80,255,${0.25 * intensity})`;
+        break;
+      case 'glow':
+        shadow = `0 0 ${40 * intensity}px rgba(255,255,255,${0.4 * intensity})`;
+        break;
+      default:
+        shadow = 'none';
+    }
+    
+    return shadow;
   }, [isPreview, shadowType, shadowOpacity, rotationX, rotationY]);
 
   const aspectValue = getAspectRatioValue(aspectRatio);

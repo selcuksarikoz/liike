@@ -130,8 +130,13 @@ export const SidebarRight = () => {
   const { backgroundType, backgroundGradient, backgroundColor, backgroundImage, setImageLayout, imageLayout } = useRenderStore();
   const { setIsPlaying, setPlayhead, clearTrack } = useTimelineStore();
 
-  // Derive layoutFilter from store's imageLayout
-  const layoutFilter = getFilterFromLayout(imageLayout);
+  // Derive initial layoutFilter from store's imageLayout
+  const [layoutFilter, setLayoutFilter] = useState<LayoutFilter>(getFilterFromLayout(imageLayout));
+
+  // Sync internal filter state when global store changes (e.g. from SidebarLeft)
+  useEffect(() => {
+    setLayoutFilter(getFilterFromLayout(imageLayout));
+  }, [imageLayout]);
 
   // Handle filter change - update canvas layout (filter will auto-derive)
   const handleFilterChange = (filter: LayoutFilter) => {
@@ -155,6 +160,7 @@ export const SidebarRight = () => {
         setImageLayout('grid');
         break;
     }
+    setLayoutFilter(filter);
   };
 
   // Generate preview style for background button

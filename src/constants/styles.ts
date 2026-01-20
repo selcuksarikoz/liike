@@ -136,6 +136,53 @@ export const STYLE_PRESETS: StylePreset[] = [
       boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.2)',
     },
   },
+  {
+    id: 'minimal',
+    label: 'Minimal',
+    css: {
+      background: '#ffffff',
+      border: '1px solid #e5e5e5',
+      boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)',
+    },
+  },
+  {
+    id: 'polaroid',
+    label: 'Retro',
+    css: {
+      background: '#ffffff',
+      border: 'none',
+      padding: '12px 12px 36px 12px',
+      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+    },
+  },
+  {
+    id: 'glass-frosted',
+    label: 'Frost',
+    css: {
+      background: 'rgba(255, 255, 255, 0.05)',
+      backdropFilter: 'blur(16px) saturate(180%)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+    },
+  },
+  {
+    id: 'neon-cyber',
+    label: 'Cyber',
+    css: {
+      background: 'rgba(5, 5, 5, 0.9)',
+      border: '1px solid #00f2ff',
+      boxShadow: '0 0 15px rgba(0, 242, 255, 0.3), inset 0 0 15px rgba(0, 242, 255, 0.1)',
+    },
+  },
+  {
+    id: 'gradient-border',
+    label: 'Gradient',
+    css: {
+      background: 'linear-gradient(#18181b, #18181b) padding-box, linear-gradient(45deg, #f43f5e, #8b5cf6) border-box',
+      border: '3px solid transparent',
+      boxShadow: '0 10px 30px -10px rgba(139, 92, 246, 0.3)',
+    },
+  },
 ];
 
 export const BORDER_TYPES: BorderType[] = [
@@ -146,9 +193,10 @@ export const BORDER_TYPES: BorderType[] = [
 
 export const SHADOW_TYPES: ShadowType[] = [
   { id: 'none', label: 'None' },
-  { id: 'spread', label: 'Spread' },
-  { id: 'hug', label: 'Hug' },
-  { id: 'adaptive', label: 'Adaptive' },
+  { id: 'soft', label: 'Soft' },
+  { id: 'float', label: 'Float' },
+  { id: 'dream', label: 'Dream' },
+  { id: 'glow', label: 'Glow' },
 ];
 
 export const FRAMES_DATA = [
