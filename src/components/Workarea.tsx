@@ -7,7 +7,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   const {
     rotationX, rotationY, rotationZ,
     cornerRadius, backgroundGradient,
-    mockupType, setMediaAssets, mediaAssets,
+    setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight, canvasCornerRadius,
     shadowType, shadowOpacity, stylePreset,
     deviceScale
@@ -17,6 +17,9 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const deviceContainerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const backgroundRef = useRef<HTMLDivElement>(null);
+  const prevBackgroundRef = useRef<HTMLDivElement>(null);
+  const [prevGradient, setPrevGradient] = useState<string>(backgroundGradient);
 
   const handleScreenClick = (index: number) => {
     setActiveMediaIndex(index);
@@ -27,8 +30,9 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
+      const isVideo = file.type.startsWith('video/');
       const newAssets = [...mediaAssets];
-      newAssets[activeMediaIndex] = url;
+      newAssets[activeMediaIndex] = { url, type: isVideo ? 'video' : 'image' };
       setMediaAssets(newAssets);
     }
   };
@@ -52,23 +56,41 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Calculate scale to fit canvas in view
-  const fitScale = useMemo(() => {
-    if (!canvasWidth || !canvasHeight || !containerSize.width || !containerSize.height) return 0.5;
+  // Calculate display dimensions to fit canvas in view while maintaining aspect ratio
+  const displayDimensions = useMemo(() => {
+    if (!canvasWidth || !canvasHeight || !containerSize.width || !containerSize.height) {
+      return { width: 400, height: 400, scale: 0.5 };
+    }
 
     const padding = 80;
     const availableWidth = containerSize.width - padding;
     const availableHeight = containerSize.height - padding;
 
-    if (availableWidth <= 0 || availableHeight <= 0) return 0.5;
+    if (availableWidth <= 0 || availableHeight <= 0) {
+      return { width: 400, height: 400, scale: 0.5 };
+    }
 
-    const scaleX = availableWidth / canvasWidth;
-    const scaleY = availableHeight / canvasHeight;
+    const aspectRatio = canvasWidth / canvasHeight;
+    let displayWidth: number;
+    let displayHeight: number;
 
-    return Math.min(1, scaleX, scaleY);
+    // Fit to container while maintaining aspect ratio
+    if (availableWidth / availableHeight > aspectRatio) {
+      // Container is wider than canvas aspect ratio - fit to height
+      displayHeight = availableHeight;
+      displayWidth = displayHeight * aspectRatio;
+    } else {
+      // Container is taller than canvas aspect ratio - fit to width
+      displayWidth = availableWidth;
+      displayHeight = displayWidth / aspectRatio;
+    }
+
+    const scale = displayWidth / canvasWidth;
+
+    return { width: displayWidth, height: displayHeight, scale };
   }, [canvasWidth, canvasHeight, containerSize]);
 
-  const zoomDisplay = isNaN(fitScale) ? '100%' : `${Math.round(fitScale * 100)}%`;
+  const zoomDisplay = `${Math.round(displayDimensions.scale * 100)}%`;
 
   // GSAP animation on rotation changes
   useEffect(() => {
@@ -92,15 +114,33 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
 
   // Animate canvas size changes
   useEffect(() => {
-    if (canvasRef.current && canvasWidth && canvasHeight) {
+    if (canvasRef.current && displayDimensions.width && displayDimensions.height) {
       gsap.to(canvasRef.current, {
-        width: canvasWidth,
-        height: canvasHeight,
+        width: displayDimensions.width,
+        height: displayDimensions.height,
         duration: 0.4,
         ease: 'power2.out'
       });
     }
-  }, [canvasWidth, canvasHeight]);
+  }, [displayDimensions.width, displayDimensions.height]);
+
+  // Animate background gradient changes with crossfade
+  useEffect(() => {
+    if (!backgroundRef.current || !prevBackgroundRef.current) return;
+    if (prevGradient === backgroundGradient) return;
+
+    // Crossfade animation
+    gsap.fromTo(backgroundRef.current,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.5, ease: 'power2.out' }
+    );
+    gsap.fromTo(prevBackgroundRef.current,
+      { opacity: 1 },
+      { opacity: 0, duration: 0.5, ease: 'power2.out', onComplete: () => {
+        setPrevGradient(backgroundGradient);
+      }}
+    );
+  }, [backgroundGradient, prevGradient]);
 
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden bg-[#111618]">
@@ -146,21 +186,19 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             }}
             className="relative shadow-2xl transition-all duration-300 ease-in-out flex items-center justify-center bg-transparent"
             style={{
-                width: `${canvasWidth}px`,
-                height: `${canvasHeight}px`,
-                transform: `scale(${isNaN(fitScale) ? 1 : fitScale})`,
-                transformOrigin: 'center center'
+                width: `${displayDimensions.width}px`,
+                height: `${displayDimensions.height}px`,
             }}
         >
-             {/* Canvas Background */}
+             {/* Canvas Background with Crossfade */}
              <div
-                className="absolute inset-0 border border-[#2c393f] bg-gradient-to-br opacity-100 overflow-hidden"
-                style={{
-                  backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))`,
-                  borderRadius: `${canvasCornerRadius}px`
-                }}
+                className="absolute inset-0 border border-[#2c393f] overflow-hidden"
+                style={{ borderRadius: `${canvasCornerRadius}px` }}
              >
-               <div className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient}`} />
+               {/* Previous gradient (fades out) */}
+               <div ref={prevBackgroundRef} className={`absolute inset-0 bg-gradient-to-br ${prevGradient}`} />
+               {/* Current gradient (fades in) */}
+               <div ref={backgroundRef} className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient}`} />
              </div>
 
              {/* Dynamic Mockup Render - Centered in Canvas */}
@@ -173,7 +211,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   rotationY={rotationY}
                   rotationZ={rotationZ}
                   cornerRadius={cornerRadius}
-                  mockupType={mockupType}
                   mediaAssets={mediaAssets}
                   onScreenClick={handleScreenClick}
                   shadowType={shadowType}

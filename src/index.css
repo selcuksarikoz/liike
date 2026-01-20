@@ -3,6 +3,24 @@
 
 @import 'tailwindcss';
 
+@theme {
+  /* UI Colors */
+  --color-ui-bg: #141b1e;
+  --color-ui-bg-secondary: #111618;
+  --color-ui-panel: #1c2529;
+  --color-ui-highlight: #1c3b4a;
+  --color-ui-border: #2c393f;
+  --color-ui-muted: #5f6f79;
+  --color-ui-text: #9fb2bc;
+
+  /* Accent */
+  --color-accent: #d4ff3f;
+  --color-accent-hover: #e5ff7a;
+
+  /* Scrollbar */
+  --color-scrollbar: rgba(148, 163, 184, 0.35);
+}
+
 :root {
   color-scheme: dark;
   font-family:

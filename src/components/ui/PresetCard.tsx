@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { DeviceRenderer } from '../DeviceRenderer';
+import type { MediaAsset } from '../../store/renderStore';
 
 type PresetCardProps = {
   preset: {
@@ -14,7 +15,7 @@ type PresetCardProps = {
   onClick: () => void;
   cornerRadius: number;
   mockupType: string;
-  mediaAssets: string[];
+  mediaAssets: (MediaAsset | null)[];
   stylePreset?: string;
   shadowType?: string;
   shadowOpacity?: number;
@@ -49,7 +50,7 @@ export const PresetCard = ({
 
       if (deviceRef.current) {
         gsap.to(deviceRef.current, {
-          scale: 1,
+          scale: 0.95,
           duration: 0.5,
           ease: 'back.out(1.7)'
         });
@@ -66,7 +67,7 @@ export const PresetCard = ({
 
       if (deviceRef.current) {
         gsap.to(deviceRef.current, {
-          scale: 0.75,
+          scale: 0.85,
           duration: 0.4,
           ease: 'power2.out'
         });
@@ -115,19 +116,20 @@ export const PresetCard = ({
       {/* Device Preview */}
       <div
         ref={deviceRef}
-        className="absolute inset-0 flex items-center justify-center p-6 scale-75 transition-transform duration-500"
+        className="absolute inset-0 flex items-center justify-center p-4 scale-[0.85] transition-transform duration-500"
       >
         <DeviceRenderer
           rotationX={preset.rotationX}
           rotationY={preset.rotationY}
           rotationZ={preset.rotationZ}
           cornerRadius={cornerRadius || 20}
-          mockupType={mockupType}
+          mockupType={mockupType || 'iphone'}
           mediaAssets={mediaAssets}
           stylePreset={stylePreset}
           shadowType={shadowType}
           shadowOpacity={shadowOpacity}
           isPreview={true}
+          scale={0.9}
         />
       </div>
 

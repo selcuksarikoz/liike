@@ -47,7 +47,7 @@ export const Modal = ({
 
   if (position === 'center') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
         <div
           ref={modalRef}
           className={`relative max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-200 ${className}`}
@@ -74,7 +74,7 @@ export const Modal = ({
   return (
     <div
       ref={modalRef}
-      className={`absolute top-14 left-0 right-0 z-50 mx-4 overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200 ${className}`}
+      className={`absolute top-14 left-0 right-0 z-[9999] mx-4 overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200 ${className}`}
     >
       {title && (
         <div className="flex items-center justify-between border-b border-ui-border px-4 py-3">

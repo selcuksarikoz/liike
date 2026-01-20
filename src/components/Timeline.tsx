@@ -1,6 +1,6 @@
 export const Timeline = () => {
   return (
-    <footer className="z-30 flex h-64 flex-col border-t border-[#2c393f] bg-[#141b1e]">
+    <footer className="col-span-3 flex h-64 flex-col border-t border-ui-border bg-ui-bg">
       <div className="flex h-12 items-center justify-between border-b border-[#2c393f] bg-[#1c2529]/30 px-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">

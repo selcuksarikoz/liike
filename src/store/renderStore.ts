@@ -10,15 +10,18 @@ type StylePreset = 'default' | 'glass-light' | 'glass-dark' | 'liquid' | 'inset-
 type BorderType = 'sharp' | 'curved' | 'round';
 type ShadowType = 'none' | 'spread' | 'hug' | 'adaptive';
 
+export type MediaAsset = {
+  url: string;
+  type: 'image' | 'video';
+};
+
 type RenderStore = RenderSettings & {
-  deviceModel: string;
   rotationX: number;
   rotationY: number;
   rotationZ: number;
   cornerRadius: number;
   backgroundGradient: string;
-  mockupType: string;
-  mediaAssets: string[];
+  mediaAssets: (MediaAsset | null)[];
   canvasWidth: number;
   canvasHeight: number;
   canvasCornerRadius: number;
@@ -32,7 +35,6 @@ type RenderStore = RenderSettings & {
   shadowOpacity: number;
   framePreset: string;
   // Setters
-  setDeviceModel: (model: string) => void;
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
   setRotationZ: (deg: number) => void;
@@ -41,8 +43,7 @@ type RenderStore = RenderSettings & {
   setShadowIntensity: (percent: number) => void;
   setDeviceScale: (scale: number) => void;
   setBackgroundGradient: (gradient: string) => void;
-  setMockupType: (type: string) => void;
-  setMediaAssets: (assets: string[]) => void;
+  setMediaAssets: (assets: (MediaAsset | null)[]) => void;
   setCanvasSize: (width: number, height: number) => void;
   setDurationMs: (durationMs: number) => void;
   setFps: (fps: number) => void;
@@ -61,13 +62,11 @@ export const useRenderStore = create<RenderStore>((set) => ({
   durationMs: 5000,
   fps: 30,
   outputName: 'liike_render',
-  deviceModel: 'iPhone 15 Pro Max',
   rotationX: 0,
   rotationY: 0,
   rotationZ: 0,
   cornerRadius: 0,
   backgroundGradient: 'from-[#1c3b4a] via-[#141b1e] to-[#0a0f12]',
-  mockupType: 'iphone',
   mediaAssets: [],
   canvasWidth: 1080,
   canvasHeight: 1080,
@@ -82,7 +81,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
   shadowOpacity: 40,
   framePreset: 'instagram-post',
   // Setters
-  setDeviceModel: (deviceModel) => set({ deviceModel }),
   setRotationX: (rotationX) => set({ rotationX }),
   setRotationY: (rotationY) => set({ rotationY }),
   setRotationZ: (rotationZ) => set({ rotationZ }),
@@ -91,7 +89,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setShadowIntensity: (shadowIntensity) => set({ shadowIntensity }),
   setDeviceScale: (deviceScale) => set({ deviceScale }),
   setBackgroundGradient: (backgroundGradient) => set({ backgroundGradient }),
-  setMockupType: (mockupType) => set({ mockupType }),
   setMediaAssets: (mediaAssets) => set({ mediaAssets }),
   setCanvasSize: (width, height) => set({ canvasWidth: width, canvasHeight: height }),
   setDurationMs: (durationMs) => set({ durationMs }),

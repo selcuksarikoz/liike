@@ -22,15 +22,16 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0f12] text-white flex flex-col h-screen">
+    <div className="h-screen bg-ui-bg text-white grid grid-rows-[auto_1fr_auto] grid-cols-[320px_1fr_320px]">
+      {/* Header - spans all columns */}
       <Header onRender={handleRender} />
-      
-      <main className="flex flex-1 overflow-hidden bg-[#141b1e]">
-        <SidebarLeft />
-        <Workarea stageRef={stageRef} />
-        <SidebarRight />
-      </main>
 
+      {/* Main content row */}
+      <SidebarLeft />
+      <Workarea stageRef={stageRef} />
+      <SidebarRight />
+
+      {/* Timeline - spans all columns */}
       <Timeline />
     </div>
   );
