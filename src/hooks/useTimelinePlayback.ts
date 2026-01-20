@@ -199,6 +199,36 @@ export const calculateAnimationValue = (
         opacity: easedProgress,
       };
 
+    case 'slide-up':
+      const slideYUp = (1 - easedProgress) * intensity;
+      return {
+        transform: `translateY(${slideYUp}px)`,
+        opacity: easedProgress,
+      };
+
+    case 'slide-down':
+      const slideYDown = (easedProgress - 1) * intensity;
+      return {
+        transform: `translateY(${slideYDown}px)`,
+        opacity: easedProgress,
+      };
+
+    case 'zoom-up':
+      const zoomUpScale = 0.7 + easedProgress * 0.3;
+      const zoomUpY = (1 - easedProgress) * 30;
+      return {
+        transform: `scale(${zoomUpScale}) translateY(${zoomUpY}px)`,
+        opacity: easedProgress,
+      };
+
+    case 'zoom-down':
+      const zoomDownScale = 0.7 + easedProgress * 0.3;
+      const zoomDownY = (easedProgress - 1) * 30;
+      return {
+        transform: `scale(${zoomDownScale}) translateY(${zoomDownY}px)`,
+        opacity: easedProgress,
+      };
+
     case 'pulse':
       const pulseScale = 1 + Math.sin(easedProgress * Math.PI * 4) * (intensity - 1) * 0.5;
       return {
@@ -265,10 +295,14 @@ const getDefaultIntensity = (type: string): number => {
     case 'rotate': return 360;
     case 'zoom':
     case 'zoom-in': return 1.2;
-    case 'zoom-out': return 0.8;
+    case 'zoom-out': return 1.3;
+    case 'zoom-up':
+    case 'zoom-down': return 1.1;
     case 'slide':
     case 'slide-right':
     case 'slide-left': return 100;
+    case 'slide-up':
+    case 'slide-down': return 60;
     case 'pulse': return 1.1;
     case 'shake': return 5;
     case 'swing': return 15;

@@ -60,16 +60,6 @@ const TimelineClipComponent = ({
         }}
       />
 
-      {/* Clip content */}
-      <div className="flex items-center h-full px-2 overflow-hidden">
-        <span className="material-symbols-outlined text-[14px] text-white/80 mr-1">
-          {clip.icon}
-        </span>
-        <span className="text-[10px] font-medium text-white/90 truncate">
-          {clip.name}
-        </span>
-      </div>
-
       {/* Delete button - visible when selected */}
       {isSelected && (
         <button
@@ -328,7 +318,7 @@ export const Timeline = () => {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPlayhead(0)}
-              className="rounded p-1.5 hover:bg-[#1c3b4a]/40"
+              className="rounded p-1.5 hover:bg-[#1c3b4a]/40 flex items-center justify-center"
             >
               <span className="material-symbols-outlined text-[20px]">skip_previous</span>
             </button>
@@ -342,7 +332,7 @@ export const Timeline = () => {
             </button>
             <button
               onClick={() => setPlayhead(durationMs)}
-              className="rounded p-1.5 hover:bg-[#1c3b4a]/40"
+              className="rounded p-1.5 hover:bg-[#1c3b4a]/40 flex items-center justify-center"
             >
               <span className="material-symbols-outlined text-[20px]">skip_next</span>
             </button>
@@ -449,7 +439,7 @@ export const Timeline = () => {
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="relative left-4 h-12 border-b border-[#2c393f] bg-[#1c2529]/10"
+                className="relative h-12 border-b border-[#2c393f] bg-[#1c2529]/10"
                 onDrop={(e) => handleTrackDrop(e, track.id)}
                 onDragOver={handleTrackDragOver}
               >
@@ -479,7 +469,7 @@ export const Timeline = () => {
 
                 {/* Drop zone indicator */}
                 {track.clips.length === 0 && (
-                  <div className="absolute inset-y-2 left-2 right-2 flex items-center justify-center border border-dashed border-[#2c393f] rounded-lg text-[10px] text-[#2c393f] uppercase tracking-widest">
+                  <div className="absolute inset-2 flex items-center justify-center border border-dashed border-[#2c393f] rounded-lg text-[10px] text-[#2c393f] uppercase tracking-widest">
                     Drop {track.type} here
                   </div>
                 )}

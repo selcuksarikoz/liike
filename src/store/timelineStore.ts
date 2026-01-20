@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useRenderStore } from './renderStore';
 
 export type AnimationType =
   | 'none'
@@ -211,16 +212,26 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
         return track;
       }),
     }));
+
+    // Update render duration if clip end exceeds current duration
+    if (clipToMove) {
+      const newEndTime = Math.max(0, newStartMs) + clipToMove.durationMs;
+      const currentDuration = useRenderStore.getState().durationMs;
+      if (newEndTime > currentDuration) {
+        useRenderStore.getState().setDurationMs(newEndTime);
+      }
+    }
   },
 
   resizeClip: (clipId, newDurationMs, fromStart = false) => {
+    const minDuration = 100;
+    const duration = Math.max(minDuration, newDurationMs);
+
     set((state) => ({
       tracks: state.tracks.map((track) => ({
         ...track,
         clips: track.clips.map((clip) => {
           if (clip.id !== clipId) return clip;
-          const minDuration = 100;
-          const duration = Math.max(minDuration, newDurationMs);
           if (fromStart) {
             const diff = clip.durationMs - duration;
             return {
@@ -233,6 +244,22 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
         }),
       })),
     }));
+
+    // Update render duration to match longest clip end time
+    const state = get();
+    let maxEndTime = 0;
+    state.tracks.forEach((track) => {
+      track.clips.forEach((clip) => {
+        const endTime = clip.startMs + clip.durationMs;
+        if (endTime > maxEndTime) {
+          maxEndTime = endTime;
+        }
+      });
+    });
+
+    if (maxEndTime > 0) {
+      useRenderStore.getState().setDurationMs(maxEndTime);
+    }
   },
 
   toggleTrackMute: (trackId) => {

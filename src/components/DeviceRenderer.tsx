@@ -89,7 +89,7 @@ export const DeviceRenderer = ({
         ref={mediaRef}
         className={`relative flex h-full w-full items-center justify-center overflow-hidden transition-all duration-300 ${isPreview ? '' : 'cursor-pointer group'}`}
         onClick={() => !isPreview && onScreenClick?.(index)}
-        style={{ borderRadius: `${cornerRadius}px` }}
+        style={{ borderRadius: `${cornerRadius}px`, clipPath: 'inset(0 round ' + cornerRadius + 'px)' }}
       >
         {media ? (
           media.type === 'video' ? (
@@ -170,6 +170,7 @@ export const DeviceRenderer = ({
             borderRadius: `${cornerRadius}px`,
             boxShadow: computedShadow(),
             backfaceVisibility: 'hidden',
+            clipPath: `inset(0 round ${cornerRadius}px)`,
             ...styleCSS
           }}
         >
@@ -201,6 +202,7 @@ export const DeviceRenderer = ({
                 aspectRatio: aspectValue ? aspectValue : undefined,
                 borderRadius: `${cornerRadius}px`,
                 boxShadow: computedShadow(),
+                clipPath: `inset(0 round ${cornerRadius}px)`,
                 ...styleCSS
               }}
             >
@@ -233,6 +235,7 @@ export const DeviceRenderer = ({
               aspectRatio: aspectValue ? aspectValue : undefined,
               borderRadius: `${cornerRadius}px`,
               boxShadow: computedShadow(),
+              clipPath: `inset(0 round ${cornerRadius}px)`,
               ...styleCSS
             }}
           >

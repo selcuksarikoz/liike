@@ -10,6 +10,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   const {
     rotationX, rotationY, rotationZ,
     cornerRadius, backgroundGradient,
+    backgroundType, backgroundColor, backgroundImage,
     setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight, canvasCornerRadius,
     shadowType, shadowOpacity, stylePreset,
@@ -245,18 +246,31 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
              {/* Canvas Background with Crossfade */}
              <div
                 className="absolute inset-0 border border-[#2c393f] overflow-hidden"
-                style={{ borderRadius: `${canvasCornerRadius}px` }}
+                style={{ borderRadius: `${canvasCornerRadius}px`, clipPath: `inset(0 round ${canvasCornerRadius}px)` }}
              >
-               {/* Previous gradient (fades out) */}
+               {/* Previous background (fades out) */}
                <div ref={prevBackgroundRef} className={`absolute inset-0 bg-gradient-to-br ${prevGradient}`} />
-               {/* Current gradient (fades in) */}
-               <div ref={backgroundRef} className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient}`} />
+
+               {/* Current background based on type */}
+               {backgroundType === 'gradient' && (
+                 <div ref={backgroundRef} className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient}`} />
+               )}
+               {backgroundType === 'solid' && (
+                 <div ref={backgroundRef} className="absolute inset-0" style={{ backgroundColor }} />
+               )}
+               {backgroundType === 'image' && backgroundImage && (
+                 <div
+                   ref={backgroundRef}
+                   className="absolute inset-0 bg-cover bg-center"
+                   style={{ backgroundImage: `url(${backgroundImage})` }}
+                 />
+               )}
              </div>
 
              {/* Dynamic Mockup Render - Centered in Canvas */}
             <div
               ref={deviceContainerRef}
-              className="relative z-10 w-full h-full flex items-center justify-center p-[5%]"
+              className="relative z-10 w-full h-full flex items-center justify-center p-[5%] overflow-hidden"
             >
               {/* Animation wrapper */}
               <div

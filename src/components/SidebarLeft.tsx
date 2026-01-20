@@ -102,6 +102,18 @@ export const SidebarLeft = () => {
           </div>
         </div>
 
+
+        {/* Frame Selection */}
+        <div className="border-t border-ui-border pt-6">
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Canvas</h2>
+          <DropdownTrigger
+            icon="crop"
+            label={getCurrentFrameLabel()}
+            value={`${canvasWidth} × ${canvasHeight}`}
+            onClick={() => setIsFrameModalOpen(true)}
+          />
+        </div>
+
         {/* Aspect Ratio */}
         <div className="border-t border-ui-border pt-6">
           <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Aspect Ratio</h2>
@@ -123,7 +135,7 @@ export const SidebarLeft = () => {
                 onClick={() => setImageLayout(value)}
                 className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-lg transition-all ${
                   imageLayout === value
-                    ? 'bg-accent text-white'
+                    ? 'bg-accent text-ui-text'
                     : 'bg-ui-panel text-ui-text hover:bg-ui-highlight hover:text-white'
                 }`}
               >
@@ -132,17 +144,6 @@ export const SidebarLeft = () => {
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Frame Selection */}
-        <div className="border-t border-ui-border pt-6">
-          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Canvas</h2>
-          <DropdownTrigger
-            icon="crop"
-            label={getCurrentFrameLabel()}
-            value={`${canvasWidth} × ${canvasHeight}`}
-            onClick={() => setIsFrameModalOpen(true)}
-          />
         </div>
       </div>
 

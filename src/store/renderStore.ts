@@ -10,6 +10,7 @@ type StylePreset = 'default' | 'glass-light' | 'glass-dark' | 'liquid' | 'inset-
 type ShadowType = 'none' | 'spread' | 'hug' | 'adaptive';
 export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3';
 export type ImageLayout = 'single' | 'side-by-side' | 'stacked';
+export type BackgroundType = 'gradient' | 'solid' | 'image';
 
 export type MediaAsset = {
   url: string;
@@ -22,6 +23,9 @@ type RenderStore = RenderSettings & {
   rotationZ: number;
   cornerRadius: number;
   backgroundGradient: string;
+  backgroundType: BackgroundType;
+  backgroundColor: string;
+  backgroundImage: string | null;
   mediaAssets: (MediaAsset | null)[];
   canvasWidth: number;
   canvasHeight: number;
@@ -40,6 +44,9 @@ type RenderStore = RenderSettings & {
   setCanvasCornerRadius: (px: number) => void;
   setDeviceScale: (scale: number) => void;
   setBackgroundGradient: (gradient: string) => void;
+  setBackgroundType: (type: BackgroundType) => void;
+  setBackgroundColor: (color: string) => void;
+  setBackgroundImage: (image: string | null) => void;
   setMediaAssets: (assets: (MediaAsset | null)[]) => void;
   setCanvasSize: (width: number, height: number) => void;
   setDurationMs: (durationMs: number) => void;
@@ -62,6 +69,9 @@ export const useRenderStore = create<RenderStore>((set) => ({
   rotationZ: 0,
   cornerRadius: 12,
   backgroundGradient: 'from-[#1c3b4a] via-[#141b1e] to-[#0a0f12]',
+  backgroundType: 'gradient',
+  backgroundColor: '#1a1a2e',
+  backgroundImage: null,
   mediaAssets: [],
   canvasWidth: 1080,
   canvasHeight: 1080,
@@ -79,7 +89,10 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setCornerRadius: (cornerRadius) => set({ cornerRadius }),
   setCanvasCornerRadius: (canvasCornerRadius) => set({ canvasCornerRadius }),
   setDeviceScale: (deviceScale) => set({ deviceScale }),
-  setBackgroundGradient: (backgroundGradient) => set({ backgroundGradient }),
+  setBackgroundGradient: (backgroundGradient) => set({ backgroundGradient, backgroundType: 'gradient' }),
+  setBackgroundType: (backgroundType) => set({ backgroundType }),
+  setBackgroundColor: (backgroundColor) => set({ backgroundColor, backgroundType: 'solid' }),
+  setBackgroundImage: (backgroundImage) => set({ backgroundImage, backgroundType: 'image' }),
   setMediaAssets: (mediaAssets) => set({ mediaAssets }),
   setCanvasSize: (width, height) => set({ canvasWidth: width, canvasHeight: height }),
   setDurationMs: (durationMs) => set({ durationMs }),
