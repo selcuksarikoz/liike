@@ -1,8 +1,8 @@
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { getShadowStyle, STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
-import { combineAnimations, CSS_TRANSITIONS, ANIMATION_PRESETS } from '../constants/animations';
+import { combineAnimations, CSS_TRANSITIONS } from '../constants/animations';
 
 export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3';
 
@@ -96,13 +96,6 @@ export const DeviceRenderer = ({
 }: ImageRendererProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Entrance animation
-  useEffect(() => {
-    if (!containerRef.current || isPreview) return;
-
-    const { keyframes, options } = ANIMATION_PRESETS.fadeInScale;
-    containerRef.current.animate([...keyframes], options);
-  }, [isPreview]);
 
   // Get style preset CSS (moved up for use in MediaContainer)
   const styleCSS = (() => {
@@ -113,19 +106,9 @@ export const DeviceRenderer = ({
 
   const MediaContainer = ({ index }: { index: number }) => {
     const media = mediaAssets[index];
-    const mediaRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-      if (!mediaRef.current || isPreview) return;
-      if (media) {
-        const { keyframes, options } = ANIMATION_PRESETS.mediaFadeIn;
-        mediaRef.current.animate([...keyframes], options);
-      }
-    }, [media]);
 
     return (
       <div
-        ref={mediaRef}
         className={`relative flex h-full w-full items-center justify-center overflow-hidden transition-all duration-300 ${isPreview ? '' : 'cursor-pointer group'}`}
         onClick={() => !isPreview && onScreenClick?.(index)}
         style={{ borderRadius: `${cornerRadius}px` }}

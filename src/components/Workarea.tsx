@@ -3,7 +3,7 @@ import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { DeviceRenderer } from './DeviceRenderer';
 import { useTimelinePlayback } from '../hooks/useTimelinePlayback';
-import { combineAnimations, ANIMATION_PRESETS, DURATIONS, EASINGS } from '../constants/animations';
+import { combineAnimations, ANIMATION_PRESETS } from '../constants/animations';
 import { LAYOUT_PRESETS } from '../constants/styles';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
@@ -178,23 +178,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     return { width: displayWidth, height: displayHeight, scale, innerPadding };
   }, [canvasWidth, canvasHeight, containerSize]);
 
-  // Entrance animation
-  useEffect(() => {
-    if (canvasRef.current) {
-      const { keyframes, options } = ANIMATION_PRESETS.scaleIn;
-      canvasRef.current.animate([...keyframes], options);
-    }
-  }, []);
-
-  // Animate canvas size changes
-  useEffect(() => {
-    if (canvasRef.current && displayDimensions.width && displayDimensions.height) {
-      canvasRef.current.animate(
-        [{ width: `${displayDimensions.width}px`, height: `${displayDimensions.height}px` }],
-        { duration: DURATIONS.quick, easing: EASINGS.easeOut, fill: 'forwards' }
-      );
-    }
-  }, [displayDimensions.width, displayDimensions.height]);
 
   // Animate background gradient changes with crossfade
   useEffect(() => {
