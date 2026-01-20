@@ -230,6 +230,9 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
     // Add to timeline if it has animations (replace existing)
     const hasAnimation = preset.animations.some(a => a.type !== 'none');
     if (hasAnimation) {
+      // IMPORTANT: Stop playback first to ensure clean restart
+      setIsPlaying(false);
+
       // Update timeline duration to match animation
       setDurationMs(preset.durationMs);
       setPlayhead(0);
@@ -256,8 +259,8 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
         },
       });
 
-      // Auto-play the animation after selecting
-      setTimeout(() => setIsPlaying(true), 50);
+      // Auto-play the animation after state updates settle
+      setTimeout(() => setIsPlaying(true), 100);
     }
   };
 

@@ -279,6 +279,15 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
   },
 }));
 
+// =============================================================================
+// Granular Selectors - for performance optimization
+// =============================================================================
+export const usePlayheadMs = () => useTimelineStore(state => state.playheadMs);
+export const useIsPlaying = () => useTimelineStore(state => state.isPlaying);
+export const useTracks = () => useTimelineStore(state => state.tracks);
+export const useSelectedClipId = () => useTimelineStore(state => state.selectedClipId);
+export const useZoom = () => useTimelineStore(state => state.zoom);
+
 // Animation Presets
 export const ANIMATION_PRESETS: AnimationPreset[] = [
   {

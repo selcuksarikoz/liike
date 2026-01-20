@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useMemo, memo, useCallback } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { getShadowStyle, STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
@@ -30,6 +30,98 @@ type ImageRendererProps = {
   layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan';
   animationInfo?: AnimationInfo;
 };
+
+// =============================================================================
+// MediaContainer - Extracted and memoized for performance
+// =============================================================================
+type MediaContainerProps = {
+  index: number;
+  media: MediaAsset | null;
+  cornerRadius: number;
+  isPreview: boolean;
+  onScreenClick?: (index: number) => void;
+  styleCSS: React.CSSProperties;
+};
+
+const MediaContainer = memo(({
+  index,
+  media,
+  cornerRadius,
+  isPreview,
+  onScreenClick,
+  styleCSS,
+}: MediaContainerProps) => {
+  const handleClick = useCallback(() => {
+    if (!isPreview) onScreenClick?.(index);
+  }, [isPreview, onScreenClick, index]);
+
+  return (
+    <div
+      className={`relative flex h-full w-full items-center justify-center overflow-hidden ${isPreview ? '' : 'cursor-pointer group'}`}
+      onClick={handleClick}
+      style={{
+        borderRadius: `${cornerRadius}px`,
+        transition: 'border-radius 0.3s ease',
+      }}
+    >
+      {media ? (
+        media.type === 'video' ? (
+          <video
+            src={media.url}
+            className="w-full h-full object-cover"
+            style={{
+              borderRadius: `${cornerRadius}px`,
+              transition: 'border-radius 0.3s ease',
+            }}
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+        ) : (
+          <img
+            src={media.url}
+            className="w-full h-full object-cover"
+            style={{
+              borderRadius: `${cornerRadius}px`,
+              transition: 'border-radius 0.3s ease',
+            }}
+            alt="Media"
+          />
+        )
+      ) : (
+        <div
+          className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-8'} ${!isPreview && 'group-hover:brightness-110'}`}
+          style={{
+            borderRadius: `${cornerRadius}px`,
+            background: styleCSS.background || 'rgba(24, 24, 27, 0.8)',
+            border: styleCSS.border || '2px dashed rgba(255, 255, 255, 0.2)',
+            boxShadow: styleCSS.boxShadow,
+            backdropFilter: styleCSS.backdropFilter,
+            transition: 'background 0.3s ease, border 0.3s ease',
+          }}
+        >
+          <div className={`flex flex-col items-center gap-4 text-ui-text ${!isPreview && 'group-hover:text-accent group-hover:scale-110'}`} style={{ transition: 'color 0.3s ease, transform 0.3s ease' }}>
+            <ImagePlus className={isPreview ? 'w-5 h-5' : 'w-16 h-16'} />
+            {!isPreview && <span className="text-sm uppercase tracking-widest text-center font-bold">Add Image</span>}
+          </div>
+        </div>
+      )}
+      {/* Hover overlay */}
+      {media && !isPreview && (
+        <div
+          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center"
+          style={{
+            borderRadius: `${cornerRadius}px`,
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          <span className="text-[11px] text-white font-medium uppercase tracking-wider">Change</span>
+        </div>
+      )}
+    </div>
+  );
+});
 
 const getAspectRatioValue = (ratio: AspectRatio): number | null => {
   switch (ratio) {
@@ -78,7 +170,7 @@ const getStaggeredAnimationStyle = (
   };
 };
 
-export const DeviceRenderer = ({
+const DeviceRendererComponent = ({
   rotationX,
   rotationY,
   rotationZ,
@@ -96,74 +188,18 @@ export const DeviceRenderer = ({
 }: ImageRendererProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-
-  // Get style preset CSS (moved up for use in MediaContainer)
-  const styleCSS = (() => {
+  // Memoized style preset CSS
+  const styleCSS = useMemo(() => {
     const preset = STYLE_PRESETS.find(p => p.id === stylePreset);
     if (!preset || stylePreset === 'default') return {};
     return preset.css;
-  })();
+  }, [stylePreset]);
 
-  const MediaContainer = ({ index }: { index: number }) => {
-    const media = mediaAssets[index];
-
-    return (
-      <div
-        className={`relative flex h-full w-full items-center justify-center overflow-hidden transition-all duration-300 ${isPreview ? '' : 'cursor-pointer group'}`}
-        onClick={() => !isPreview && onScreenClick?.(index)}
-        style={{ borderRadius: `${cornerRadius}px` }}
-      >
-        {media ? (
-          media.type === 'video' ? (
-            <video
-              src={media.url}
-              className="w-full h-full object-cover transition-transform duration-500"
-              style={{ borderRadius: `${cornerRadius}px` }}
-              autoPlay
-              loop
-              muted
-              playsInline
-            />
-          ) : (
-            <img
-              src={media.url}
-              className="w-full h-full object-cover transition-transform duration-500"
-              style={{ borderRadius: `${cornerRadius}px` }}
-              alt="Media"
-            />
-          )
-        ) : (
-          <div
-            className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-8'} transition-all duration-300 ${!isPreview && 'group-hover:brightness-110'}`}
-            style={{
-              borderRadius: `${cornerRadius}px`,
-              background: styleCSS.background || 'rgba(24, 24, 27, 0.8)',
-              border: styleCSS.border || '2px dashed rgba(255, 255, 255, 0.2)',
-              boxShadow: styleCSS.boxShadow,
-              backdropFilter: styleCSS.backdropFilter,
-            }}
-          >
-            <div className={`flex flex-col items-center gap-4 text-ui-text ${!isPreview && 'group-hover:text-accent group-hover:scale-110'} transition-all duration-300`}>
-              <ImagePlus className={isPreview ? 'w-5 h-5' : 'w-16 h-16'} />
-              {!isPreview && <span className="text-sm uppercase tracking-widest text-center font-bold">Add Image</span>}
-            </div>
-          </div>
-        )}
-        {/* Hover overlay */}
-        {media && !isPreview && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity" style={{ borderRadius: `${cornerRadius}px` }}>
-            <span className="text-[11px] text-white font-medium uppercase tracking-wider">Change</span>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Get computed shadow
-  const computedShadow = () => {
+  // Memoized computed shadow
+  const computedShadow = useMemo(() => {
     if (isPreview) return 'none';
     return getShadowStyle(shadowType, shadowOpacity, rotationX, rotationY);
-  };
+  }, [isPreview, shadowType, shadowOpacity, rotationX, rotationY]);
 
   const aspectValue = getAspectRatioValue(aspectRatio);
 
@@ -178,7 +214,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative overflow-hidden transition-all duration-300 ease-out"
+          className="relative overflow-hidden transition-[transform,box-shadow,border-radius] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: aspectValue ? 'auto' : '85%',
@@ -187,12 +223,12 @@ export const DeviceRenderer = ({
             maxWidth: '85%',
             maxHeight: '85%',
             borderRadius: `${cornerRadius}px`,
-            boxShadow: computedShadow(),
+            boxShadow: computedShadow,
             backfaceVisibility: 'hidden',
             ...styleCSS
           }}
         >
-          <MediaContainer index={0} />
+          <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
         </div>
       </div>
     );
@@ -204,7 +240,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative flex gap-4 transition-all duration-300 ease-out"
+          className="relative flex gap-4 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: '90%',
@@ -221,14 +257,15 @@ export const DeviceRenderer = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow(),
+                  boxShadow: computedShadow,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
-                  transition: CSS_TRANSITIONS.stagger,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  willChange: 'transform, opacity',
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
               </div>
             );
           })}
@@ -243,7 +280,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative flex flex-col gap-4 transition-all duration-300 ease-out"
+          className="relative flex flex-col gap-4 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: aspectValue ? undefined : '70%',
@@ -260,14 +297,15 @@ export const DeviceRenderer = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow(),
+                  boxShadow: computedShadow,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
-                  transition: CSS_TRANSITIONS.stagger,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  willChange: 'transform, opacity',
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
               </div>
             );
           })}
@@ -282,7 +320,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative flex gap-3 transition-all duration-300 ease-out"
+          className="relative flex gap-3 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: '95%',
@@ -299,14 +337,15 @@ export const DeviceRenderer = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow(),
+                  boxShadow: computedShadow,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
-                  transition: CSS_TRANSITIONS.stagger,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  willChange: 'transform, opacity',
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
               </div>
             );
           })}
@@ -321,7 +360,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative flex flex-col gap-3 transition-all duration-300 ease-out"
+          className="relative flex flex-col gap-3 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: aspectValue ? undefined : '55%',
@@ -338,14 +377,15 @@ export const DeviceRenderer = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow(),
+                  boxShadow: computedShadow,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
-                  transition: CSS_TRANSITIONS.stagger,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  willChange: 'transform, opacity',
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
               </div>
             );
           })}
@@ -360,7 +400,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative grid grid-cols-2 gap-3 transition-all duration-300 ease-out"
+          className="relative grid grid-cols-2 gap-3 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: '85%',
@@ -378,14 +418,15 @@ export const DeviceRenderer = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : 1,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow(),
+                  boxShadow: computedShadow,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
-                  transition: CSS_TRANSITIONS.stagger,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  willChange: 'transform, opacity',
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
               </div>
             );
           })}
@@ -405,7 +446,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative transition-all duration-300 ease-out"
+          className="relative transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: '70%',
@@ -426,14 +467,15 @@ export const DeviceRenderer = ({
                   top: `${offset.y}%`,
                   zIndex: offset.zIndex,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow(),
+                  boxShadow: computedShadow,
                   transform: `rotate(${offset.rotate}deg) ${animStyle.transform}`,
                   opacity: animStyle.opacity,
-                  transition: CSS_TRANSITIONS.stagger,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  willChange: 'transform, opacity',
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
               </div>
             );
           })}
@@ -454,7 +496,7 @@ export const DeviceRenderer = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative transition-all duration-300 ease-out"
+          className="relative transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: '80%',
@@ -477,14 +519,15 @@ export const DeviceRenderer = ({
                   transformOrigin: 'bottom center',
                   zIndex: index === 1 ? 30 : 20 - index,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow(),
+                  boxShadow: computedShadow,
                   transform: `translate(calc(-50% + ${offset.x}%), calc(-70% + ${offset.y}%)) rotate(${angle}deg) ${animStyle.transform}`,
                   opacity: animStyle.opacity,
-                  transition: CSS_TRANSITIONS.stagger,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  willChange: 'transform, opacity',
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
               </div>
             );
           })}
@@ -498,7 +541,7 @@ export const DeviceRenderer = ({
     <div className="flex h-full w-full items-center justify-center">
       <div
         ref={containerRef}
-        className="relative overflow-hidden transition-all duration-300 ease-out"
+        className="relative overflow-hidden transition-[transform,box-shadow,border-radius] duration-300 ease-out"
         style={{
           ...containerStyle,
           width: aspectValue ? 'auto' : '85%',
@@ -507,13 +550,44 @@ export const DeviceRenderer = ({
           maxWidth: '85%',
           maxHeight: '85%',
           borderRadius: `${cornerRadius}px`,
-          boxShadow: computedShadow(),
+          boxShadow: computedShadow,
           backfaceVisibility: 'hidden',
           ...styleCSS
         }}
       >
-        <MediaContainer index={0} />
+        <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
       </div>
     </div>
   );
 };
+
+// =============================================================================
+// Memoized DeviceRenderer export - prevents unnecessary re-renders
+// =============================================================================
+export const DeviceRenderer = memo(DeviceRendererComponent, (prev, next) => {
+  // Shallow comparison for primitives
+  if (prev.rotationX !== next.rotationX) return false;
+  if (prev.rotationY !== next.rotationY) return false;
+  if (prev.rotationZ !== next.rotationZ) return false;
+  if (prev.cornerRadius !== next.cornerRadius) return false;
+  if (prev.scale !== next.scale) return false;
+  if (prev.layout !== next.layout) return false;
+  if (prev.aspectRatio !== next.aspectRatio) return false;
+  if (prev.stylePreset !== next.stylePreset) return false;
+  if (prev.shadowType !== next.shadowType) return false;
+  if (prev.shadowOpacity !== next.shadowOpacity) return false;
+  if (prev.isPreview !== next.isPreview) return false;
+
+  // Reference comparison for arrays/objects
+  if (prev.mediaAssets !== next.mediaAssets) return false;
+
+  // AnimationInfo deep comparison - critical for animation performance
+  if (!prev.animationInfo && !next.animationInfo) return true;
+  if (!prev.animationInfo || !next.animationInfo) return false;
+  if (prev.animationInfo.progress !== next.animationInfo.progress) return false;
+  if (prev.animationInfo.easing !== next.animationInfo.easing) return false;
+  if (prev.animationInfo.stagger !== next.animationInfo.stagger) return false;
+  if (prev.animationInfo.animations.length !== next.animationInfo.animations.length) return false;
+
+  return true;
+});

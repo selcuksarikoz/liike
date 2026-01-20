@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTimelineStore } from '../store/timelineStore';
 import { useRenderStore } from '../store/renderStore';
 // Re-export animation utilities from centralized file
@@ -114,11 +114,14 @@ export const useTimelinePlayback = () => {
     setPlayhead(Math.max(0, Math.min(ms, durationMs)));
   }, [setPlayhead, durationMs]);
 
+  // Memoize activeClips to prevent recalculation on every render
+  const activeClips = useMemo(() => getActiveClips(), [tracks, playheadMs]);
+
   return {
     playheadMs,
     isPlaying,
     durationMs,
-    activeClips: getActiveClips(),
+    activeClips,
     play,
     pause,
     stop,

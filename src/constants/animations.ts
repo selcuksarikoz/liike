@@ -632,20 +632,40 @@ export const calculateAnimationValue = (
 };
 
 // =============================================================================
-// COMBINE MULTIPLE ANIMATIONS
+// COMBINE MULTIPLE ANIMATIONS (with caching for performance)
 // =============================================================================
+const animationCache = new Map<string, { transform: string; opacity?: number }>();
+const MAX_CACHE_SIZE = 500;
+
 export const combineAnimations = (
   animations: { type: string; intensity?: number }[],
   progress: number,
   easing: string
 ): { transform: string; opacity?: number } => {
+  // Round progress to 3 decimals for better cache hit rate
+  const roundedProgress = Math.round(progress * 1000) / 1000;
+
+  // Create cache key
+  const animKey = animations.map(a => `${a.type}:${a.intensity ?? ''}`).join('|');
+  const cacheKey = `${animKey}-${roundedProgress}-${easing}`;
+
+  // Check cache
+  const cached = animationCache.get(cacheKey);
+  if (cached) return cached;
+
+  // Clear cache if too large
+  if (animationCache.size > MAX_CACHE_SIZE) {
+    animationCache.clear();
+  }
+
+  // Calculate result
   const transforms: string[] = [];
   let opacity: number | undefined;
 
   animations.forEach((anim) => {
     const result = calculateAnimationValue(
       anim.type,
-      progress,
+      roundedProgress,
       anim.intensity || getDefaultIntensity(anim.type),
       easing
     );
@@ -658,10 +678,15 @@ export const combineAnimations = (
     }
   });
 
-  return {
+  const result = {
     transform: transforms.length > 0 ? transforms.join(' ') : 'none',
     opacity,
   };
+
+  // Store in cache
+  animationCache.set(cacheKey, result);
+
+  return result;
 };
 
 // =============================================================================
