@@ -47,16 +47,16 @@ fn get_encoder_args(format: &str) -> Vec<String> {
       "-pix_fmt".to_string(), "yuv422p10le".to_string(),
       "-vendor".to_string(), "apl0".to_string(),
     ],
+    "gif" => vec![
+      "-vf".to_string(), "fps=15,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse".to_string(),
+      "-loop".to_string(), "0".to_string(),
+    ],
     _ => vec![
       "-c:v".to_string(), "libx264".to_string(),
       "-pix_fmt".to_string(), "yuv420p".to_string(),
       "-preset".to_string(), "medium".to_string(),
       "-crf".to_string(), "18".to_string(),
       "-movflags".to_string(), "+faststart".to_string(),
-    ],
-    "gif" => vec![
-      "-vf".to_string(), "fps=15,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse".to_string(),
-      "-loop".to_string(), "0".to_string(),
     ],
   }
 }
