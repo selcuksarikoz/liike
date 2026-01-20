@@ -34,7 +34,7 @@ const TimelineClipComponent = ({
   return (
     <div
       className={`absolute top-1 bottom-1 rounded-lg cursor-pointer group ${
-        isSelected ? 'ring-2 ring-accent ring-offset-1 ring-offset-[#1c2529]' : ''
+        isSelected ? 'ring-2 ring-accent ring-offset-1 ring-offset-[#1c2529] z-20' : 'z-10'
       }`}
       style={{
         left: `${left}px`,
@@ -67,9 +67,9 @@ const TimelineClipComponent = ({
             e.stopPropagation();
             onDelete();
           }}
-          className="absolute -top-6 right-0 w-5 h-5 rounded bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
+          className="absolute top-0.5 right-0.5 w-4 h-4 rounded bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors z-30"
         >
-          <span className="material-symbols-outlined text-[12px] text-white">delete</span>
+          <span className="material-symbols-outlined text-[10px] text-white">close</span>
         </button>
       )}
 
@@ -83,7 +83,7 @@ const TimelineClipComponent = ({
       />
 
       {/* Duration tooltip on hover */}
-      <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/80 rounded text-[9px] text-white font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+      <div className="absolute top-0.5 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[8px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
         {(clip.durationMs / 1000).toFixed(2)}s
       </div>
     </div>
@@ -439,7 +439,7 @@ export const Timeline = () => {
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="relative h-12 border-b border-[#2c393f] bg-[#1c2529]/10"
+                className="relative h-12 left-2 border-b border-[#2c393f] bg-[#1c2529]/10"
                 onDrop={(e) => handleTrackDrop(e, track.id)}
                 onDragOver={handleTrackDragOver}
               >

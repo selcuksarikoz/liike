@@ -127,7 +127,7 @@ export const SidebarLeft = () => {
 
         {/* Layout */}
         <div className="border-t border-ui-border pt-6">
-          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">Layout</h2>
+          <h2 className="mb-4 text-[11px] font-bofld uppercase tracking-widest text-ui-text">Layout</h2>
           <div className="flex gap-2">
             {LAYOUTS.map(({ value, label, icon }) => (
               <button
