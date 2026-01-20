@@ -15,14 +15,15 @@
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",
     "@tauri-apps/plugin-fs": "^2.4.5",
+    "gsap": "^3.14.2",
     "html-to-image": "^1.11.13",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.9.6",
     "@tailwindcss/postcss": "^4.1.18",
+    "@tauri-apps/cli": "^2.9.6",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.2",
