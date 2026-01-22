@@ -3,6 +3,7 @@ import { downloadDir } from '@tauri-apps/api/path';
 import { BaseDirectory, writeFile } from '@tauri-apps/plugin-fs';
 import { Command } from '@tauri-apps/plugin-shell';
 import { fetch } from '@tauri-apps/plugin-http';
+import { type } from '@tauri-apps/plugin-os';
 import { ChevronDown, Download, Film, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRenderStore, type ExportFormat } from '../store/renderStore';
@@ -38,6 +39,15 @@ type VersionInfo = {
   notes?: string;
 };
 
+type RemoteVersionInfo = {
+  version: string;
+  macos_download_url?: string;
+  windows_download_url?: string;
+  linux_download_url?: string;
+  download_url?: string; // fallback
+  release_notes?: string;
+};
+
 export const Header = ({ onRender }: HeaderProps) => {
   const { renderStatus, fps, setFps } = useRenderStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -66,26 +76,48 @@ export const Header = ({ onRender }: HeaderProps) => {
 
         const response = await fetch('https://tavggalbjqwdfobiaoec.supabase.co/storage/v1/object/public/liike-release/version.json');
         if (response.ok) {
-          const data = await response.json() as VersionInfo;
+          const data = await response.json() as RemoteVersionInfo;
           console.log(data);
           // output current and remote versions for debugging
           console.log(`Current: ${ver}, Remote: ${data.version}`);
           
+          const osType = await type();
+          let downloadUrl = '';
+          
+          if (osType === 'macos') {
+            downloadUrl = data.macos_download_url || data.download_url || '';
+          } else if (osType === 'windows') {
+            downloadUrl = data.windows_download_url || data.download_url || '';
+          } else if (osType === 'linux') {
+            downloadUrl = data.linux_download_url || data.download_url || '';
+          } else {
+             downloadUrl = data.download_url || '';
+          }
+
           // Simple semantic version comparison (assuming x.y.z)
-          if (data.version !== ver) {
+          if (data.version !== ver && downloadUrl) {
              // Basic check: if strings differ, assume update (or could do proper semver compare)
              // For now, let's assume if they don't match, it's an update, 
              // ideally we should check if remote > current.
              const v1 = ver.split('.').map(Number);
              const v2 = data.version.split('.').map(Number);
              
+             let hasUpdate = false;
              for (let i = 0; i < 3; i++) {
                if (v2[i] > v1[i]) {
-                 setUpdateAvailable(data);
+                 hasUpdate = true;
                  break;
                } else if (v2[i] < v1[i]) {
                  break;
                }
+             }
+             
+             if (hasUpdate) {
+                setUpdateAvailable({
+                    version: data.version,
+                    url: downloadUrl,
+                    notes: data.release_notes
+                });
              }
           }
         }

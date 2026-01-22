@@ -91,7 +91,12 @@
     "dialog:default",
     {
       "identifier": "http:default",
-      "allow": [{ "url": "https://tavggalbjqwdfobiaoec.supabase.co/*" }]
-    }
+      "allow": [
+        {
+          "url": "https://tavggalbjqwdfobiaoec.supabase.co/*"
+        }
+      ]
+    },
+    "os:default"
   ]
 }
