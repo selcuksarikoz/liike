@@ -89,6 +89,9 @@
       ]
     },
     "dialog:default",
-    "http:default"
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://tavggalbjqwdfobiaoec.supabase.co/*" }]
+    }
   ]
 }
