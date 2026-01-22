@@ -42,6 +42,8 @@ type RenderStore = RenderSettings & {
   canvasWidth: number;
   canvasHeight: number;
   canvasCornerRadius: number;
+  canvasBorderWidth: number;
+  canvasBorderColor: string;
   deviceScale: number;
   stylePreset: StylePreset;
   shadowType: ShadowType;
@@ -61,6 +63,8 @@ type RenderStore = RenderSettings & {
   setRotationZ: (deg: number) => void;
   setCornerRadius: (px: number) => void;
   setCanvasCornerRadius: (px: number) => void;
+  setCanvasBorderWidth: (px: number) => void;
+  setCanvasBorderColor: (color: string) => void;
   setDeviceScale: (scale: number) => void;
   setBackgroundGradient: (gradient: string) => void;
   setBackgroundType: (type: BackgroundType) => void;
@@ -111,6 +115,8 @@ export const useRenderStore = create<RenderStore>((set) => ({
   canvasWidth: 1080,
   canvasHeight: 1080,
   canvasCornerRadius: 20,
+  canvasBorderWidth: 0,
+  canvasBorderColor: '#ffffff',
   deviceScale: 1,
   stylePreset: 'default',
   shadowType: 'soft',
@@ -129,6 +135,8 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setRotationZ: (rotationZ) => set({ rotationZ }),
   setCornerRadius: (cornerRadius) => set({ cornerRadius }),
   setCanvasCornerRadius: (canvasCornerRadius) => set({ canvasCornerRadius }),
+  setCanvasBorderWidth: (canvasBorderWidth) => set({ canvasBorderWidth }),
+  setCanvasBorderColor: (canvasBorderColor) => set({ canvasBorderColor }),
   setDeviceScale: (deviceScale) => set({ deviceScale }),
   setBackgroundGradient: (backgroundGradient) => set({ backgroundGradient, backgroundType: 'gradient' }),
   setBackgroundType: (backgroundType) => set({ backgroundType }),

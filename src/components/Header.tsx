@@ -80,8 +80,6 @@ export const Header = ({ onRender }: HeaderProps) => {
           
           const osType = await type();
           let downloadUrl = '';
-
-          console.log(osType);
           
           if (osType === 'macos') {
             downloadUrl = data.macos_download_url || data.download_url || '';
@@ -302,7 +300,7 @@ export const Header = ({ onRender }: HeaderProps) => {
         {/* <nav className="flex items-center gap-4 border-l border-ui-border pl-6">
           <div className="flex gap-1">
             <button className="p-1 rounded text-ui-muted hover:bg-ui-highlight/30 transition-all">
-              <Undo2 className="w-5 h-5" />
+              <Undo2 className="w-5 h-5" /> 
             </button>
             <button className="p-1 rounded text-ui-muted hover:bg-ui-highlight/30 transition-all">
               <Redo2 className="w-5 h-5" />
@@ -311,12 +309,12 @@ export const Header = ({ onRender }: HeaderProps) => {
         </nav> */}
       </div>
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 rounded-lg border border-ui-highlight/40 bg-ui-highlight/20 px-3 py-1.5">
+        {/* <div className="flex items-center gap-2 rounded-lg border border-ui-highlight/40 bg-ui-highlight/20 px-3 py-1.5">
           <div className={`w-2 h-2 rounded-full ${statusColor} ${renderStatus.isRendering ? 'animate-pulse' : ''}`} />
           <span className={`text-[10px] font-mono ${renderStatus.error ? 'text-red-400' : renderStatus.isRendering ? 'text-amber-400' : 'text-accent'}`}>
             {statusLabel}
           </span>
-        </div>
+        </div> */}
         <div ref={dropdownRef} className="relative">
           <button
             className="flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-bold text-black hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

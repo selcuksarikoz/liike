@@ -13,6 +13,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     backgroundType, backgroundColor, backgroundImage,
     setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight, canvasCornerRadius,
+    canvasBorderWidth, canvasBorderColor,
     shadowType, shadowOpacity, shadowBlur, shadowColor,
     stylePreset,
     deviceScale, imageAspectRatio, imageLayout,
@@ -227,6 +228,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 width: `${displayDimensions.width}px`,
                 height: `${displayDimensions.height}px`,
                 borderRadius: `${canvasCornerRadius}px`,
+                borderWidth: `${canvasBorderWidth}px`,
+                borderColor: canvasBorderColor,
                 // Fallback background for video export (prevents transparent corners)
                 backgroundColor: backgroundColor || '#000',
             }}
@@ -249,15 +252,15 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                  <div ref={backgroundRef} className="absolute inset-0" style={{ backgroundColor }} />
                )}
                {backgroundType === 'image' && backgroundImage && (
-                 <div
-                   ref={backgroundRef}
-                   className="absolute inset-0 w-full h-full bg-cover bg-center"
-                   style={{ 
-                     backgroundImage: `url("${backgroundImage}")`,
-                     backgroundSize: 'cover',
-                     backgroundPosition: 'center',
-                   }}
-                 />
+                 <div ref={backgroundRef} className="absolute inset-0 w-full h-full">
+                   <img 
+                      src={backgroundImage}
+                      className="w-full h-full object-cover object-center"
+                      alt="Background" 
+                      decoding='sync'
+                      loading='eager'
+                   />
+                 </div>
                )}
              </div>
 

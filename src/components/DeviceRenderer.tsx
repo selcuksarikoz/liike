@@ -103,6 +103,8 @@ const MediaContainer = memo(({
               borderRadius: 'inherit',
             }}
             alt="Media"
+            loading="eager"
+            decoding="sync"
           />
         )
       ) : (

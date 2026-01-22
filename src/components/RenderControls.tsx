@@ -1,10 +1,10 @@
 import { useMemo, useRef } from 'react';
-import type { RenderLoopApi } from '../hooks/useRenderLoop';
+import type { StreamingRenderApi } from '../hooks/useStreamingRender';
 import { useRenderStore } from '../store/renderStore';
 
 type Props = {
   stageRef: React.RefObject<HTMLElement>;
-  loop: RenderLoopApi;
+  loop: StreamingRenderApi;
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ');

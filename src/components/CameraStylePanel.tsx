@@ -21,76 +21,7 @@ import { useRenderStore } from '../store/renderStore';
 import { STYLE_PRESETS, SHADOW_TYPES } from '../constants/styles';
 import { DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
 
-const SliderControl = ({
-  label,
-  value,
-  min,
-  max,
-  step = 1,
-  unit = '',
-  onChange,
-  icon,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step?: number;
-  unit?: string;
-  onChange: (value: number) => void;
-  icon?: ReactNode;
-}) => {
-  const fillRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (fillRef.current) {
-      const percent = ((value - min) / (max - min)) * 100;
-      fillRef.current.animate(
-        [{ width: `${percent}%` }],
-        { duration: DURATIONS.fast, easing: EASINGS.easeOut, fill: 'forwards' }
-      );
-    }
-  }, [value, min, max]);
-
-  return (
-    <div className="group">
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center gap-1.5">
-          {icon && (
-            <span className="text-ui-muted group-hover:text-accent transition-colors">
-              {icon}
-            </span>
-          )}
-          <span className="text-[10px] text-ui-muted group-hover:text-white transition-colors">{label}</span>
-        </div>
-        <span className="text-[10px] font-mono text-accent">
-          {typeof value === 'number' && !Number.isInteger(step) ? value.toFixed(2) : value}{unit}
-        </span>
-      </div>
-      <div className="relative h-6 flex items-center">
-        <div className="absolute inset-x-0 h-1.5 bg-ui-border rounded-full overflow-hidden">
-          <div
-            ref={fillRef}
-            className="h-full bg-gradient-to-r from-accent/60 to-accent rounded-full"
-          />
-        </div>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="absolute inset-x-0 w-full h-6 opacity-0 cursor-pointer"
-        />
-        <div
-          className="absolute w-3 h-3 bg-accent rounded-full shadow-lg shadow-accent/30 pointer-events-none transition-transform group-hover:scale-125"
-          style={{ left: `calc(${((value - min) / (max - min)) * 100}% - 6px)` }}
-        />
-      </div>
-    </div>
-  );
-};
+import { SliderControl } from './ui/SliderControl';
 
 export const CameraStylePanel = () => {
   const {

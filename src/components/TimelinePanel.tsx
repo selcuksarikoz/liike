@@ -1,10 +1,10 @@
 import { useMemo, useState, useRef } from 'react';
-import type { RenderLoopApi } from '../hooks/useRenderLoop';
+import type { StreamingRenderApi } from '../hooks/useStreamingRender';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 
 type Props = {
-  loop: RenderLoopApi;
+  loop: StreamingRenderApi;
 };
 
 export const TimelinePanel = ({ loop }: Props) => {

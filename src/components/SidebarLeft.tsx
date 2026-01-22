@@ -6,6 +6,7 @@ import { FrameSelectorModal } from './modals/FrameSelectorModal';
 import { AspectRatioModal } from './modals/AspectRatioModal';
 import { FRAMES_DATA } from '../constants/styles';
 import { DropdownTrigger } from './ui/Dropdown';
+import { SliderControl } from './ui/SliderControl';
 
 const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = [
   { value: 'single', label: 'Single', icon: <Square className="w-5 h-5" /> },
@@ -28,6 +29,12 @@ export const SidebarLeft = () => {
     imageAspectRatio,
     imageLayout,
     setImageLayout,
+    canvasCornerRadius,
+    setCanvasCornerRadius,
+    canvasBorderWidth,
+    setCanvasBorderWidth,
+    canvasBorderColor,
+    setCanvasBorderColor,
   } = useRenderStore();
 
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
@@ -166,6 +173,55 @@ export const SidebarLeft = () => {
             value={`${canvasWidth} × ${canvasHeight}`}
             onClick={() => setIsFrameModalOpen(true)}
           />
+        </div>
+
+
+
+        {/* Canvas Style */}
+        <div className="border-t border-ui-border pt-6">
+          <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">
+            Canvas Style
+          </h2>
+          
+          <div className="space-y-4">
+            {/* Corner Radius */}
+            <SliderControl
+              label="Corner Radius"
+              icon={<CircleDot className="w-3.5 h-3.5" />}
+              value={canvasCornerRadius}
+              min={0}
+              max={100}
+              unit="px"
+              onChange={setCanvasCornerRadius}
+            />
+
+            {/* Border Width */}
+            <SliderControl
+              label="Border Width"
+              icon={<Square className="w-3.5 h-3.5" />}
+              value={canvasBorderWidth}
+              min={0}
+              max={20}
+              unit="px"
+              onChange={setCanvasBorderWidth}
+            />
+
+            {/* Border Color */}
+            {canvasBorderWidth > 0 && (
+              <div className="flex items-center justify-between">
+                 <label className="text-[10px] text-ui-muted">Border Color</label>
+                 <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-ui-text font-mono uppercase">{canvasBorderColor}</span>
+                    <input 
+                      type="color"
+                      value={canvasBorderColor}
+                      onChange={(e) => setCanvasBorderColor(e.target.value)}
+                      className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent"
+                    />
+                 </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Aspect Ratio */}
