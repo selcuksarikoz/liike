@@ -97,9 +97,6 @@ export const SidebarLeft = () => {
         
         {/* Visual Style */}
         <SidebarSection>
-          <SidebarHeader icon={<Sparkles className="w-4 h-4" />}>
-            Visual Style
-          </SidebarHeader>
           <CameraStylePanel />
         </SidebarSection>
       </SidebarContent>

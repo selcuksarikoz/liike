@@ -118,6 +118,23 @@ export const CameraStylePanel = () => {
 
   return (
     <div ref={containerRef} className="space-y-6">
+
+      {/* Frame Style & Device Selection */}
+      <div className="style-section">
+        <SidebarHeader icon={<Palette className="w-4 h-4" />}>
+          Frame Style
+        </SidebarHeader>
+        
+        <DropdownTrigger
+           icon={frameMode === 'device' ? 'smartphone' : 'palette'}
+           label={frameMode === 'device' ? 'Device Mockup' : 'Frame Style'}
+           value={getFormattedValue()}
+           onClick={() => setIsFrameModalOpen(true)}
+        />
+      </div>
+
+      <FrameStyleModal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} />
+        
       {/* 3D Rotation */}
       <div className="style-section group">
         <SidebarHeader 
@@ -187,22 +204,6 @@ export const CameraStylePanel = () => {
           />
         </ControlGroup>
       </div>
-
-      {/* Frame Style & Device Selection */}
-      <div className="style-section">
-        <SidebarHeader icon={<Palette className="w-4 h-4" />}>
-          Frame Style
-        </SidebarHeader>
-        
-        <DropdownTrigger
-           icon={frameMode === 'device' ? 'smartphone' : 'palette'}
-           label={frameMode === 'device' ? 'Device Mockup' : 'Frame Style'}
-           value={getFormattedValue()}
-           onClick={() => setIsFrameModalOpen(true)}
-        />
-      </div>
-
-      <FrameStyleModal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} />
 
       {/* Shadow & Glow */}
       <div className="style-section group">
