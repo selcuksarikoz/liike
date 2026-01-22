@@ -17,6 +17,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     deviceScale, imageAspectRatio, imageLayout,
     cornerRadius,
     applyPreset,
+    renderStatus,
   } = useRenderStore();
 
   const { tracks, playheadMs } = useTimelineStore();
@@ -199,6 +200,35 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden bg-canvas">
       <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle,var(--color-ui-border)_1px,transparent_1px)] [background-size:32px_32px]" />
+
+      {/* Export Loading Overlay - outside canvas capture area */}
+      {renderStatus.isRendering && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 rounded-2xl bg-ui-bg p-8 shadow-2xl border border-ui-border">
+            <div className="relative h-12 w-12">
+              <div className="absolute inset-0 animate-spin rounded-full border-4 border-ui-border border-t-accent" />
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-medium text-ui-text">
+                {renderStatus.phase === 'capturing' ? 'Capturing frames...' :
+                 renderStatus.phase === 'encoding' ? 'Encoding video...' :
+                 renderStatus.phase === 'done' ? 'Done!' : 'Exporting...'}
+              </p>
+              <p className="mt-1 text-sm text-ui-text-muted">
+                {renderStatus.phase === 'capturing'
+                  ? `Frame ${renderStatus.currentFrame} / ${renderStatus.totalFrames}`
+                  : `${Math.round(renderStatus.progress * 100)}%`}
+              </p>
+            </div>
+            <div className="h-2 w-48 overflow-hidden rounded-full bg-ui-border">
+              <div
+                className="h-full bg-accent transition-all duration-150 ease-out"
+                style={{ width: `${renderStatus.progress * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden File Input */}
       <input

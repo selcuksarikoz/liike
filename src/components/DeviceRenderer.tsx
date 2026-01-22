@@ -204,19 +204,27 @@ const DeviceRendererComponent = ({
     return preset.css;
   }, [stylePreset]);
 
-  // Memoized computed shadow
-  const computedShadow = useMemo(() => {
-    if (isPreview) return 'none';
-    if (shadowType === 'none') return 'none';
-    
-    // Construct exact box-shadow string from granular props
+  // Memoized computed shadow - use filter for better transform compatibility
+  const { computedShadow, shadowFilter } = useMemo(() => {
+    if (isPreview || shadowType === 'none') {
+      return { computedShadow: 'none', shadowFilter: 'none' };
+    }
+
     const hex = shadowColor.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
     const alpha = (shadowOpacity / 100);
+    const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
-    return `${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowSpread}px rgba(${r}, ${g}, ${b}, ${alpha})`;
+    // Use drop-shadow filter for better 3D transform compatibility
+    // drop-shadow doesn't support spread, so we use blur only
+    const dropShadow = `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px ${rgba})`;
+
+    // Keep box-shadow as fallback for spread support
+    const boxShadow = `${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowSpread}px ${rgba}`;
+
+    return { computedShadow: boxShadow, shadowFilter: dropShadow };
   }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowSpread, shadowX, shadowY]);
 
   const aspectValue = getAspectRatioValue(aspectRatio);
@@ -230,23 +238,25 @@ const DeviceRendererComponent = ({
   if (layout === 'single') {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        <div
-          ref={containerRef}
-          className="relative overflow-hidden transition-[transform,box-shadow,border-radius] duration-300 ease-out"
-          style={{
-            ...containerStyle,
-            width: aspectValue ? 'auto' : '85%',
-            height: aspectValue ? '85%' : '85%',
-            aspectRatio: aspectValue ? aspectValue : undefined,
-            maxWidth: '85%',
-            maxHeight: '85%',
-            borderRadius: `${cornerRadius}px`,
-            boxShadow: computedShadow,
-            backfaceVisibility: 'hidden',
-            ...styleCSS
-          }}
-        >
-          <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+        {/* Shadow wrapper - filter applied here for proper 3D transform support */}
+        <div style={{ filter: shadowFilter }}>
+          <div
+            ref={containerRef}
+            className="relative overflow-hidden transition-[transform,border-radius] duration-300 ease-out"
+            style={{
+              ...containerStyle,
+              width: aspectValue ? 'auto' : '85%',
+              height: aspectValue ? '85%' : '85%',
+              aspectRatio: aspectValue ? aspectValue : undefined,
+              maxWidth: '85%',
+              maxHeight: '85%',
+              borderRadius: `${cornerRadius}px`,
+              backfaceVisibility: 'hidden',
+              ...styleCSS
+            }}
+          >
+            <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+          </div>
         </div>
       </div>
     );
@@ -275,7 +285,7 @@ const DeviceRendererComponent = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow,
+                  filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
@@ -315,7 +325,7 @@ const DeviceRendererComponent = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow,
+                  filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
@@ -355,7 +365,7 @@ const DeviceRendererComponent = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow,
+                  filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
@@ -395,7 +405,7 @@ const DeviceRendererComponent = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow,
+                  filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
@@ -436,7 +446,7 @@ const DeviceRendererComponent = ({
                 style={{
                   aspectRatio: aspectValue ? aspectValue : 1,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow,
+                  filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
@@ -486,7 +496,7 @@ const DeviceRendererComponent = ({
                   top: `${offset.y}%`,
                   zIndex: offset.zIndex,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow,
+                  filter: shadowFilter,
                   transform: `rotate(${offset.rotate}deg) ${animStyle.transform}`,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
@@ -530,7 +540,7 @@ const DeviceRendererComponent = ({
                   ...pos,
                   aspectRatio: aspectValue ? aspectValue : undefined, // Keep free aspect ratio if set on container or square
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow,
+                  filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
@@ -582,7 +592,7 @@ const DeviceRendererComponent = ({
                   transformOrigin: 'bottom center',
                   zIndex: index === 1 ? 30 : 20 - index,
                   borderRadius: `${cornerRadius}px`,
-                  boxShadow: computedShadow,
+                  filter: shadowFilter,
                   transform: `translate(calc(-50% + ${offset.x}%), calc(-70% + ${offset.y}%)) rotate(${angle}deg) ${animStyle.transform}`,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
@@ -613,7 +623,7 @@ const DeviceRendererComponent = ({
           maxWidth: '85%',
           maxHeight: '85%',
           borderRadius: `${cornerRadius}px`,
-          boxShadow: computedShadow,
+          filter: shadowFilter,
           backfaceVisibility: 'hidden',
           ...styleCSS
         }}

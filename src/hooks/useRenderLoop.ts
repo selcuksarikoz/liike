@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { toBlob } from 'html-to-image';
-import { mkdir, writeFile, remove } from '@tauri-apps/plugin-fs';
+import { flushSync } from 'react-dom';
+import { toCanvas } from 'html-to-image';
+import { mkdir, writeFile } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import { join, tempDir, downloadDir } from '@tauri-apps/api/path';
-import { save } from '@tauri-apps/plugin-dialog';
+import { join, downloadDir } from '@tauri-apps/api/path';
+import { open } from '@tauri-apps/plugin-shell';
 import { useRenderStore, type ExportFormat } from '../store/renderStore';
+import { useTimelineStore } from '../store/timelineStore';
 
 export type RenderOptions = {
   node: HTMLElement | null;
@@ -13,8 +15,6 @@ export type RenderOptions = {
   fps?: number;
   outputName?: string;
   format?: ExportFormat;
-  width?: number;
-  height?: number;
 };
 
 export type RenderState = {
@@ -27,20 +27,49 @@ export type RenderState = {
   error?: string;
 };
 
-const blobToUint8Array = async (blob: Blob): Promise<Uint8Array> => {
-  const buffer = await blob.arrayBuffer();
-  return new Uint8Array(buffer);
-};
-
-const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
-  const animations = node.getAnimations({ subtree: true });
-  animations.forEach((animation) => {
-    animation.pause();
-    animation.currentTime = timeMs;
+// Seek timeline and wait for React to re-render synchronously
+const seekTimeline = (timeMs: number) => {
+  flushSync(() => {
+    useTimelineStore.getState().setPlayhead(timeMs);
   });
 };
 
-const frameFileName = (index: number) => `frame_${String(index + 1).padStart(3, '0')}.png`;
+// Pause/seek any Web Animations API animations
+const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
+  const animations = node.getAnimations({ subtree: true });
+  for (const animation of animations) {
+    animation.pause();
+    animation.currentTime = timeMs;
+  }
+};
+
+// Wait for next animation frame + paint
+const waitForRender = () =>
+  new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+
+// Convert canvas to PNG blob using OffscreenCanvas for speed
+const canvasToBlob = async (canvas: HTMLCanvasElement): Promise<Blob> => {
+  if (typeof OffscreenCanvas !== 'undefined') {
+    const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
+    const ctx = offscreen.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(canvas, 0, 0);
+      return offscreen.convertToBlob({ type: 'image/png' });
+    }
+  }
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
+      'image/png'
+    );
+  });
+};
+
+const frameFileName = (index: number) => `frame_${String(index + 1).padStart(5, '0')}.png`;
 
 const getFileExtension = (format: ExportFormat): string => {
   switch (format) {
@@ -53,56 +82,58 @@ const getFileExtension = (format: ExportFormat): string => {
   }
 };
 
-const getFileFilter = (format: ExportFormat): { name: string; extensions: string[] } => {
-  switch (format) {
-    case 'webm': return { name: 'WebM Video', extensions: ['webm'] };
-    case 'mov': return { name: 'QuickTime Movie', extensions: ['mov'] };
-    case 'png': return { name: 'PNG Image', extensions: ['png'] };
-    case 'gif': return { name: 'GIF Animation', extensions: ['gif'] };
-    case 'mp4':
-    default: return { name: 'MP4 Video', extensions: ['mp4'] };
-  }
-};
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
+// Concurrent queue for parallel disk writes
 const createQueue = (concurrency: number) => {
   let active = 0;
   const queue: (() => Promise<void>)[] = [];
+
   const next = () => {
-    if (active >= concurrency || queue.length === 0) return;
-    active++;
-    const fn = queue.shift()!;
-    fn().finally(() => {
-      active--;
-      next();
-    });
+    while (active < concurrency && queue.length > 0) {
+      active++;
+      const fn = queue.shift()!;
+      fn().finally(() => {
+        active--;
+        next();
+      });
+    }
   };
-  return (fn: () => Promise<void>) => {
-    return new Promise<void>((resolve, reject) => {
+
+  return (fn: () => Promise<void>) =>
+    new Promise<void>((resolve, reject) => {
       queue.push(() => fn().then(resolve, reject));
       next();
     });
-  };
 };
 
-const cleanupTempFiles = async (framesDir: string, tempOutputPath: string) => {
+// Get or create Liike export folder
+const getExportFolder = async (): Promise<string> => {
+  const downloads = await downloadDir();
+  const liikeFolder = await join(downloads, 'Liike');
   try {
-    // Remove frames directory
-    await invoke('cleanup_temp_dir', { dirPath: framesDir });
-  } catch (e) {
-    console.warn('Failed to cleanup frames dir:', e);
+    await mkdir(liikeFolder, { recursive: true });
+  } catch {
+    // Folder might already exist
   }
+  return liikeFolder;
+};
+
+// Generate unique filename
+const getUniqueFilename = (baseName: string, ext: string): string => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  return `${baseName}_${timestamp}.${ext}`;
+};
+
+const cleanupTempFiles = async (framesDir: string) => {
+  if (!framesDir) return;
   try {
-    // Remove temp output file
-    await remove(tempOutputPath);
-  } catch (e) {
-    console.warn('Failed to cleanup temp output:', e);
+    await invoke('cleanup_temp_dir', { dirPath: framesDir });
+  } catch {
+    // Ignore cleanup errors - dir might already be cleaned or never created
   }
 };
 
 export const useRenderLoop = () => {
-  const { setRenderStatus, resetRenderStatus } = useRenderStore();
+  const { setRenderStatus, resetRenderStatus, canvasWidth, canvasHeight } = useRenderStore();
   const [state, setState] = useState<RenderState>({
     isRendering: false,
     progress: 0,
@@ -126,47 +157,75 @@ export const useRenderLoop = () => {
     resetRenderStatus();
   }, [resetRenderStatus]);
 
-
-
-  // Helper to write frame to disk
-  const writeFrame = useCallback(
-    async (framesDir: string, index: number, blob: Blob) => {
-      const bytes = await blobToUint8Array(blob);
-      const filePath = await join(framesDir, frameFileName(index));
-      await writeFile(filePath, bytes);
-    },
-    []
-  );
-
   const render = useCallback(
-    async ({ node, durationMs, fps = 30, outputName = 'liike_render', format = 'mp4', width, height }: RenderOptions) => {
+    async ({
+      node,
+      durationMs,
+      fps = 30,
+      outputName = 'liike_export',
+      format = 'mp4',
+    }: RenderOptions) => {
+      console.log('[Render] Starting export:', { format, durationMs, fps, node: !!node });
+
       if (!node) {
-        setState((prev) => ({ ...prev, error: 'Missing node to render.' }));
-        setRenderStatus({ error: 'Missing node to render.' });
+        const error = 'Missing node to render.';
+        console.error('[Render]', error);
+        setState((prev) => ({ ...prev, error }));
+        setRenderStatus({ error });
+        return;
+      }
+
+      const isPngExport = format === 'png';
+      const isVideoExport = !isPngExport;
+
+      // For video export, require a minimum duration
+      if (isVideoExport && durationMs < 100) {
+        const error = 'Video export requires a duration. Add clips to the timeline first.';
+        console.error('[Render]', error);
+        setState((prev) => ({ ...prev, error }));
+        setRenderStatus({ error });
         return;
       }
 
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
 
-      // For PNG export, only capture one frame
-      const isPngExport = format === 'png';
       const totalFrames = isPngExport ? 1 : Math.max(1, Math.ceil((durationMs / 1000) * fps));
-      const tempRoot = await tempDir();
-      const framesDir = await join(tempRoot, `liike_frames_${Date.now()}`);
+      console.log('[Render] Total frames:', totalFrames);
+
+      // Use canvas dimensions from store for output size
+      const outputWidth = canvasWidth || 1080;
+      const outputHeight = canvasHeight || 1080;
+
+      // Calculate pixelRatio based on canvas size vs node size
+      const nodeRect = node.getBoundingClientRect();
+      const pixelRatio = Math.max(outputWidth / nodeRect.width, outputHeight / nodeRect.height);
+      console.log('[Render] Output size:', outputWidth, 'x', outputHeight, 'pixelRatio:', pixelRatio);
+
+      // Setup folders
+      const exportFolder = await getExportFolder();
       const ext = getFileExtension(format);
-      const outputPath = await join(tempRoot, `${outputName}.${ext}`);
+      const filename = getUniqueFilename(outputName, ext);
+      const outputPath = await join(exportFolder, filename);
+      console.log('[Render] Output path:', outputPath);
 
-      await mkdir(framesDir, { recursive: true });
+      // Temp folder for frames (video only)
+      let framesDir = '';
+      if (isVideoExport) {
+        framesDir = await join(exportFolder, `temp_frames_${Date.now()}`);
+        await mkdir(framesDir, { recursive: true });
+        console.log('[Render] Frames dir:', framesDir);
+      }
 
-      pauseAndSeekAnimations(node, 0);
+      // Pause playback
+      useTimelineStore.getState().setIsPlaying(false);
 
       setState({
         isRendering: true,
         progress: 0,
         totalFrames,
         currentFrame: 0,
-        framesDir,
+        framesDir: framesDir || undefined,
         outputPath,
         error: undefined,
       });
@@ -179,95 +238,119 @@ export const useRenderLoop = () => {
         phase: 'capturing',
       });
 
+      // html-to-image options for accurate capture
+      const captureOptions = {
+        pixelRatio,
+        cacheBust: false,
+        skipAutoScale: true,
+        includeQueryParams: true,
+        skipFonts: false,
+        preferredFontFormat: 'woff2' as const,
+        // Ensure proper rendering of shadows and transforms
+        style: {
+          transformStyle: 'preserve-3d',
+        },
+        // Use foreignObject for better shadow/transform support
+        useForeignObjectRendering: false,
+      };
 
       try {
-        const queueLimit = createQueue(5); // 5 concurrent writes
+        // PNG Export - capture current canvas state directly
+        if (isPngExport) {
+          console.log('[Render] PNG export - capturing current state');
+
+          // Just wait for any pending renders
+          await waitForRender();
+
+          const canvas = await toCanvas(node, captureOptions);
+          console.log('[Render] Canvas captured:', canvas.width, 'x', canvas.height);
+
+          const blob = await canvasToBlob(canvas);
+          console.log('[Render] Blob created:', blob.size, 'bytes');
+
+          const bytes = new Uint8Array(await blob.arrayBuffer());
+          await writeFile(outputPath, bytes);
+          console.log('[Render] PNG saved to:', outputPath);
+
+          setState((prev) => ({ ...prev, isRendering: false, progress: 1, outputPath }));
+          setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
+
+          // Open export folder
+          await open(exportFolder);
+          return;
+        }
+
+        // Video Export - capture all frames
+        console.log('[Render] Video export - capturing', totalFrames, 'frames');
+
+        // Seek to start
+        seekTimeline(0);
+        pauseAndSeekAnimations(node, 0);
+        await waitForRender();
+
+        const writeQueue = createQueue(10);
         const writePromises: Promise<void>[] = [];
 
-        for (let frameIndex = 0; frameIndex < totalFrames; frameIndex += 1) {
-          // Check abort at start of loop
+        for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
           if (abortController.signal.aborted) {
+            console.log('[Render] Aborted at frame', frameIndex);
             resetState();
+            await cleanupTempFiles(framesDir);
             return;
           }
 
-          // Yield to main thread to allow UI updates
-          await sleep(0);
-
           const t = (frameIndex / fps) * 1000;
-          pauseAndSeekAnimations(node, t);
-          
-          // Capture frame (must be sequential with DOM state)
-          const blob = await toBlob(node, { pixelRatio: 1 });
-          if (!blob) {
-            throw new Error('Failed to capture frame.');
-          }
 
-          // Queue the write operation (parallel)
-          const p = queueLimit(() => writeFrame(framesDir, frameIndex, blob));
-          writePromises.push(p);
+          // Seek timeline (React state-based animations)
+          seekTimeline(t);
+          // Seek Web Animations API animations
+          pauseAndSeekAnimations(node, t);
+          // Wait for DOM to fully update
+          await waitForRender();
+
+          // Capture to canvas
+          const canvas = await toCanvas(node, captureOptions);
+
+          // Convert to blob
+          const blob = await canvasToBlob(canvas);
+
+          // Queue disk write (parallel I/O)
+          const frameNum = frameIndex;
+          writePromises.push(
+            writeQueue(async () => {
+              const bytes = new Uint8Array(await blob.arrayBuffer());
+              const filePath = await join(framesDir, frameFileName(frameNum));
+              await writeFile(filePath, bytes);
+            })
+          );
 
           // Update progress
+          const progress = (frameIndex + 1) / totalFrames;
           setState((prev) => ({
             ...prev,
             currentFrame: frameIndex + 1,
-            progress: (frameIndex + 1) / totalFrames,
+            progress,
           }));
           setRenderStatus({
             currentFrame: frameIndex + 1,
-            progress: (frameIndex + 1) / totalFrames,
+            progress,
           });
         }
-        
-        // Wait for all writes to complete
+
+        // Wait for all disk writes
         await Promise.all(writePromises);
-        
+        console.log('[Render] All frames written');
       } catch (error) {
         const errorMsg = (error as Error).message;
+        console.error('[Render] Capture error:', errorMsg);
         setState((prev) => ({ ...prev, error: errorMsg, isRendering: false }));
         setRenderStatus({ error: errorMsg, isRendering: false, phase: 'idle' });
+        if (framesDir) await cleanupTempFiles(framesDir);
         return;
       }
 
-      // For PNG, just copy the first frame to output
-      if (isPngExport) {
-        try {
-          const framePath = await join(framesDir, frameFileName(0));
-          // Copy frame to temp output path
-          await invoke('copy_file', { src: framePath, dest: outputPath });
-
-          // Ask user where to save
-          const defaultPath = await join(await downloadDir(), `${outputName}.${ext}`);
-          const savePath = await save({
-            defaultPath,
-            filters: [getFileFilter(format)],
-            title: 'Save Export',
-          });
-
-          if (savePath) {
-            // Copy to user's selected location
-            await invoke('copy_file', { src: outputPath, dest: savePath });
-            setState((prev) => ({ ...prev, isRendering: false, progress: 1, outputPath: savePath }));
-            setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
-          } else {
-            // User cancelled
-            setState((prev) => ({ ...prev, isRendering: false, progress: 1 }));
-            setRenderStatus({ isRendering: false, progress: 1, phase: 'idle' });
-          }
-
-          // Cleanup temp files
-          await cleanupTempFiles(framesDir, outputPath);
-        } catch (error) {
-          const errorMsg = (error as Error).message;
-          setState((prev) => ({ ...prev, error: errorMsg, isRendering: false }));
-          setRenderStatus({ error: errorMsg, isRendering: false, phase: 'idle' });
-          // Still try to cleanup on error
-          await cleanupTempFiles(framesDir, outputPath);
-        }
-        return;
-      }
-
-      // Video encoding
+      // Video encoding phase
+      console.log('[Render] Starting video encoding');
       setRenderStatus({ phase: 'encoding', progress: 0 });
 
       try {
@@ -285,37 +368,25 @@ export const useRenderLoop = () => {
           outputPath,
           fps,
           format,
-          width: width || 1080,
-          height: height || 1080,
+          width: outputWidth,
+          height: outputHeight,
         });
 
-        // Ask user where to save
-        const defaultPath = await join(await downloadDir(), `${outputName}.${ext}`);
-        const savePath = await save({
-          defaultPath,
-          filters: [getFileFilter(format)],
-          title: 'Save Export',
-        });
+        console.log('[Render] Video encoded successfully');
+        setState((prev) => ({ ...prev, isRendering: false, progress: 1, outputPath }));
+        setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
 
-        if (savePath) {
-          // Copy to user's selected location
-          await invoke('copy_file', { src: outputPath, dest: savePath });
-          setState((prev) => ({ ...prev, isRendering: false, progress: 1, outputPath: savePath }));
-          setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
-        } else {
-          // User cancelled
-          setState((prev) => ({ ...prev, isRendering: false, progress: 1 }));
-          setRenderStatus({ isRendering: false, progress: 1, phase: 'idle' });
-        }
+        // Cleanup temp frames
+        await cleanupTempFiles(framesDir);
 
-        // Cleanup temp files
-        await cleanupTempFiles(framesDir, outputPath);
+        // Open export folder
+        await open(exportFolder);
       } catch (error) {
         const errorMsg = (error as Error).message;
+        console.error('[Render] Encoding error:', errorMsg);
         setState((prev) => ({ ...prev, error: errorMsg, isRendering: false }));
         setRenderStatus({ error: errorMsg, isRendering: false, phase: 'idle' });
-        // Still try to cleanup on error
-        await cleanupTempFiles(framesDir, outputPath);
+        await cleanupTempFiles(framesDir);
       } finally {
         if (unlistenProgressRef.current) {
           unlistenProgressRef.current();
@@ -323,7 +394,7 @@ export const useRenderLoop = () => {
         }
       }
     },
-    [resetState, writeFrame, setRenderStatus]
+    [resetState, setRenderStatus, canvasWidth, canvasHeight]
   );
 
   const cancel = useCallback(() => {
@@ -336,16 +407,10 @@ export const useRenderLoop = () => {
     resetRenderStatus();
   }, [resetState, resetRenderStatus]);
 
-  const api = useMemo(
-    () => ({
-      render,
-      cancel,
-      state,
-    }),
+  return useMemo(
+    () => ({ render, cancel, state }),
     [cancel, render, state]
   );
-
-  return api;
 };
 
 export type RenderLoopApi = ReturnType<typeof useRenderLoop>;

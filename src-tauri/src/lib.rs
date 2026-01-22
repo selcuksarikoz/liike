@@ -31,31 +31,53 @@ async fn copy_file(src: String, dest: String) -> Result<(), String> {
   Ok(())
 }
 
-fn get_encoder_args(format: &str) -> Vec<String> {
+fn get_encoder_args(format: &str, width: u32, height: u32) -> Vec<String> {
+  // Scale filter with proper color handling for vivid output
+  let scale_w = if width % 2 == 0 { width } else { width + 1 };
+  let scale_h = if height % 2 == 0 { height } else { height + 1 };
+  let scale_filter = format!("scale={}:{}:flags=lanczos:in_color_matrix=bt709:out_color_matrix=bt709", scale_w, scale_h);
+
   match format {
     "webm" => vec![
+      "-vf".to_string(), scale_filter,
       "-c:v".to_string(), "libvpx-vp9".to_string(),
       "-crf".to_string(), "18".to_string(),
       "-b:v".to_string(), "0".to_string(),
       "-pix_fmt".to_string(), "yuv420p".to_string(),
+      "-colorspace".to_string(), "bt709".to_string(),
+      "-color_primaries".to_string(), "bt709".to_string(),
+      "-color_trc".to_string(), "bt709".to_string(),
       "-row-mt".to_string(), "1".to_string(),
-      "-threads".to_string(), "4".to_string(),
+      "-threads".to_string(), "0".to_string(),
     ],
     "mov" => vec![
+      "-vf".to_string(), scale_filter,
       "-c:v".to_string(), "prores_ks".to_string(),
       "-profile:v".to_string(), "3".to_string(),
       "-pix_fmt".to_string(), "yuv422p10le".to_string(),
+      "-colorspace".to_string(), "bt709".to_string(),
+      "-color_primaries".to_string(), "bt709".to_string(),
+      "-color_trc".to_string(), "bt709".to_string(),
       "-vendor".to_string(), "apl0".to_string(),
     ],
-    "gif" => vec![
-      "-vf".to_string(), "fps=15,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse".to_string(),
-      "-loop".to_string(), "0".to_string(),
-    ],
+    "gif" => {
+      let gif_filter = format!("{},fps=15,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=full[p];[s1][p]paletteuse=dither=sierra2_4a", scale_filter);
+      vec![
+        "-vf".to_string(), gif_filter,
+        "-loop".to_string(), "0".to_string(),
+      ]
+    },
+    // MP4 with H.265/HEVC for better quality and smaller size
     _ => vec![
-      "-c:v".to_string(), "libx264".to_string(),
+      "-vf".to_string(), scale_filter,
+      "-c:v".to_string(), "libx265".to_string(),
       "-pix_fmt".to_string(), "yuv420p".to_string(),
       "-preset".to_string(), "medium".to_string(),
-      "-crf".to_string(), "18".to_string(),
+      "-crf".to_string(), "20".to_string(),
+      "-tag:v".to_string(), "hvc1".to_string(), // Apple compatibility
+      "-colorspace".to_string(), "bt709".to_string(),
+      "-color_primaries".to_string(), "bt709".to_string(),
+      "-color_trc".to_string(), "bt709".to_string(),
       "-movflags".to_string(), "+faststart".to_string(),
     ],
   }
@@ -73,10 +95,10 @@ async fn encode_video(
 ) -> Result<(), String> {
   let fps = fps.unwrap_or(30);
   let format = format.unwrap_or_else(|| "mp4".to_string());
-  let _width = width.unwrap_or(1080);
-  let _height = height.unwrap_or(1080);
+  let width = width.unwrap_or(1080);
+  let height = height.unwrap_or(1080);
 
-  let input_pattern = PathBuf::from(&frames_dir).join("frame_%03d.png");
+  let input_pattern = PathBuf::from(&frames_dir).join("frame_%05d.png");
   let input_pattern_str = input_pattern.to_string_lossy().to_string();
   let output_path_owned = output_path.clone();
 
@@ -99,7 +121,7 @@ async fn encode_video(
     input_pattern_str.clone(),
   ];
 
-  args.extend(get_encoder_args(&format));
+  args.extend(get_encoder_args(&format, width, height));
   args.push(output_path_owned.clone());
 
   let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
@@ -188,13 +210,19 @@ async fn cleanup_temp_dir(dir_path: String) -> Result<(), String> {
   Ok(())
 }
 
+#[tauri::command]
+async fn precise_sleep(ms: u64) -> Result<(), String> {
+  tokio::time::sleep(std::time::Duration::from_millis(ms)).await;
+  Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_shell::init())
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_dialog::init())
-    .invoke_handler(tauri::generate_handler![encode_video, copy_file, cleanup_temp_dir])
+    .invoke_handler(tauri::generate_handler![encode_video, copy_file, cleanup_temp_dir, precise_sleep])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

@@ -10,7 +10,7 @@ import { Timeline } from './components/Timeline';
 const App = () => {
   const stageRef = useRef<HTMLDivElement>(null);
   const loop = useRenderLoop();
-  const { durationMs, fps, outputName, canvasWidth, canvasHeight } = useRenderStore();
+  const { durationMs, fps, outputName } = useRenderStore();
 
   const handleRender = (format: ExportFormat) => {
     loop.render({
@@ -19,8 +19,6 @@ const App = () => {
       fps,
       outputName,
       format,
-      width: canvasWidth,
-      height: canvasHeight,
     });
   };
 

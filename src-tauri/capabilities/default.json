@@ -15,10 +15,12 @@
       "identifier": "fs:read-dirs"
     },
     {
-      "identifier": "fs:allow-mkdir"
+      "identifier": "fs:allow-mkdir",
+      "allow": [{ "path": "$TEMP/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$HOME/**" }]
     },
     {
-      "identifier": "fs:allow-remove"
+      "identifier": "fs:allow-remove",
+      "allow": [{ "path": "$TEMP/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$HOME/**" }]
     },
     {
       "identifier": "fs:scope",
@@ -32,6 +34,10 @@
     },
     {
       "identifier": "shell:allow-stdin-write"
+    },
+    {
+      "identifier": "shell:allow-open",
+      "allow": [{ "path": "$DOWNLOAD/**" }, { "path": "$HOME/**" }]
     },
     "dialog:default"
   ]
