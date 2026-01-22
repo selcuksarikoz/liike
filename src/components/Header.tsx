@@ -8,9 +8,6 @@ import { ChevronDown, Download, Film, Image as ImageIcon, RefreshCw } from 'luci
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRenderStore, type ExportFormat } from '../store/renderStore';
 
-const avatar =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuCcsrYtTC_qy7rQZBsuZfyG4ZLH3oWBz2N86U22VRA38uY2NB4eqCVNq01tuQMIF6Ay7ZvbM9oBL7krtOJpIq6wTQ5N9zhEgR-f2yt-YxUvCEPq52WH6rfX8bW7Lu81Upf-9VY-BhEd2c8gmTrAr5qxfW23T871EUjkEv2GBGOSeRNwLnJwCSjoN4lawrs3R18HI-q7KPQUQrR5v2qJuUdCLCiUwMAjGkkc7P0mgeJ53mg-E3ZM30wLDqC5AvjNje98_pl1hjyPilY';
-
 type ExportOption = {
   id: ExportFormat;
   label: string;
@@ -83,6 +80,8 @@ export const Header = ({ onRender }: HeaderProps) => {
           
           const osType = await type();
           let downloadUrl = '';
+
+          console.log(osType);
           
           if (osType === 'macos') {
             downloadUrl = data.macos_download_url || data.download_url || '';

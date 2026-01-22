@@ -219,6 +219,15 @@ async fn encode_video(
 
     let total_frames = std::fs::read_dir(&frames_dir)
         .map_err(|e| format!("Failed to read frames dir: {e}"))?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.starts_with("frame_") && name.ends_with(".webp") {
+                Some(())
+            } else {
+                None
+            }
+        })
         .count();
 
     let total_duration = (total_frames as f32 / fps as f32).max(0.01);

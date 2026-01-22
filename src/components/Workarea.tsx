@@ -241,7 +241,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         type="file"
         ref={fileInputRef}
         className="hidden"
-        accept="image/*,video/*"
+        accept="image/*,video/mp4,video/quicktime,video/webm"
         onChange={handleFileChange}
       />
 

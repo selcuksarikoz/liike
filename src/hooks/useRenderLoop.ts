@@ -43,6 +43,36 @@ const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
   }
 };
 
+// Seek all video elements in the node and wait for them to be ready
+const seekVideos = async (node: HTMLElement, timeMs: number) => {
+  const videos = Array.from(node.querySelectorAll('video'));
+  if (videos.length === 0) return;
+
+  const seekPromises = videos.map((video) => {
+    return new Promise<void>((resolve) => {
+      // If already at the right time (within small margin), skip
+      if (Math.abs(video.currentTime - timeMs / 1000) < 0.05) {
+        resolve();
+        return;
+      }
+
+      const onSeeked = () => {
+        video.removeEventListener('seeked', onSeeked);
+        resolve();
+      };
+      
+      // Safety timeout in case seek fails
+      setTimeout(onSeeked, 500);
+
+      video.addEventListener('seeked', onSeeked);
+      video.pause();
+      video.currentTime = timeMs / 1000;
+    });
+  });
+
+  await Promise.all(seekPromises);
+};
+
 // Wait for DOM to update and paint
 // Uses setTimeout instead of requestAnimationFrame to work in background
 const waitForRender = (ms = 50) =>
@@ -339,6 +369,7 @@ export const useRenderLoop = () => {
         // Seek to start with longer initial wait
         seekTimeline(0);
         pauseAndSeekAnimations(node, 0);
+        await seekVideos(node, 0);
         await waitForRender(200); // Longer wait for initial frame to ensure DOM settles
 
         const writeQueue = createQueue(10);
@@ -362,6 +393,8 @@ export const useRenderLoop = () => {
           seekTimeline(t);
           // Seek Web Animations API animations
           pauseAndSeekAnimations(node, t);
+          // Seek and sync any video elements
+          await seekVideos(node, t);
           // Wait for DOM to fully update (works in background too)
           await waitForRender(frameWaitMs);
 

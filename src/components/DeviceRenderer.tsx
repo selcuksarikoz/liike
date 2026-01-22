@@ -1,4 +1,4 @@
-import { useRef, useMemo, memo, useCallback } from 'react';
+import { useRef, useMemo, memo, useCallback, useEffect } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
@@ -31,6 +31,7 @@ type ImageRendererProps = {
   shadowBlur?: number;
   layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative';
   animationInfo?: AnimationInfo;
+  playing?: boolean;
 };
 
 // =============================================================================
@@ -43,6 +44,7 @@ type MediaContainerProps = {
   isPreview: boolean;
   onScreenClick?: (index: number) => void;
   styleCSS: React.CSSProperties;
+  playing?: boolean;
 };
 
 const MediaContainer = memo(({
@@ -52,7 +54,20 @@ const MediaContainer = memo(({
   isPreview,
   onScreenClick,
   styleCSS,
+  playing = true,
 }: MediaContainerProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (playing) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [playing]);
+
   const handleClick = useCallback(() => {
     if (!isPreview) onScreenClick?.(index);
   }, [isPreview, onScreenClick, index]);
@@ -69,12 +84,13 @@ const MediaContainer = memo(({
       {media ? (
         media.type === 'video' ? (
           <video
+            ref={videoRef}
             src={media.url}
             className="w-full h-full object-cover block"
             style={{
               borderRadius: 'inherit',
             }}
-            autoPlay
+            autoPlay={playing}
             loop
             muted
             playsInline
@@ -188,6 +204,7 @@ const DeviceRendererComponent = ({
   shadowBlur = 30,
   layout = 'single',
   animationInfo,
+  playing = true,
 }: ImageRendererProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -242,7 +259,7 @@ const DeviceRendererComponent = ({
             ...styleCSS
           }}
         >
-          <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+          <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
         </div>
       </div>
     );
@@ -279,7 +296,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
               </div>
             );
           })}
@@ -319,7 +336,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
               </div>
             );
           })}
@@ -359,7 +376,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
               </div>
             );
           })}
@@ -399,7 +416,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
               </div>
             );
           })}
@@ -440,7 +457,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
               </div>
             );
           })}
@@ -490,7 +507,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
               </div>
             );
           })}
@@ -534,7 +551,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
               </div>
             );
           })}
@@ -586,7 +603,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
               </div>
             );
           })}
@@ -614,7 +631,7 @@ const DeviceRendererComponent = ({
           ...styleCSS
         }}
       >
-        <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
+        <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
       </div>
     </div>
   );
@@ -638,6 +655,7 @@ export const DeviceRenderer = memo(DeviceRendererComponent, (prev, next) => {
   if (prev.shadowColor !== next.shadowColor) return false;
   if (prev.shadowBlur !== next.shadowBlur) return false;
   if (prev.isPreview !== next.isPreview) return false;
+  if (prev.playing !== next.playing) return false;
 
   // Reference comparison for arrays/objects
   if (prev.mediaAssets !== next.mediaAssets) return false;

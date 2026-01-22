@@ -42,6 +42,7 @@ const AnimatedLayoutCard = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const deviceRef = useRef<HTMLDivElement>(null);
   const animationsRef = useRef<Animation[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
 
   const hasAnimation = preset.animations.some(a => a.type !== 'none');
   const isCombo = preset.animations.filter(a => a.type !== 'none').length > 1;
@@ -69,6 +70,7 @@ const AnimatedLayoutCard = ({
     };
 
     const handleMouseEnter = () => {
+      setIsHovered(true);
       // Card hover effect
       card.animate(
         [...ANIMATION_PRESETS.cardHoverIn.keyframes],
@@ -86,6 +88,7 @@ const AnimatedLayoutCard = ({
     };
 
     const handleMouseLeave = () => {
+      setIsHovered(false);
       // Card hover out
       card.animate(
         [...ANIMATION_PRESETS.cardHoverOut.keyframes],
@@ -153,6 +156,7 @@ const AnimatedLayoutCard = ({
           layout={layout}
           isPreview={true}
           scale={0.9}
+          playing={isHovered}
         />
       </div>
 
