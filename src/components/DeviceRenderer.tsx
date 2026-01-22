@@ -234,7 +234,7 @@ const DeviceRendererComponent = ({
     const alpha = (shadowOpacity / 100);
     const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
-    // drop-shadow(x-offset y-offset blur color)
+    // drop-shadow(x-offset y-offset blur-radius color)
     return `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px ${rgba})`;
   }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowX, shadowY]);
 
