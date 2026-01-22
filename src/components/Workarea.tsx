@@ -251,7 +251,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
              {/* Canvas Background with Crossfade */}
              <div
                 className="absolute inset-0 overflow-hidden"
-                style={{ borderRadius: `${canvasCornerRadius}px` }}
+                style={{ borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px` }}
              >
                {/* Previous background (fades out) - only for gradient crossfade */}
                {backgroundType === 'gradient' && (
@@ -282,6 +282,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             <div
               ref={deviceContainerRef}
               className="relative z-10 w-full h-full flex items-center justify-center p-[5%] overflow-hidden"
+              style={{ borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px` }}
             >
               {/* Animation wrapper - only apply outer animation for single layout */}
               <div
