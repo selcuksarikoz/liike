@@ -39,23 +39,24 @@ export const SidebarLeft = () => {
 
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
   const [isAspectRatioModalOpen, setIsAspectRatioModalOpen] = useState(false);
-  const fileInputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
+  const inputRef0 = useRef<HTMLInputElement>(null);
+  const inputRef1 = useRef<HTMLInputElement>(null);
+  const inputRef2 = useRef<HTMLInputElement>(null);
+  const inputRef3 = useRef<HTMLInputElement>(null);
+  
+  const fileInputRefs = [inputRef0, inputRef1, inputRef2, inputRef3];
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
     const newAssets = [...mediaAssets];
+    
+    // Process max 4 files to prevent overflow loops
+    const filesToProcess = files.slice(0, 4);
 
-    // If multiple files selected, fill starting from current index
-    files.forEach((file, i) => {
+    filesToProcess.forEach((file, i) => {
       const targetIndex = index + i;
-      // Stop if we exceed the max number of slots (4)
       if (targetIndex >= 4) return;
 
       const url = URL.createObjectURL(file);
@@ -64,6 +65,9 @@ export const SidebarLeft = () => {
     });
 
     setMediaAssets(newAssets);
+    
+    // Reset input value to allow selecting the same file again if needed
+    e.target.value = '';
   };
 
   const handleRemoveMedia = (index: number, e: React.MouseEvent) => {
@@ -115,7 +119,7 @@ export const SidebarLeft = () => {
                   ref={fileInputRefs[index]}
                   type="file"
                   className="hidden"
-                  multiple
+                  multiple={true} // Explicitly set multiple
                   accept="image/*,video/mp4,video/quicktime,video/webm"
                   onChange={(e) => handleFileSelect(e, index)}
                 />

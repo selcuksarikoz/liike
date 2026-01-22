@@ -314,7 +314,7 @@ const captureFrame = async (
   canvas.height = outputHeight;
   const ctx = canvas.getContext('2d', { 
     willReadFrequently: true,
-    alpha: false 
+    alpha: true 
   })!;
 
   // High quality scaling
@@ -327,18 +327,33 @@ const captureFrame = async (
   const scaleY = outputHeight / nodeRect.height;
   const scale = Math.min(scaleX, scaleY);
   
-  // Fill background (get from node's computed style)
+  
+  // Get computed styles
   const computedStyle = window.getComputedStyle(node);
-  ctx.fillStyle = computedStyle.backgroundColor || '#000000';
-  ctx.fillRect(0, 0, outputWidth, outputHeight);
 
   // Center the content
   const offsetX = (outputWidth - nodeRect.width * scale) / 2;
   const offsetY = (outputHeight - nodeRect.height * scale) / 2;
 
-  ctx.save();
   ctx.translate(offsetX, offsetY);
   ctx.scale(scale, scale);
+
+  // Apply clipping for rounded corners to enable transparency
+  const radius = parseFloat(computedStyle.borderRadius) || 0;
+  if (radius > 0) {
+      ctx.beginPath();
+      // Use roundRect if available, otherwise simple rect (most modern environments support roundRect)
+      if (ctx.roundRect) {
+          ctx.roundRect(0, 0, nodeRect.width, nodeRect.height, radius);
+      } else {
+          ctx.rect(0, 0, nodeRect.width, nodeRect.height);
+      }
+      ctx.clip();
+  }
+
+  // Fill background inside the clipped area
+  ctx.fillStyle = computedStyle.backgroundColor || '#000000';
+  ctx.fillRect(0, 0, nodeRect.width, nodeRect.height);
 
   // Use drawImage if node has a canvas child, otherwise use html2canvas-like approach
   // For now, we use foreignObject SVG approach (fast, supports CSS)
@@ -460,16 +475,16 @@ export const useStreamingRender = () => {
            const canvas = document.createElement('canvas');
            canvas.width = outputWidth;
            canvas.height = outputHeight;
-           const ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: false })!;
+           const ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true })!;
            
            // High quality smoothing
            ctx.imageSmoothingEnabled = true;
            ctx.imageSmoothingQuality = 'high';
            
-           // Background
+           // Background & Clipping
            const computedStyle = window.getComputedStyle(node);
-           ctx.fillStyle = computedStyle.backgroundColor || '#000000';
-           ctx.fillRect(0, 0, outputWidth, outputHeight);
+           // We'll apply background after clip in the transform block
+           ctx.clearRect(0, 0, outputWidth, outputHeight);
            
            // Content
            const nodeRect = node.getBoundingClientRect();
@@ -482,6 +497,22 @@ export const useStreamingRender = () => {
            ctx.save();
            ctx.translate(offsetX, offsetY);
            ctx.scale(scale, scale);
+
+           // Apply clipping for rounded corners
+           const radius = parseFloat(computedStyle.borderRadius) || 0;
+           if (radius > 0) {
+               ctx.beginPath();
+               if (ctx.roundRect) {
+                   ctx.roundRect(0, 0, nodeRect.width, nodeRect.height, radius);
+               } else {
+                   ctx.rect(0, 0, nodeRect.width, nodeRect.height);
+               }
+               ctx.clip();
+           }
+
+           // Fill background inside the clipped area
+           ctx.fillStyle = computedStyle.backgroundColor || '#000000';
+           ctx.fillRect(0, 0, nodeRect.width, nodeRect.height);
            const svgData = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height);
            const img = await loadImage(svgData);
            ctx.drawImage(img, 0, 0, nodeRect.width, nodeRect.height);
@@ -657,7 +688,9 @@ export const useStreamingRender = () => {
 
   const cancel = useCallback(async () => {
     // 1. Stop playback & signal abort immediately
-    useTimelineStore.getState().setIsPlaying(false);
+    const store = useTimelineStore.getState();
+    store.setIsPlaying(false);
+    store.setPlayhead(0); // Reset to start
     abortControllerRef.current?.abort();
     
     // 2. Reset UI state immediately

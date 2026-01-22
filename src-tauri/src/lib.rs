@@ -438,7 +438,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                 "-b:v".to_string(),
                 "0".to_string(),
                 "-pix_fmt".to_string(),
-                "yuv420p".to_string(),
+                "yuva420p".to_string(), // With Alpha
                 "-deadline".to_string(),
                 "realtime".to_string(),
                 "-cpu-used".to_string(),
