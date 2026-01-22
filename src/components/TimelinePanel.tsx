@@ -9,7 +9,7 @@ type Props = {
 
 export const TimelinePanel = ({ loop }: Props) => {
   const { durationMs, fps } = useRenderStore();
-  const { tracks, playheadMs, isPlaying, setPlayhead } = useTimelineStore();
+  const { tracks, playheadMs, isPlaying, setPlayhead, setIsPlaying } = useTimelineStore();
   const { state } = loop;
 
   const [hoverPosition, setHoverPosition] = useState<number | null>(null);
@@ -37,7 +37,7 @@ export const TimelinePanel = ({ loop }: Props) => {
       <div className="mb-3 flex items-center justify-between text-xs font-semibold text-ui-text">
         <div 
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => loop.toggle()}
+          onClick={() => setIsPlaying(!isPlaying)}
         >
           <div className="relative flex items-center justify-center w-4 h-4">
             <span className={`absolute h-2 w-2 rounded-full ${isPlaying ? 'bg-red-500 animate-pulse' : 'bg-accent'} shadow-[0_0_0_3px_var(--color-accent-20)]`} />

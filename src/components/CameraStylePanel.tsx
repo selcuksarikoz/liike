@@ -104,6 +104,7 @@ export const CameraStylePanel = () => {
     shadowOpacity, setShadowOpacity,
     shadowBlur, setShadowBlur,
     shadowColor, setShadowColor,
+    setShadowSpread, setShadowX, setShadowY,
   } = useRenderStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -151,7 +152,7 @@ export const CameraStylePanel = () => {
         setCornerRadius(12);
         break;
       case 'shadow':
-        setShadowType('spread');
+        setShadowType('soft');
         setShadowOpacity(40);
         break;
     }

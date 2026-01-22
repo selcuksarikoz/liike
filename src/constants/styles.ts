@@ -7,6 +7,7 @@ export type StylePreset = {
     border?: string;
     boxShadow?: string;
     opacity?: number;
+    padding?: string;
   };
   preview?: string;
 };
@@ -18,7 +19,7 @@ export type BorderType = {
 };
 
 export type ShadowType = {
-  id: 'none' | 'spread' | 'hug' | 'adaptive';
+  id: 'none' | 'soft' | 'float' | 'dream' | 'glow';
   label: string;
   preview?: string;
 };

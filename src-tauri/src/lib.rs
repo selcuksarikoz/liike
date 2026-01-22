@@ -32,85 +32,106 @@ async fn copy_file(src: String, dest: String) -> Result<(), String> {
 }
 
 fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<String> {
-  // Scale filter with proper color handling for vivid output
+  // Scale filter - use fast_bilinear for speed, lanczos only if needed
   let scale_w = if width % 2 == 0 { width } else { width + 1 };
   let scale_h = if height % 2 == 0 { height } else { height + 1 };
-  let scale_filter = format!("scale={}:{}:flags=lanczos:in_color_matrix=bt709:out_color_matrix=bt709", scale_w, scale_h);
+  let scale_filter = format!("scale={}:{}:flags=bilinear", scale_w, scale_h);
+
+  let is_macos = std::env::consts::OS == "macos";
+  let is_windows = std::env::consts::OS == "windows";
 
   match format {
     "webm" => vec![
       "-vf".to_string(), scale_filter,
       "-c:v".to_string(), "libvpx-vp9".to_string(),
-      "-crf".to_string(), "24".to_string(), // Slightly lower quality for speed
+      "-crf".to_string(), "28".to_string(),
       "-b:v".to_string(), "0".to_string(),
       "-pix_fmt".to_string(), "yuv420p".to_string(),
-      "-colorspace".to_string(), "bt709".to_string(),
-      "-color_primaries".to_string(), "bt709".to_string(),
-      "-color_trc".to_string(), "bt709".to_string(),
       "-row-mt".to_string(), "1".to_string(),
       "-threads".to_string(), "0".to_string(),
-      "-deadline".to_string(), "good".to_string(), // realtime < good < best
-      "-cpu-used".to_string(), "2".to_string(), // 0-5, higher = faster
+      "-deadline".to_string(), "realtime".to_string(), // Fastest
+      "-cpu-used".to_string(), "5".to_string(), // Max speed (0-5)
+      "-tile-columns".to_string(), "2".to_string(),
+      "-frame-parallel".to_string(), "1".to_string(),
     ],
-    "mov" => vec![
-      "-vf".to_string(), scale_filter,
-      "-c:v".to_string(), "prores_ks".to_string(),
-      "-profile:v".to_string(), "2".to_string(), // Profile 2 (LT) instead of 3 (HQ) for speed
-      "-pix_fmt".to_string(), "yuv422p10le".to_string(),
-      "-colorspace".to_string(), "bt709".to_string(),
-      "-color_primaries".to_string(), "bt709".to_string(),
-      "-color_trc".to_string(), "bt709".to_string(),
-      "-vendor".to_string(), "apl0".to_string(),
-    ],
+    "mov" => {
+      if use_hw && is_macos {
+        // HEVC VideoToolbox - macOS (fastest, excellent quality)
+        vec![
+          "-vf".to_string(), scale_filter,
+          "-c:v".to_string(), "hevc_videotoolbox".to_string(),
+          "-pix_fmt".to_string(), "yuv420p".to_string(),
+          "-q:v".to_string(), "65".to_string(), // Quality-based (0-100, higher=better)
+          "-realtime".to_string(), "1".to_string(),
+          "-tag:v".to_string(), "hvc1".to_string(),
+          "-movflags".to_string(), "+faststart".to_string(),
+        ]
+      } else if use_hw && is_windows {
+        // HEVC NVENC - Windows NVIDIA
+        vec![
+          "-vf".to_string(), scale_filter,
+          "-c:v".to_string(), "hevc_nvenc".to_string(),
+          "-pix_fmt".to_string(), "yuv420p".to_string(),
+          "-preset".to_string(), "p1".to_string(), // Fastest preset
+          "-tune".to_string(), "hq".to_string(),
+          "-rc".to_string(), "vbr".to_string(),
+          "-cq".to_string(), "24".to_string(),
+          "-tag:v".to_string(), "hvc1".to_string(),
+          "-movflags".to_string(), "+faststart".to_string(),
+        ]
+      } else {
+        // Software HEVC - ultrafast preset
+        vec![
+          "-vf".to_string(), scale_filter,
+          "-c:v".to_string(), "libx265".to_string(),
+          "-pix_fmt".to_string(), "yuv420p".to_string(),
+          "-preset".to_string(), "ultrafast".to_string(),
+          "-crf".to_string(), "24".to_string(),
+          "-tag:v".to_string(), "hvc1".to_string(),
+          "-movflags".to_string(), "+faststart".to_string(),
+        ]
+      }
+    },
     "gif" => {
-      let gif_filter = format!("{},fps=15,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=full[p];[s1][p]paletteuse=dither=sierra2_4a", scale_filter);
+      // Optimized GIF - reduce fps and colors for speed
+      let gif_filter = format!("{},fps=12,split[s0][s1];[s0]palettegen=max_colors=128:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3", scale_filter);
       vec![
         "-vf".to_string(), gif_filter,
         "-loop".to_string(), "0".to_string(),
       ]
     },
-    // MP4 - use hardware encoder if available (runtime OS detection)
+    // MP4 - H.264 for universal compatibility
     _ => {
-      let is_macos = std::env::consts::OS == "macos";
-      let is_windows = std::env::consts::OS == "windows";
-
       if use_hw && is_macos {
-        // VideoToolbox H.264 hardware encoder - macOS
+        // H.264 VideoToolbox - macOS
         vec![
           "-vf".to_string(), scale_filter,
           "-c:v".to_string(), "h264_videotoolbox".to_string(),
           "-pix_fmt".to_string(), "yuv420p".to_string(),
-          "-b:v".to_string(), "8M".to_string(),
-          "-colorspace".to_string(), "bt709".to_string(),
-          "-color_primaries".to_string(), "bt709".to_string(),
-          "-color_trc".to_string(), "bt709".to_string(),
+          "-q:v".to_string(), "60".to_string(),
+          "-realtime".to_string(), "1".to_string(),
           "-movflags".to_string(), "+faststart".to_string(),
         ]
       } else if use_hw && is_windows {
-        // NVENC H.264 hardware encoder - Windows (NVIDIA)
-        // Falls back to software if NVENC not available
+        // H.264 NVENC - Windows NVIDIA
         vec![
           "-vf".to_string(), scale_filter,
           "-c:v".to_string(), "h264_nvenc".to_string(),
           "-pix_fmt".to_string(), "yuv420p".to_string(),
-          "-b:v".to_string(), "8M".to_string(),
-          "-preset".to_string(), "p4".to_string(), // balanced preset
-          "-colorspace".to_string(), "bt709".to_string(),
-          "-color_primaries".to_string(), "bt709".to_string(),
-          "-color_trc".to_string(), "bt709".to_string(),
+          "-preset".to_string(), "p1".to_string(), // Fastest
+          "-tune".to_string(), "hq".to_string(),
+          "-rc".to_string(), "vbr".to_string(),
+          "-cq".to_string(), "22".to_string(),
           "-movflags".to_string(), "+faststart".to_string(),
         ]
       } else {
-        // Software H.264 - works everywhere
+        // Software H.264 - veryfast for speed
         vec![
           "-vf".to_string(), scale_filter,
           "-c:v".to_string(), "libx264".to_string(),
           "-pix_fmt".to_string(), "yuv420p".to_string(),
-          "-preset".to_string(), "fast".to_string(),
-          "-crf".to_string(), "20".to_string(),
-          "-colorspace".to_string(), "bt709".to_string(),
-          "-color_primaries".to_string(), "bt709".to_string(),
-          "-color_trc".to_string(), "bt709".to_string(),
+          "-preset".to_string(), "veryfast".to_string(),
+          "-crf".to_string(), "22".to_string(),
           "-movflags".to_string(), "+faststart".to_string(),
         ]
       }
@@ -135,8 +156,8 @@ async fn encode_video(
   let height = height.unwrap_or(1080);
   let use_hw = use_hw.unwrap_or(true); // Default to hardware encoding
 
-  // Use JPEG frames for faster I/O
-  let input_pattern = PathBuf::from(&frames_dir).join("frame_%05d.jpg");
+  // Use WebP frames (smaller file size than PNG)
+  let input_pattern = PathBuf::from(&frames_dir).join("frame_%05d.webp");
   let input_pattern_str = input_pattern.to_string_lossy().to_string();
   let output_path_owned = output_path.clone();
 

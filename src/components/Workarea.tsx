@@ -220,6 +220,11 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   ? `Frame ${renderStatus.currentFrame} / ${renderStatus.totalFrames}`
                   : `${Math.round(renderStatus.progress * 100)}%`}
               </p>
+              {renderStatus.phase === 'capturing' && (
+                <p className="mt-3 text-xs text-amber-400/80 bg-amber-400/10 px-3 py-1.5 rounded-lg">
+                  Keep this window in foreground
+                </p>
+              )}
             </div>
             <div className="h-2 w-48 overflow-hidden rounded-full bg-ui-border">
               <div
@@ -263,8 +268,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 className="absolute inset-0 border border-ui-border overflow-hidden"
                 style={{ borderRadius: `${canvasCornerRadius}px` }}
              >
-               {/* Previous background (fades out) */}
-               <div ref={prevBackgroundRef} className={`absolute inset-0 bg-gradient-to-br ${prevGradient}`} />
+               {/* Previous background (fades out) - only for gradient crossfade */}
+               {backgroundType === 'gradient' && (
+                 <div ref={prevBackgroundRef} className={`absolute inset-0 bg-gradient-to-br ${prevGradient}`} />
+               )}
 
                {/* Current background based on type */}
                {backgroundType === 'gradient' && (
@@ -274,10 +281,11 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                  <div ref={backgroundRef} className="absolute inset-0" style={{ backgroundColor }} />
                )}
                {backgroundType === 'image' && backgroundImage && (
-                 <div
-                   ref={backgroundRef}
-                   className="absolute inset-0 bg-cover bg-center"
-                   style={{ backgroundImage: `url(${backgroundImage})` }}
+                 <img
+                   ref={backgroundRef as React.RefObject<HTMLImageElement>}
+                   src={backgroundImage}
+                   className="absolute inset-0 w-full h-full object-cover"
+                   alt=""
                  />
                )}
              </div>

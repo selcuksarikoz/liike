@@ -14,7 +14,7 @@ type ExportOption = {
 
 const EXPORT_OPTIONS: ExportOption[] = [
   { id: 'webm', label: 'WebM Video', description: 'Best quality, VP9 codec', icon: <Film className="w-4 h-4" /> },
-  { id: 'mov', label: 'MOV Video', description: 'ProRes, for editing', icon: <Film className="w-4 h-4" /> },
+  { id: 'mov', label: 'MOV Video', description: 'HEVC, Apple compatible', icon: <Film className="w-4 h-4" /> },
   { id: 'mp4', label: 'MP4 Video', description: 'Universal format', icon: <Film className="w-4 h-4" /> },
   { id: 'gif', label: 'GIF', description: 'Animated Image', icon: <ImageIcon className="w-4 h-4" /> },
   { id: 'png', label: 'PNG Image', description: 'Transparent background', icon: <ImageIcon className="w-4 h-4" /> },
@@ -25,8 +25,10 @@ type HeaderProps = {
   onRender: (format: ExportFormat) => void;
 };
 
+const FPS_OPTIONS = [30, 50, 60] as const;
+
 export const Header = ({ onRender }: HeaderProps) => {
-  const { renderStatus } = useRenderStore();
+  const { renderStatus, fps, setFps } = useRenderStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -101,6 +103,25 @@ export const Header = ({ onRender }: HeaderProps) => {
           </button>
           {isDropdownOpen && (
             <div className="absolute top-full right-0 mt-2 w-56 z-50 overflow-hidden rounded-xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200">
+              {/* FPS Selector */}
+              <div className="px-3 py-2.5 border-b border-ui-border">
+                <div className="text-[10px] text-ui-muted uppercase tracking-wider mb-2">Frame Rate</div>
+                <div className="flex gap-1">
+                  {FPS_OPTIONS.map((fpsOption) => (
+                    <button
+                      key={fpsOption}
+                      onClick={() => setFps(fpsOption)}
+                      className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        fps === fpsOption
+                          ? 'bg-accent text-black'
+                          : 'bg-ui-highlight/30 text-ui-muted hover:bg-ui-highlight/50 hover:text-white'
+                      }`}
+                    >
+                      {fpsOption}fps
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="p-1">
                 {EXPORT_OPTIONS.map((option) => (
                   <button

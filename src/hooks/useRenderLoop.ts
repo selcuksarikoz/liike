@@ -47,17 +47,25 @@ const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
 // Uses setTimeout instead of requestAnimationFrame to work in background
 const waitForRender = (ms = 50) =>
   new Promise<void>((resolve) => {
-    // Force a reflow first
+    // Force multiple reflows to ensure DOM is fully updated
     document.body.offsetHeight;
-    // Use setTimeout - works even when window is in background
-    // (requestAnimationFrame is throttled/paused in background)
-    setTimeout(resolve, ms);
+    // Double RAF ensures paint is complete, then setTimeout for background support
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.body.offsetHeight; // Force another reflow
+        setTimeout(resolve, ms);
+      });
+    });
   });
 
 // Convert canvas to blob using OffscreenCanvas for speed
 // Supports JPEG (video frames), PNG (lossless), WebP (lossless, smaller than PNG)
 type BlobFormat = 'jpeg' | 'png' | 'webp';
-const canvasToBlob = async (canvas: HTMLCanvasElement, format: BlobFormat = 'jpeg'): Promise<Blob> => {
+const canvasToBlob = async (
+  canvas: HTMLCanvasElement,
+  format: BlobFormat = 'jpeg',
+  bgColor?: string // Optional background color to fill (for video frames)
+): Promise<Blob> => {
   const mimeType = `image/${format}`;
   // PNG/WebP: lossless (undefined = max quality), JPEG: 0.95 high quality
   const quality = format === 'jpeg' ? 0.95 : undefined;
@@ -66,9 +74,9 @@ const canvasToBlob = async (canvas: HTMLCanvasElement, format: BlobFormat = 'jpe
     const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
     const ctx = offscreen.getContext('2d');
     if (ctx) {
-      // Fill black background for JPEG (no transparency)
-      if (format === 'jpeg') {
-        ctx.fillStyle = '#000000';
+      // Fill background if provided (for video frames) or for JPEG
+      if (bgColor || format === 'jpeg') {
+        ctx.fillStyle = bgColor || '#000000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       ctx.drawImage(canvas, 0, 0);
@@ -84,7 +92,7 @@ const canvasToBlob = async (canvas: HTMLCanvasElement, format: BlobFormat = 'jpe
   });
 };
 
-const frameFileName = (index: number, ext = 'jpg') => `frame_${String(index + 1).padStart(5, '0')}.${ext}`;
+const frameFileName = (index: number, ext = 'webp') => `frame_${String(index + 1).padStart(5, '0')}.${ext}`;
 
 const getFileExtension = (format: ExportFormat): string => {
   switch (format) {
@@ -139,10 +147,10 @@ const getImageFilename = (baseName: string, width: number, height: number, scale
   return `${baseName}_${timestamp}_${width}x${height}_${scale}x.${ext}`;
 };
 
-// Generate unique filename for video
-const getVideoFilename = (baseName: string, ext: string): string => {
+// Generate unique filename for video (same format as images)
+const getVideoFilename = (baseName: string, width: number, height: number, ext: string): string => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  return `${baseName}_${timestamp}.${ext}`;
+  return `${baseName}_${timestamp}_${width}x${height}.${ext}`;
 };
 
 const cleanupTempFiles = async (framesDir: string) => {
@@ -234,7 +242,7 @@ export const useRenderLoop = () => {
       if (isVideoExport) {
         framesDir = await join(exportFolder, `temp_frames_${Date.now()}`);
         await mkdir(framesDir, { recursive: true });
-        const filename = getVideoFilename(outputName, ext);
+        const filename = getVideoFilename(outputName, outputWidth, outputHeight, ext);
         outputPath = await join(exportFolder, filename);
         console.log('[Render] Frames dir:', framesDir);
         console.log('[Render] Output path:', outputPath);
@@ -264,9 +272,9 @@ export const useRenderLoop = () => {
       // html-to-image options for accurate capture
       const captureOptions = {
         pixelRatio: 1, // Will be overridden per export
-        cacheBust: false,
+        cacheBust: false, // Disabled - breaks blob URLs in WebKit
         skipAutoScale: true,
-        includeQueryParams: true,
+        includeQueryParams: false, // Don't add query params to URLs
         skipFonts: false,
         preferredFontFormat: 'woff2' as const,
         // Ensure proper rendering of shadows and transforms
@@ -285,7 +293,8 @@ export const useRenderLoop = () => {
         // Image Export (PNG/WebP) - export both 1x and 2x versions
         if (isImageExport) {
           console.log(`[Render] ${format.toUpperCase()} export - capturing 1x and 2x versions`);
-          await waitForRender();
+          // Force DOM to settle with longer wait
+          await waitForRender(150);
 
           const blobFormat = format === 'webp' ? 'webp' : 'png';
 
@@ -330,14 +339,14 @@ export const useRenderLoop = () => {
         // Seek to start with longer initial wait
         seekTimeline(0);
         pauseAndSeekAnimations(node, 0);
-        await waitForRender(100); // Longer wait for initial frame
+        await waitForRender(200); // Longer wait for initial frame to ensure DOM settles
 
         const writeQueue = createQueue(10);
         const writePromises: Promise<void>[] = [];
 
         // Calculate frame wait time based on complexity
         // More time = more reliable, but slower
-        const frameWaitMs = 60; // 60ms per frame ensures DOM settles
+        const frameWaitMs = 80; // 80ms per frame ensures DOM fully settles
 
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
           if (abortController.signal.aborted) {
@@ -359,15 +368,15 @@ export const useRenderLoop = () => {
           // Capture to canvas
           const canvas = await toCanvas(node, videoOptions);
 
-          // Convert to blob
-          const blob = await canvasToBlob(canvas);
+          // Convert to blob (WebP - smaller file size, DOM capture includes background)
+          const blob = await canvasToBlob(canvas, 'webp');
 
           // Queue disk write (parallel I/O)
           const frameNum = frameIndex;
           writePromises.push(
             writeQueue(async () => {
               const bytes = new Uint8Array(await blob.arrayBuffer());
-              const filePath = await join(framesDir, frameFileName(frameNum, 'jpg'));
+              const filePath = await join(framesDir, frameFileName(frameNum, 'webp'));
               await writeFile(filePath, bytes);
             })
           );
