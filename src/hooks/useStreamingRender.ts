@@ -220,7 +220,7 @@ const convertVideosToImages = async (sourceNode: HTMLElement, cloneNode: HTMLEle
         const ctx = canvas.getContext('2d');
         if (ctx) {
            ctx.drawImage(sourceVideo, 0, 0, width, height);
-           const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+           const dataUrl = canvas.toDataURL('image/png');
            
            const img = document.createElement('img');
            img.src = dataUrl;
@@ -574,22 +574,28 @@ export const useStreamingRender = () => {
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
           if (abortController.signal.aborted) {
             console.log('[StreamRender] Aborted at frame', frameIndex);
-            await invoke('cancel_streaming_encode', { encoderId });
-            encoderIdRef.current = null;
-            resetState();
             return;
           }
 
           const timeMs = (frameIndex / fps) * 1000;
 
+          if (abortController.signal.aborted) return;
+
           // Seek timeline
           seekTimeline(timeMs);
           pauseAndSeekAnimations(node, timeMs);
           pauseAndSeekVideos(node, timeMs);
+          
+          if (abortController.signal.aborted) return;
+
           await waitForRender(8); // Minimal wait for speed
+
+          if (abortController.signal.aborted) return;
 
           // Capture frame to raw RGBA
           const rgbaData = await captureFrame(node, outputWidth, outputHeight);
+          
+          if (abortController.signal.aborted) return;
           
           // Send to Rust encoder
           const frameBase64 = arrayToBase64(rgbaData);
@@ -650,22 +656,24 @@ export const useStreamingRender = () => {
   );
 
   const cancel = useCallback(async () => {
-    // Stop playback immediately
+    // 1. Stop playback & signal abort immediately
     useTimelineStore.getState().setIsPlaying(false);
-    
     abortControllerRef.current?.abort();
     
-    if (encoderIdRef.current) {
-      try {
-        await invoke('cancel_streaming_encode', { encoderId: encoderIdRef.current });
-      } catch {
-        // Ignore
-      }
-      encoderIdRef.current = null;
-    }
-    
+    // 2. Reset UI state immediately
     resetState();
     resetRenderStatus();
+    
+    // 3. Clean up backend process
+    if (encoderIdRef.current) {
+      const encoderId = encoderIdRef.current;
+      encoderIdRef.current = null;
+      try {
+        await invoke('cancel_streaming_encode', { encoderId });
+      } catch (e) {
+        console.warn('[StreamRender] Cancel error:', e);
+      }
+    }
   }, [resetState, resetRenderStatus]);
 
   return { render, cancel, state };

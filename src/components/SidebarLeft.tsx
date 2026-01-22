@@ -108,7 +108,7 @@ export const SidebarLeft = () => {
             {IMAGE_SLOTS.map((index) => (
               <div
                 key={index}
-                onClick={() => mediaAssets[index] ? fileInputRefs[index].current?.click() : fileInputRefs[0].current?.click()}
+                onClick={() => fileInputRefs[index].current?.click()}
                 className={`aspect-square rounded-lg border border-ui-border bg-ui-panel relative overflow-hidden group ${!mediaAssets[index] ? 'opacity-30 border-dashed hover:opacity-100 hover:border-accent/50 cursor-pointer' : 'cursor-pointer'}`}
               >
                 <input
