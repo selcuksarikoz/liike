@@ -100,17 +100,21 @@ const canvasToBlob = async (
   // PNG/WebP: lossless (undefined = max quality), JPEG: 0.95 high quality
   const quality = format === 'jpeg' ? 0.95 : undefined;
 
-  if (typeof OffscreenCanvas !== 'undefined' && format !== 'png') {
-    const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
-    const ctx = offscreen.getContext('2d');
-    if (ctx) {
-      // Fill background if provided (for video frames) or for JPEG
-      if (bgColor || format === 'jpeg') {
-        ctx.fillStyle = bgColor || '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (typeof OffscreenCanvas !== 'undefined') {
+    try {
+      const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
+      const ctx = offscreen.getContext('2d');
+      if (ctx) {
+        // Fill background if provided (for video frames) or for JPEG
+        if (bgColor || format === 'jpeg') {
+          ctx.fillStyle = bgColor || '#000000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(canvas, 0, 0);
+        return await offscreen.convertToBlob({ type: mimeType, quality });
       }
-      ctx.drawImage(canvas, 0, 0);
-      return offscreen.convertToBlob({ type: mimeType, quality });
+    } catch (e) {
+      console.warn('OffscreenCanvas failed, falling back to main thread:', e);
     }
   }
   return new Promise((resolve, reject) => {
@@ -290,6 +294,7 @@ export const useRenderLoop = () => {
       }
 
       // Pause playback
+      const { playheadMs } = useTimelineStore.getState();
       useTimelineStore.getState().setIsPlaying(false);
 
       setState({
@@ -336,15 +341,28 @@ export const useRenderLoop = () => {
         // Image Export (PNG/WebP) - export both 1x and 2x versions
         if (isImageExport) {
           console.log(`[Render] ${format.toUpperCase()} export - capturing 1x and 2x versions`);
+          
+          // Sync animations to current playhead to ensure WYSIWYG
+          seekTimeline(playheadMs);
+          pauseAndSeekAnimations(node, playheadMs);
+          await seekVideos(node, playheadMs);
+
           // Force DOM to settle with longer wait
           await waitForRender(800);
           
-          // Warmup (Image export)
+          // Enable cache busting for single image export to ensure fresh resources
+          // const imageOptions = { ...captureOptions, cacheBust: true }; // Reverted: causes issues with Blob URLs
+          
+          // Warmup (Image export) - forces resource loading in the clone
           try {
             await toCanvas(node, { ...captureOptions, pixelRatio: 1 });
+            console.log('[Render] Warmup complete');
           } catch (e) {
             console.warn('[Render] Warmup failed:', e);
           }
+
+          // Vital: Wait after warmup to let the engine settle before real capture
+          await waitForRender(200);
 
           const blobFormat = format === 'webp' ? 'webp' : 'png';
 
