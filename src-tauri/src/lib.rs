@@ -434,7 +434,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                 "-c:v".to_string(),
                 "libvpx-vp9".to_string(),
                 "-crf".to_string(),
-                "15".to_string(), // Maximum quality
+                "28".to_string(), // High quality (balanced)
                 "-b:v".to_string(),
                 "0".to_string(),
                 "-pix_fmt".to_string(),
@@ -442,7 +442,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                 "-deadline".to_string(),
                 "realtime".to_string(),
                 "-cpu-used".to_string(),
-                "4".to_string(), // Better quality/speed balance
+                "5".to_string(), // Faster encoding
             ]);
         }
         "gif" => {
@@ -465,8 +465,8 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-q:v".to_string(),
-                    "95".to_string(), // Near lossless (85->95)
-                    "-realtime".to_string(), // Keep realtime for speed, but quality is high
+                    "70".to_string(), // High quality (balanced size)
+                    "-realtime".to_string(),
                     "1".to_string(),
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
@@ -485,13 +485,13 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "p6".to_string(), // Slower, better quality (p4->p6)
+                    "p4".to_string(), // Balanced preset
                     "-tune".to_string(),
                     "hq".to_string(),
                     "-rc".to_string(),
                     "vbr".to_string(),
                     "-cq".to_string(),
-                    "15".to_string(), // Near lossless (19->15)
+                    "24".to_string(), // High quality (balanced size)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
@@ -512,9 +512,9 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "fast".to_string(), // Slower than veryfast
+                    "veryfast".to_string(), // Faster
                     "-crf".to_string(),
-                    "16".to_string(), // Near lossless (18->16)
+                    "24".to_string(), // High quality (balanced size)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),

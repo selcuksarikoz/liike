@@ -250,7 +250,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         >
              {/* Canvas Background with Crossfade */}
              <div
-                className="absolute inset-0 border border-ui-border overflow-hidden"
+                className="absolute inset-0 overflow-hidden"
                 style={{ borderRadius: `${canvasCornerRadius}px` }}
              >
                {/* Previous background (fades out) - only for gradient crossfade */}
