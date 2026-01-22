@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, ReactNode } from 'react';
-import { ChevronRight, Crop, RatioIcon } from 'lucide-react';
+import { ChevronRight, Crop, RatioIcon, Palette, Smartphone, SmartphoneCharging } from 'lucide-react';
 
 type DropdownProps = {
   trigger: ReactNode;
@@ -62,6 +62,10 @@ const getIcon = (iconName: string) => {
       return <Crop className="w-4.5 h-4.5" />;
     case 'aspect_ratio':
       return <RatioIcon className="w-4.5 h-4.5" />;
+    case 'palette':
+      return <Palette className="w-4.5 h-4.5" />;
+    case 'smartphone':
+      return <Smartphone className="w-4.5 h-4.5" />;
     default:
       return <Crop className="w-4.5 h-4.5" />;
   }

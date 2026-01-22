@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import {
   ArrowUpDown,
   ArrowLeftRight,
@@ -13,11 +13,14 @@ import {
   Move3d,
   Sparkles,
   Square,
+  Smartphone,
 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
-import { STYLE_PRESETS, SHADOW_TYPES } from '../constants/styles';
+import { SHADOW_TYPES } from '../constants/styles';
 import { DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
+import { FrameStyleModal } from './modals/FrameStyleModal';
 
+import { DropdownTrigger } from './ui/Dropdown';
 import { SliderControl } from './ui/SliderControl';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
 
@@ -28,15 +31,31 @@ export const CameraStylePanel = () => {
     rotationZ, setRotationZ,
     cornerRadius, setCornerRadius,
     deviceScale, setDeviceScale,
-    stylePreset, setStylePreset,
+    stylePreset,
     shadowType, setShadowType,
     shadowOpacity, setShadowOpacity,
     shadowBlur, setShadowBlur,
     shadowColor, setShadowColor,
     setShadowSpread, setShadowX, setShadowY,
+    
+    frameMode,
+    deviceType,
   } = useRenderStore();
 
+  const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Helper to format values
+  const getFormattedValue = () => {
+     if (frameMode === 'device') {
+        if (deviceType === 'imac') return 'iMac';
+        if (deviceType === 'iphone') return 'iPhone';
+        if (deviceType === 'ipad') return 'iPad';
+        return deviceType.charAt(0).toUpperCase() + deviceType.slice(1);
+     }
+     // Format style preset (e.g. soft-gradient -> Soft Gradient)
+     return stylePreset.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  };
 
   useEffect(() => {
     if (containerRef.current) {
@@ -169,41 +188,21 @@ export const CameraStylePanel = () => {
         </ControlGroup>
       </div>
 
-      {/* Style Preset */}
+      {/* Frame Style & Device Selection */}
       <div className="style-section">
         <SidebarHeader icon={<Palette className="w-4 h-4" />}>
           Frame Style
         </SidebarHeader>
-        <div className="grid grid-cols-4 gap-2">
-          {STYLE_PRESETS.map((preset) => {
-            const isActive = stylePreset === preset.id;
-            return (
-              <button
-                key={preset.id}
-                onClick={() => setStylePreset(preset.id as typeof stylePreset)}
-                className={`group relative aspect-square rounded-lg border overflow-hidden transition-all hover:scale-105 active:scale-95 ${
-                  isActive ? 'border-accent ring-2 ring-accent/30' : 'border-ui-border hover:border-accent/50'
-                }`}
-              >
-                <div
-                  className="absolute inset-0 flex items-center justify-center p-2"
-                  style={{
-                    background: preset.css.background || 'linear-gradient(135deg, var(--color-ui-panel) 0%, var(--color-ui-bg) 100%)',
-                  }}
-                >
-                  <div
-                    className="w-full h-2/3 rounded bg-white/80 transition-transform group-hover:scale-110"
-                    style={{ boxShadow: preset.css.boxShadow, border: preset.css.border }}
-                  />
-                </div>
-                <span className={`absolute bottom-0.5 inset-x-0 text-[7px] font-medium text-center transition-colors ${isActive ? 'text-accent' : 'text-white/60 group-hover:text-white'}`}>
-                  {preset.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        
+        <DropdownTrigger
+           icon={frameMode === 'device' ? 'smartphone' : 'palette'}
+           label={frameMode === 'device' ? 'Device Mockup' : 'Frame Style'}
+           value={getFormattedValue()}
+           onClick={() => setIsFrameModalOpen(true)}
+        />
       </div>
+
+      <FrameStyleModal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} />
 
       {/* Shadow & Glow */}
       <div className="style-section group">

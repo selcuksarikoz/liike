@@ -90,6 +90,11 @@ type RenderStore = RenderSettings & {
   applyPreset: (preset: Partial<RenderStore>) => void;
   setRenderStatus: (status: Partial<RenderStatus>) => void;
   resetRenderStatus: () => void;
+  // Frame Settings
+  frameMode: 'basic' | 'device';
+  deviceType: 'iphone' | 'macbook' | 'ipad' | 'imac' | 'watch';
+  setFrameMode: (mode: 'basic' | 'device') => void;
+  setDeviceType: (type: 'iphone' | 'macbook' | 'ipad' | 'imac' | 'watch') => void;
 };
 
 const initialRenderStatus: RenderStatus = {
@@ -132,6 +137,10 @@ export const useRenderStore = create<RenderStore>((set) => ({
   imageLayout: 'single',
   renderStatus: initialRenderStatus,
   renderQuality: '1080p',
+  
+  frameMode: 'basic',
+  deviceType: 'iphone',
+
   // Setters
   setRotationX: (rotationX) => set({ rotationX }),
   setRotationY: (rotationY) => set({ rotationY }),
@@ -164,4 +173,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   applyPreset: (preset) => set((state) => ({ ...state, ...preset })),
   setRenderStatus: (status) => set((state) => ({ renderStatus: { ...state.renderStatus, ...status } })),
   resetRenderStatus: () => set({ renderStatus: initialRenderStatus }),
+
+  setFrameMode: (frameMode) => set({ frameMode }),
+  setDeviceType: (deviceType) => set({ deviceType }),
 }));

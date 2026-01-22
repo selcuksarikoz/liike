@@ -21,6 +21,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     cornerRadius,
     applyPreset,
     renderStatus,
+    frameMode,
+    deviceType,
   } = useRenderStore();
 
   const { tracks, playheadMs } = useTimelineStore();
@@ -311,6 +313,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   aspectRatio={imageAspectRatio}
                   layout={imageLayout}
                   animationInfo={imageLayout !== 'single' ? animationInfo : undefined}
+                  frameMode={frameMode}
+                  deviceType={deviceType}
                 />
               </div>
             </div>

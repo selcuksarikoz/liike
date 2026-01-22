@@ -3,6 +3,11 @@ import { ImagePlus } from 'lucide-react';
 import { STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
 import { combineAnimations, CSS_TRANSITIONS } from '../constants/animations';
+import { IphoneMockup } from './DeviceMockups/IphoneMockup';
+import { MacbookMockup } from './DeviceMockups/MacbookMockup';
+import { IpadMockup } from './DeviceMockups/IpadMockup';
+import { ImacMockup } from './DeviceMockups/ImacMockup';
+import { AppleWatchMockup } from './DeviceMockups/AppleWatchMockup';
 
 export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3' | '21:9' | '2:3' | '3:2';
 
@@ -34,6 +39,8 @@ type ImageRendererProps = {
   layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative' | 'masonry' | 'mosaic' | 'film-strip';
   animationInfo?: AnimationInfo;
   playing?: boolean;
+  frameMode?: 'basic' | 'device';
+  deviceType?: 'iphone' | 'macbook' | 'ipad' | 'imac' | 'watch';
 };
 
 // =============================================================================
@@ -211,6 +218,8 @@ const DeviceRendererComponent = ({
   layout = 'single',
   animationInfo,
   playing = true,
+  frameMode = 'basic',
+  deviceType = 'iphone',
 }: ImageRendererProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -240,6 +249,41 @@ const DeviceRendererComponent = ({
 
   const aspectValue = getAspectRatioValue(aspectRatio);
 
+  // Helper to wrap content in device mockup if enabled
+  const renderWithMockup = (content: React.ReactNode, key?: number | string) => {
+    if (frameMode === 'device') {
+       const MockupComponent = 
+          deviceType === 'macbook' ? MacbookMockup : 
+          deviceType === 'ipad' ? IpadMockup : 
+          deviceType === 'imac' ? ImacMockup :
+          deviceType === 'watch' ? AppleWatchMockup :
+          IphoneMockup;
+       
+       // Adjust scale slightly for different devices to fit better in grid cells
+       const deviceScale = 
+          deviceType === 'watch' ? (scale * 0.9) :
+          deviceType === 'imac' ? (scale * 0.4) : // iMac is huge
+          deviceType === 'macbook' ? (scale * 0.5) : // MacBook is wide
+          deviceType === 'ipad' ? (scale * 0.65) :
+          (scale * 0.8); // iPhone default
+
+       return (
+          <div key={key} className="relative flex items-center justify-center pointer-events-none"> 
+              {/* pointer-events-none on wrapper to let clicks pass through to screen? 
+                  Actually screen has pointer-events-auto usually. 
+                  The Mockup components don't pass onClick. 
+                  MediaContainer handles click. 
+                  Mockups render children in a div that should allow interaction.
+              */}
+              <MockupComponent scale={isPreview ? 0.2 : deviceScale}>
+                 {content}
+              </MockupComponent>
+          </div>
+       );
+    }
+    return content;
+  };
+
   const containerStyle = {
     transform: `perspective(1000px) rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ || 0}deg) scale(${scale})`,
     transformStyle: 'preserve-3d' as const,
@@ -247,6 +291,11 @@ const DeviceRendererComponent = ({
 
   // Single image layout
   if (layout === 'single') {
+    // Media content to be rendered
+    const mediaContent = (
+       <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+    );
+
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div
@@ -265,7 +314,7 @@ const DeviceRendererComponent = ({
             ...styleCSS
           }}
         >
-          <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+          {renderWithMockup(mediaContent)}
         </div>
       </div>
     );
@@ -302,7 +351,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
             );
           })}
@@ -342,7 +391,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
             );
           })}
@@ -382,7 +431,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
             );
           })}
@@ -422,7 +471,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
             );
           })}
@@ -463,7 +512,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
             );
           })}
@@ -513,7 +562,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
             );
           })}
@@ -557,7 +606,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
             );
           })}
@@ -630,7 +679,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
              );
           })}
@@ -735,7 +784,7 @@ const DeviceRendererComponent = ({
                   ...styleCSS
                 }}
               >
-                <MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />
+                {renderWithMockup(<MediaContainer index={index} media={mediaAssets[index]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} playing={playing} />, index)}
               </div>
             );
           })}
@@ -790,6 +839,8 @@ export const DeviceRenderer = memo(DeviceRendererComponent, (prev, next) => {
   if (prev.shadowY !== next.shadowY) return false;
   if (prev.isPreview !== next.isPreview) return false;
   if (prev.playing !== next.playing) return false;
+  if (prev.frameMode !== next.frameMode) return false;
+  if (prev.deviceType !== next.deviceType) return false;
 
   // Reference comparison for arrays/objects
   if (prev.mediaAssets !== next.mediaAssets) return false;
