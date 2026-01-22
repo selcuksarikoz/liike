@@ -102,6 +102,8 @@ export const CameraStylePanel = () => {
     stylePreset, setStylePreset,
     shadowType, setShadowType,
     shadowOpacity, setShadowOpacity,
+    shadowBlur, setShadowBlur,
+    shadowColor, setShadowColor,
   } = useRenderStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -352,18 +354,18 @@ export const CameraStylePanel = () => {
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={useRenderStore(state => state.shadowColor)}
-                    onChange={(e) => useRenderStore.getState().setShadowColor(e.target.value)}
+                    value={shadowColor}
+                    onChange={(e) => setShadowColor(e.target.value)}
                     className="w-5 h-5 rounded cursor-pointer border-none p-0 bg-transparent"
                   />
-                  <span className="text-[10px] font-mono text-accent uppercase">{useRenderStore(state => state.shadowColor)}</span>
+                  <span className="text-[10px] font-mono text-accent uppercase">{shadowColor}</span>
                 </div>
              </div>
 
             <SliderControl
               label="Opacity"
               icon={<Contrast className="w-3.5 h-3.5" />}
-              value={useRenderStore(state => state.shadowOpacity)}
+              value={shadowOpacity}
               min={0}
               max={100}
               unit="%"
@@ -372,41 +374,12 @@ export const CameraStylePanel = () => {
             <SliderControl
               label="Blur"
               icon={<CloudFog className="w-3.5 h-3.5" />}
-              value={useRenderStore(state => state.shadowBlur)}
+              value={shadowBlur}
               min={0}
               max={200}
               unit="px"
               onChange={setShadowBlur}
             />
-            <SliderControl
-              label="Spread"
-              icon={<Maximize2 className="w-3.5 h-3.5" />}
-              value={useRenderStore(state => state.shadowSpread)}
-              min={-50}
-              max={50}
-              unit="px"
-              onChange={setShadowSpread}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <SliderControl
-                label="X Offset"
-                icon={<ArrowLeftRight className="w-3.5 h-3.5" />}
-                value={useRenderStore(state => state.shadowX)}
-                min={-100}
-                max={100}
-                unit="px"
-                onChange={setShadowX}
-              />
-              <SliderControl
-                label="Y Offset"
-                icon={<ArrowUpDown className="w-3.5 h-3.5" />}
-                value={useRenderStore(state => state.shadowY)}
-                min={-100}
-                max={100}
-                unit="px"
-                onChange={setShadowY}
-              />
-            </div>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ExportFormat = 'mp4' | 'webm' | 'mov' | 'png' | 'gif';
+export type ExportFormat = 'mp4' | 'webm' | 'mov' | 'png' | 'gif' | 'webp';
 
 type RenderSettings = {
   durationMs: number;

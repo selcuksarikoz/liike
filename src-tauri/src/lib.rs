@@ -31,7 +31,7 @@ async fn copy_file(src: String, dest: String) -> Result<(), String> {
   Ok(())
 }
 
-fn get_encoder_args(format: &str, width: u32, height: u32) -> Vec<String> {
+fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<String> {
   // Scale filter with proper color handling for vivid output
   let scale_w = if width % 2 == 0 { width } else { width + 1 };
   let scale_h = if height % 2 == 0 { height } else { height + 1 };
@@ -41,7 +41,7 @@ fn get_encoder_args(format: &str, width: u32, height: u32) -> Vec<String> {
     "webm" => vec![
       "-vf".to_string(), scale_filter,
       "-c:v".to_string(), "libvpx-vp9".to_string(),
-      "-crf".to_string(), "18".to_string(),
+      "-crf".to_string(), "24".to_string(), // Slightly lower quality for speed
       "-b:v".to_string(), "0".to_string(),
       "-pix_fmt".to_string(), "yuv420p".to_string(),
       "-colorspace".to_string(), "bt709".to_string(),
@@ -49,11 +49,13 @@ fn get_encoder_args(format: &str, width: u32, height: u32) -> Vec<String> {
       "-color_trc".to_string(), "bt709".to_string(),
       "-row-mt".to_string(), "1".to_string(),
       "-threads".to_string(), "0".to_string(),
+      "-deadline".to_string(), "good".to_string(), // realtime < good < best
+      "-cpu-used".to_string(), "2".to_string(), // 0-5, higher = faster
     ],
     "mov" => vec![
       "-vf".to_string(), scale_filter,
       "-c:v".to_string(), "prores_ks".to_string(),
-      "-profile:v".to_string(), "3".to_string(),
+      "-profile:v".to_string(), "2".to_string(), // Profile 2 (LT) instead of 3 (HQ) for speed
       "-pix_fmt".to_string(), "yuv422p10le".to_string(),
       "-colorspace".to_string(), "bt709".to_string(),
       "-color_primaries".to_string(), "bt709".to_string(),
@@ -67,19 +69,52 @@ fn get_encoder_args(format: &str, width: u32, height: u32) -> Vec<String> {
         "-loop".to_string(), "0".to_string(),
       ]
     },
-    // MP4 with H.265/HEVC for better quality and smaller size
-    _ => vec![
-      "-vf".to_string(), scale_filter,
-      "-c:v".to_string(), "libx265".to_string(),
-      "-pix_fmt".to_string(), "yuv420p".to_string(),
-      "-preset".to_string(), "medium".to_string(),
-      "-crf".to_string(), "20".to_string(),
-      "-tag:v".to_string(), "hvc1".to_string(), // Apple compatibility
-      "-colorspace".to_string(), "bt709".to_string(),
-      "-color_primaries".to_string(), "bt709".to_string(),
-      "-color_trc".to_string(), "bt709".to_string(),
-      "-movflags".to_string(), "+faststart".to_string(),
-    ],
+    // MP4 - use hardware encoder if available (runtime OS detection)
+    _ => {
+      let is_macos = std::env::consts::OS == "macos";
+      let is_windows = std::env::consts::OS == "windows";
+
+      if use_hw && is_macos {
+        // VideoToolbox H.264 hardware encoder - macOS
+        vec![
+          "-vf".to_string(), scale_filter,
+          "-c:v".to_string(), "h264_videotoolbox".to_string(),
+          "-pix_fmt".to_string(), "yuv420p".to_string(),
+          "-b:v".to_string(), "8M".to_string(),
+          "-colorspace".to_string(), "bt709".to_string(),
+          "-color_primaries".to_string(), "bt709".to_string(),
+          "-color_trc".to_string(), "bt709".to_string(),
+          "-movflags".to_string(), "+faststart".to_string(),
+        ]
+      } else if use_hw && is_windows {
+        // NVENC H.264 hardware encoder - Windows (NVIDIA)
+        // Falls back to software if NVENC not available
+        vec![
+          "-vf".to_string(), scale_filter,
+          "-c:v".to_string(), "h264_nvenc".to_string(),
+          "-pix_fmt".to_string(), "yuv420p".to_string(),
+          "-b:v".to_string(), "8M".to_string(),
+          "-preset".to_string(), "p4".to_string(), // balanced preset
+          "-colorspace".to_string(), "bt709".to_string(),
+          "-color_primaries".to_string(), "bt709".to_string(),
+          "-color_trc".to_string(), "bt709".to_string(),
+          "-movflags".to_string(), "+faststart".to_string(),
+        ]
+      } else {
+        // Software H.264 - works everywhere
+        vec![
+          "-vf".to_string(), scale_filter,
+          "-c:v".to_string(), "libx264".to_string(),
+          "-pix_fmt".to_string(), "yuv420p".to_string(),
+          "-preset".to_string(), "fast".to_string(),
+          "-crf".to_string(), "20".to_string(),
+          "-colorspace".to_string(), "bt709".to_string(),
+          "-color_primaries".to_string(), "bt709".to_string(),
+          "-color_trc".to_string(), "bt709".to_string(),
+          "-movflags".to_string(), "+faststart".to_string(),
+        ]
+      }
+    },
   }
 }
 
@@ -92,13 +127,16 @@ async fn encode_video(
   format: Option<String>,
   width: Option<u32>,
   height: Option<u32>,
+  use_hw: Option<bool>,
 ) -> Result<(), String> {
   let fps = fps.unwrap_or(30);
   let format = format.unwrap_or_else(|| "mp4".to_string());
   let width = width.unwrap_or(1080);
   let height = height.unwrap_or(1080);
+  let use_hw = use_hw.unwrap_or(true); // Default to hardware encoding
 
-  let input_pattern = PathBuf::from(&frames_dir).join("frame_%05d.png");
+  // Use JPEG frames for faster I/O
+  let input_pattern = PathBuf::from(&frames_dir).join("frame_%05d.jpg");
   let input_pattern_str = input_pattern.to_string_lossy().to_string();
   let output_path_owned = output_path.clone();
 
@@ -121,7 +159,7 @@ async fn encode_video(
     input_pattern_str.clone(),
   ];
 
-  args.extend(get_encoder_args(&format, width, height));
+  args.extend(get_encoder_args(&format, width, height, use_hw));
   args.push(output_path_owned.clone());
 
   let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();

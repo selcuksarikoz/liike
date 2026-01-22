@@ -43,33 +43,48 @@ const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
   }
 };
 
-// Wait for next animation frame + paint
-const waitForRender = () =>
+// Wait for DOM to update and paint
+// Uses setTimeout instead of requestAnimationFrame to work in background
+const waitForRender = (ms = 50) =>
   new Promise<void>((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => resolve());
-    });
+    // Force a reflow first
+    document.body.offsetHeight;
+    // Use setTimeout - works even when window is in background
+    // (requestAnimationFrame is throttled/paused in background)
+    setTimeout(resolve, ms);
   });
 
-// Convert canvas to PNG blob using OffscreenCanvas for speed
-const canvasToBlob = async (canvas: HTMLCanvasElement): Promise<Blob> => {
+// Convert canvas to blob using OffscreenCanvas for speed
+// Supports JPEG (video frames), PNG (lossless), WebP (lossless, smaller than PNG)
+type BlobFormat = 'jpeg' | 'png' | 'webp';
+const canvasToBlob = async (canvas: HTMLCanvasElement, format: BlobFormat = 'jpeg'): Promise<Blob> => {
+  const mimeType = `image/${format}`;
+  // PNG/WebP: lossless (undefined = max quality), JPEG: 0.95 high quality
+  const quality = format === 'jpeg' ? 0.95 : undefined;
+
   if (typeof OffscreenCanvas !== 'undefined') {
     const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
     const ctx = offscreen.getContext('2d');
     if (ctx) {
+      // Fill black background for JPEG (no transparency)
+      if (format === 'jpeg') {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       ctx.drawImage(canvas, 0, 0);
-      return offscreen.convertToBlob({ type: 'image/png' });
+      return offscreen.convertToBlob({ type: mimeType, quality });
     }
   }
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
-      'image/png'
+      mimeType,
+      quality
     );
   });
 };
 
-const frameFileName = (index: number) => `frame_${String(index + 1).padStart(5, '0')}.png`;
+const frameFileName = (index: number, ext = 'jpg') => `frame_${String(index + 1).padStart(5, '0')}.${ext}`;
 
 const getFileExtension = (format: ExportFormat): string => {
   switch (format) {
@@ -77,6 +92,7 @@ const getFileExtension = (format: ExportFormat): string => {
     case 'mov': return 'mov';
     case 'png': return 'png';
     case 'gif': return 'gif';
+    case 'webp': return 'webp';
     case 'mp4':
     default: return 'mp4';
   }
@@ -117,8 +133,14 @@ const getExportFolder = async (): Promise<string> => {
   return liikeFolder;
 };
 
-// Generate unique filename
-const getUniqueFilename = (baseName: string, ext: string): string => {
+// Generate unique filename with dimensions and scale
+const getImageFilename = (baseName: string, width: number, height: number, scale: number, ext: string): string => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  return `${baseName}_${timestamp}_${width}x${height}_${scale}x.${ext}`;
+};
+
+// Generate unique filename for video
+const getVideoFilename = (baseName: string, ext: string): string => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   return `${baseName}_${timestamp}.${ext}`;
 };
@@ -175,8 +197,8 @@ export const useRenderLoop = () => {
         return;
       }
 
-      const isPngExport = format === 'png';
-      const isVideoExport = !isPngExport;
+      const isImageExport = format === 'png' || format === 'webp';
+      const isVideoExport = !isImageExport;
 
       // For video export, require a minimum duration
       if (isVideoExport && durationMs < 100) {
@@ -187,34 +209,35 @@ export const useRenderLoop = () => {
         return;
       }
 
+      // WebP uses transparency like PNG
+      const useTransparency = format === 'png' || format === 'webp';
+
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
 
-      const totalFrames = isPngExport ? 1 : Math.max(1, Math.ceil((durationMs / 1000) * fps));
+      const totalFrames = isImageExport ? 1 : Math.max(1, Math.ceil((durationMs / 1000) * fps));
       console.log('[Render] Total frames:', totalFrames);
 
       // Use canvas dimensions from store for output size
       const outputWidth = canvasWidth || 1080;
       const outputHeight = canvasHeight || 1080;
-
-      // Calculate pixelRatio based on canvas size vs node size
       const nodeRect = node.getBoundingClientRect();
-      const pixelRatio = Math.max(outputWidth / nodeRect.width, outputHeight / nodeRect.height);
-      console.log('[Render] Output size:', outputWidth, 'x', outputHeight, 'pixelRatio:', pixelRatio);
+      console.log('[Render] Output size:', outputWidth, 'x', outputHeight);
 
       // Setup folders
       const exportFolder = await getExportFolder();
       const ext = getFileExtension(format);
-      const filename = getUniqueFilename(outputName, ext);
-      const outputPath = await join(exportFolder, filename);
-      console.log('[Render] Output path:', outputPath);
 
-      // Temp folder for frames (video only)
+      // Video: setup temp folder and output path
       let framesDir = '';
+      let outputPath = '';
       if (isVideoExport) {
         framesDir = await join(exportFolder, `temp_frames_${Date.now()}`);
         await mkdir(framesDir, { recursive: true });
+        const filename = getVideoFilename(outputName, ext);
+        outputPath = await join(exportFolder, filename);
         console.log('[Render] Frames dir:', framesDir);
+        console.log('[Render] Output path:', outputPath);
       }
 
       // Pause playback
@@ -226,7 +249,7 @@ export const useRenderLoop = () => {
         totalFrames,
         currentFrame: 0,
         framesDir: framesDir || undefined,
-        outputPath,
+        outputPath: outputPath || undefined,
         error: undefined,
       });
       setRenderStatus({
@@ -240,14 +263,18 @@ export const useRenderLoop = () => {
 
       // html-to-image options for accurate capture
       const captureOptions = {
-        pixelRatio,
+        pixelRatio: 1, // Will be overridden per export
         cacheBust: false,
         skipAutoScale: true,
         includeQueryParams: true,
         skipFonts: false,
         preferredFontFormat: 'woff2' as const,
         // Ensure proper rendering of shadows and transforms
-        style: {
+        // For PNG/WebP: make background transparent
+        style: useTransparency ? {
+          transformStyle: 'preserve-3d',
+          backgroundColor: 'transparent',
+        } : {
           transformStyle: 'preserve-3d',
         },
         // Use foreignObject for better shadow/transform support
@@ -255,27 +282,40 @@ export const useRenderLoop = () => {
       };
 
       try {
-        // PNG Export - capture current canvas state directly
-        if (isPngExport) {
-          console.log('[Render] PNG export - capturing current state');
-
-          // Just wait for any pending renders
+        // Image Export (PNG/WebP) - export both 1x and 2x versions
+        if (isImageExport) {
+          console.log(`[Render] ${format.toUpperCase()} export - capturing 1x and 2x versions`);
           await waitForRender();
 
-          const canvas = await toCanvas(node, captureOptions);
-          console.log('[Render] Canvas captured:', canvas.width, 'x', canvas.height);
+          const blobFormat = format === 'webp' ? 'webp' : 'png';
 
-          const blob = await canvasToBlob(canvas);
-          console.log('[Render] Blob created:', blob.size, 'bytes');
+          // Export 1x version
+          const ratio1x = Math.max(outputWidth / nodeRect.width, outputHeight / nodeRect.height);
+          const options1x = { ...captureOptions, pixelRatio: ratio1x };
+          const canvas1x = await toCanvas(node, options1x);
+          const blob1x = await canvasToBlob(canvas1x, blobFormat);
+          const filename1x = getImageFilename(outputName, outputWidth, outputHeight, 1, ext);
+          const path1x = await join(exportFolder, filename1x);
+          await writeFile(path1x, new Uint8Array(await blob1x.arrayBuffer()));
+          console.log(`[Render] 1x saved:`, filename1x, blob1x.size, 'bytes');
 
-          const bytes = new Uint8Array(await blob.arrayBuffer());
-          await writeFile(outputPath, bytes);
-          console.log('[Render] PNG saved to:', outputPath);
+          setRenderStatus({ progress: 0.5 });
 
-          setState((prev) => ({ ...prev, isRendering: false, progress: 1, outputPath }));
+          // Export 2x version
+          const width2x = outputWidth * 2;
+          const height2x = outputHeight * 2;
+          const ratio2x = Math.max(width2x / nodeRect.width, height2x / nodeRect.height);
+          const options2x = { ...captureOptions, pixelRatio: ratio2x };
+          const canvas2x = await toCanvas(node, options2x);
+          const blob2x = await canvasToBlob(canvas2x, blobFormat);
+          const filename2x = getImageFilename(outputName, width2x, height2x, 2, ext);
+          const path2x = await join(exportFolder, filename2x);
+          await writeFile(path2x, new Uint8Array(await blob2x.arrayBuffer()));
+          console.log(`[Render] 2x saved:`, filename2x, blob2x.size, 'bytes');
+
+          setState((prev) => ({ ...prev, isRendering: false, progress: 1, outputPath: path2x }));
           setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
 
-          // Open export folder
           await open(exportFolder);
           return;
         }
@@ -283,13 +323,21 @@ export const useRenderLoop = () => {
         // Video Export - capture all frames
         console.log('[Render] Video export - capturing', totalFrames, 'frames');
 
-        // Seek to start
+        // Calculate video pixelRatio (1x, no retina needed for video)
+        const videoRatio = Math.max(outputWidth / nodeRect.width, outputHeight / nodeRect.height);
+        const videoOptions = { ...captureOptions, pixelRatio: videoRatio };
+
+        // Seek to start with longer initial wait
         seekTimeline(0);
         pauseAndSeekAnimations(node, 0);
-        await waitForRender();
+        await waitForRender(100); // Longer wait for initial frame
 
         const writeQueue = createQueue(10);
         const writePromises: Promise<void>[] = [];
+
+        // Calculate frame wait time based on complexity
+        // More time = more reliable, but slower
+        const frameWaitMs = 60; // 60ms per frame ensures DOM settles
 
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
           if (abortController.signal.aborted) {
@@ -305,11 +353,11 @@ export const useRenderLoop = () => {
           seekTimeline(t);
           // Seek Web Animations API animations
           pauseAndSeekAnimations(node, t);
-          // Wait for DOM to fully update
-          await waitForRender();
+          // Wait for DOM to fully update (works in background too)
+          await waitForRender(frameWaitMs);
 
           // Capture to canvas
-          const canvas = await toCanvas(node, captureOptions);
+          const canvas = await toCanvas(node, videoOptions);
 
           // Convert to blob
           const blob = await canvasToBlob(canvas);
@@ -319,7 +367,7 @@ export const useRenderLoop = () => {
           writePromises.push(
             writeQueue(async () => {
               const bytes = new Uint8Array(await blob.arrayBuffer());
-              const filePath = await join(framesDir, frameFileName(frameNum));
+              const filePath = await join(framesDir, frameFileName(frameNum, 'jpg'));
               await writeFile(filePath, bytes);
             })
           );

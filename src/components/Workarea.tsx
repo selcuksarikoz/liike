@@ -13,7 +13,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     backgroundType, backgroundColor, backgroundImage,
     setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight, canvasCornerRadius,
-    shadowType, shadowOpacity, stylePreset,
+    shadowType, shadowOpacity, shadowBlur, shadowColor,
+    stylePreset,
     deviceScale, imageAspectRatio, imageLayout,
     cornerRadius,
     applyPreset,
@@ -248,16 +249,19 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 (stageRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
               }
             }}
-            className="relative shadow-2xl transition-all duration-300 ease-in-out flex items-center justify-center bg-transparent"
+            className="relative shadow-2xl transition-all duration-300 ease-in-out flex items-center justify-center overflow-hidden"
             style={{
                 width: `${displayDimensions.width}px`,
                 height: `${displayDimensions.height}px`,
+                borderRadius: `${canvasCornerRadius}px`,
+                // Fallback background for video export (prevents transparent corners)
+                backgroundColor: backgroundColor || '#000',
             }}
         >
              {/* Canvas Background with Crossfade */}
              <div
                 className="absolute inset-0 border border-ui-border overflow-hidden"
-                style={{ borderRadius: `${canvasCornerRadius}px`, clipPath: `inset(0 round ${canvasCornerRadius}px)` }}
+                style={{ borderRadius: `${canvasCornerRadius}px` }}
              >
                {/* Previous background (fades out) */}
                <div ref={prevBackgroundRef} className={`absolute inset-0 bg-gradient-to-br ${prevGradient}`} />
@@ -301,6 +305,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   onScreenClick={handleScreenClick}
                   shadowType={shadowType}
                   shadowOpacity={shadowOpacity}
+                  shadowBlur={shadowBlur}
+                  shadowColor={shadowColor}
                   stylePreset={stylePreset}
                   scale={deviceScale}
                   aspectRatio={imageAspectRatio}

@@ -1,4 +1,5 @@
 import { useRef, useEffect, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { ANIMATION_PRESETS } from '../../constants/animations';
 
@@ -68,7 +69,7 @@ export const Modal = ({
   if (!isOpen) return null;
 
   if (position === 'center') {
-    return (
+    return createPortal(
       <div ref={overlayRef} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div
           ref={modalRef}
@@ -89,14 +90,16 @@ export const Modal = ({
             {children}
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
+  // Dropdown modal - also use portal to escape stacking contexts
+  return createPortal(
     <div
       ref={modalRef}
-      className={`absolute top-14 left-0 right-0 z-[9999] mx-4 overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl ${className}`}
+      className={`fixed top-14 left-4 right-4 z-[9999] overflow-hidden rounded-2xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl ${className}`}
     >
       {title && (
         <div className="flex items-center justify-between border-b border-ui-border px-4 py-3">
@@ -110,6 +113,7 @@ export const Modal = ({
         </div>
       )}
       {children}
-    </div>
+    </div>,
+    document.body
   );
 };

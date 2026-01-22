@@ -1,6 +1,6 @@
 import { useRef, useMemo, memo, useCallback } from 'react';
 import { ImagePlus } from 'lucide-react';
-import { getShadowStyle, STYLE_PRESETS } from '../constants/styles';
+import { STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
 import { combineAnimations, CSS_TRANSITIONS } from '../constants/animations';
 
@@ -29,9 +29,6 @@ type ImageRendererProps = {
   shadowColor?: string;
   shadowOpacity?: number;
   shadowBlur?: number;
-  shadowSpread?: number;
-  shadowX?: number;
-  shadowY?: number;
   layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative';
   animationInfo?: AnimationInfo;
 };
@@ -189,9 +186,6 @@ const DeviceRendererComponent = ({
   shadowOpacity = 40,
   shadowColor = '#000000',
   shadowBlur = 30,
-  shadowSpread = 0,
-  shadowX = 0,
-  shadowY = 20,
   layout = 'single',
   animationInfo,
 }: ImageRendererProps) => {
@@ -204,10 +198,10 @@ const DeviceRendererComponent = ({
     return preset.css;
   }, [stylePreset]);
 
-  // Memoized computed shadow - use filter for better transform compatibility
-  const { computedShadow, shadowFilter } = useMemo(() => {
+  // Memoized computed shadow - drop-shadow filter (works better with 3D transforms)
+  const shadowFilter = useMemo(() => {
     if (isPreview || shadowType === 'none') {
-      return { computedShadow: 'none', shadowFilter: 'none' };
+      return 'none';
     }
 
     const hex = shadowColor.replace('#', '');
@@ -217,15 +211,9 @@ const DeviceRendererComponent = ({
     const alpha = (shadowOpacity / 100);
     const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
-    // Use drop-shadow filter for better 3D transform compatibility
-    // drop-shadow doesn't support spread, so we use blur only
-    const dropShadow = `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px ${rgba})`;
-
-    // Keep box-shadow as fallback for spread support
-    const boxShadow = `${shadowX}px ${shadowY}px ${shadowBlur}px ${shadowSpread}px ${rgba}`;
-
-    return { computedShadow: boxShadow, shadowFilter: dropShadow };
-  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowSpread, shadowX, shadowY]);
+    // drop-shadow(x-offset y-offset blur color)
+    return `drop-shadow(0px ${shadowBlur / 2}px ${shadowBlur}px ${rgba})`;
+  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur]);
 
   const aspectValue = getAspectRatioValue(aspectRatio);
 
@@ -238,25 +226,23 @@ const DeviceRendererComponent = ({
   if (layout === 'single') {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        {/* Shadow wrapper - filter applied here for proper 3D transform support */}
-        <div style={{ filter: shadowFilter }}>
-          <div
-            ref={containerRef}
-            className="relative overflow-hidden transition-[transform,border-radius] duration-300 ease-out"
-            style={{
-              ...containerStyle,
-              width: aspectValue ? 'auto' : '85%',
-              height: aspectValue ? '85%' : '85%',
-              aspectRatio: aspectValue ? aspectValue : undefined,
-              maxWidth: '85%',
-              maxHeight: '85%',
-              borderRadius: `${cornerRadius}px`,
-              backfaceVisibility: 'hidden',
-              ...styleCSS
-            }}
-          >
-            <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
-          </div>
+        <div
+          ref={containerRef}
+          className="relative overflow-hidden transition-[transform,border-radius,box-shadow] duration-300 ease-out"
+          style={{
+            ...containerStyle,
+            width: aspectValue ? 'auto' : '85%',
+            height: aspectValue ? '85%' : '85%',
+            aspectRatio: aspectValue ? aspectValue : undefined,
+            maxWidth: '85%',
+            maxHeight: '85%',
+            borderRadius: `${cornerRadius}px`,
+            filter: shadowFilter,
+            backfaceVisibility: 'hidden',
+            ...styleCSS
+          }}
+        >
+          <MediaContainer index={0} media={mediaAssets[0]} cornerRadius={cornerRadius} isPreview={isPreview} onScreenClick={onScreenClick} styleCSS={styleCSS} />
         </div>
       </div>
     );
@@ -651,9 +637,6 @@ export const DeviceRenderer = memo(DeviceRendererComponent, (prev, next) => {
   if (prev.shadowOpacity !== next.shadowOpacity) return false;
   if (prev.shadowColor !== next.shadowColor) return false;
   if (prev.shadowBlur !== next.shadowBlur) return false;
-  if (prev.shadowSpread !== next.shadowSpread) return false;
-  if (prev.shadowX !== next.shadowX) return false;
-  if (prev.shadowY !== next.shadowY) return false;
   if (prev.isPreview !== next.isPreview) return false;
 
   // Reference comparison for arrays/objects

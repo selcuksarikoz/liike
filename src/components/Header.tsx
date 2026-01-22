@@ -17,7 +17,8 @@ const EXPORT_OPTIONS: ExportOption[] = [
   { id: 'mov', label: 'MOV Video', description: 'ProRes, for editing', icon: <Film className="w-4 h-4" /> },
   { id: 'mp4', label: 'MP4 Video', description: 'Universal format', icon: <Film className="w-4 h-4" /> },
   { id: 'gif', label: 'GIF', description: 'Animated Image', icon: <ImageIcon className="w-4 h-4" /> },
-  { id: 'png', label: 'PNG Image', description: 'Single frame export', icon: <ImageIcon className="w-4 h-4" /> },
+  { id: 'png', label: 'PNG Image', description: 'Transparent background', icon: <ImageIcon className="w-4 h-4" /> },
+  { id: 'webp', label: 'WebP Image', description: 'Smaller, transparent', icon: <ImageIcon className="w-4 h-4" /> },
 ];
 
 type HeaderProps = {
