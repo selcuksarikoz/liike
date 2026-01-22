@@ -253,6 +253,17 @@ export const useRenderLoop = () => {
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
 
+      // Listen for cancel event from UI
+      const cancelHandler = () => {
+        console.log('[Render] Cancel requested via event');
+        abortController.abort();
+      };
+      window.addEventListener('cancel-render', cancelHandler);
+
+      const cleanup = () => {
+        window.removeEventListener('cancel-render', cancelHandler);
+      };
+
       const totalFrames = isImageExport ? 1 : Math.max(1, Math.ceil((durationMs / 1000) * fps));
       console.log('[Render] Total frames:', totalFrames);
 
@@ -370,7 +381,15 @@ export const useRenderLoop = () => {
         seekTimeline(0);
         pauseAndSeekAnimations(node, 0);
         await seekVideos(node, 0);
-        await waitForRender(200); // Longer wait for initial frame to ensure DOM settles
+        await waitForRender(800); // Longer wait for initial frame to ensure DOM settles and images load
+
+        // Warmup capture to ensure lazy-loaded resources (like background images) are ready in the clone
+        console.log('[Render] Warming up capture engine...');
+        try {
+          await toCanvas(node, videoOptions);
+        } catch (e) {
+          console.warn('[Render] Warmup failed (non-fatal):', e);
+        }
 
         const writeQueue = createQueue(10);
         const writePromises: Promise<void>[] = [];
@@ -401,15 +420,15 @@ export const useRenderLoop = () => {
           // Capture to canvas
           const canvas = await toCanvas(node, videoOptions);
 
-          // Convert to blob (WebP - smaller file size, DOM capture includes background)
-          const blob = await canvasToBlob(canvas, 'webp');
+          // Convert to blob (PNG - reliable for video encoding)
+          const blob = await canvasToBlob(canvas, 'png');
 
           // Queue disk write (parallel I/O)
           const frameNum = frameIndex;
           writePromises.push(
             writeQueue(async () => {
               const bytes = new Uint8Array(await blob.arrayBuffer());
-              const filePath = await join(framesDir, frameFileName(frameNum, 'webp'));
+              const filePath = await join(framesDir, frameFileName(frameNum, 'png'));
               await writeFile(filePath, bytes);
             })
           );

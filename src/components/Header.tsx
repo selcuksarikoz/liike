@@ -217,7 +217,60 @@ export const Header = ({ onRender }: HeaderProps) => {
   };
 
   return (
-    <header className="col-span-3 flex h-14 items-center justify-between border-b border-ui-border bg-ui-bg px-6">
+    <>
+      {/* Full Screen Render Overlay */}
+      {renderStatus.isRendering && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="w-full max-w-md p-8 flex flex-col items-center gap-8">
+              {/* Progress Circle or Bar */}
+              <div className="relative flex items-center justify-center">
+                 <div className="absolute inset-0 rounded-full border-4 border-ui-border opacity-30"></div>
+                 <div className="w-32 h-32 rounded-full border-4 border-accent border-t-transparent animate-spin"></div>
+                 <div className="absolute inset-0 flex items-center justify-center flex-col">
+                    <span className="text-3xl font-bold text-white font-mono">
+                      {Math.round(renderStatus.progress * 100)}%
+                    </span>
+                    <span className="text-[10px] text-ui-muted uppercase tracking-widest mt-1">
+                      {renderStatus.phase === 'encoding' ? 'Encoding' : 'Capturing'}
+                    </span>
+                 </div>
+              </div>
+
+              <div className="text-center space-y-2">
+                 <h2 className="text-xl font-bold text-white">Exporting Video</h2>
+                 <p className="text-sm text-ui-muted max-w-xs mx-auto">
+                   Please keep this window in the foreground while we capture your masterpiece.
+                 </p>
+              </div>
+
+              {/* Cancel Button - Since cancel function is in parent, we might need to dispatch an event or use store 
+                  However, Header receives onRender. Does it receive cancel? No.
+                  We need to trigger cancellation via store if we can't access the hook handle.
+                  
+                  Earlier I decided to add cancelRender to store or similar.
+                  Actually, if 'renderStatus.isRendering' is true, the loop is running.
+                  If I add 'abortRequest' to store, the loop can check it.
+                  
+                  Let's modify useRenderStore to add 'abortRender' action, and useRenderLoop to watch it.
+              */}
+              <button 
+                 onClick={() => {
+                   // Dispatch abort event that useRenderLoop listens to, OR
+                   // slightly hacky but effective: set a global flag or use store
+                   useRenderStore.getState().setRenderStatus({ error: 'Cancelled by user', isRendering: false });
+                   // The loop needs to detect this change!
+                   // I will add a mechanism in useRenderLoop to watch this.
+                   window.dispatchEvent(new CustomEvent('cancel-render'));
+                 }}
+                 className="mt-8 px-8 py-3 rounded-full bg-ui-panel border border-ui-border text-ui-muted hover:bg-ui-highlight hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
+              >
+                Cancel Export
+              </button>
+           </div>
+        </div>
+      )}
+
+      <header className="col-span-3 flex h-14 items-center justify-between border-b border-ui-border bg-ui-bg px-6">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
           <div className="flex w-8 h-8 items-center justify-center rounded-md overflow-hidden bg-accent text-black font-bold">
@@ -318,6 +371,7 @@ export const Header = ({ onRender }: HeaderProps) => {
           <img className="h-full w-full object-cover" src={avatar} alt="User avatar" />
         </div> */}
       </div>
-    </header>
+      </header>
+    </>
   );
 };

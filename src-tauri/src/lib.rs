@@ -137,56 +137,63 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
             ]
         }
         // MP4 - H.264 for universal compatibility
+        // MP4 - User requested HEVC (H.265) for speed/quality
         _ => {
             if use_hw && is_macos {
-                // H.264 VideoToolbox - macOS
+                // HEVC VideoToolbox - macOS
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "h264_videotoolbox".to_string(),
+                    "hevc_videotoolbox".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-q:v".to_string(),
-                    "60".to_string(),
+                    "65".to_string(), // High quality
                     "-realtime".to_string(),
                     "1".to_string(),
+                    "-tag:v".to_string(),
+                    "hvc1".to_string(), // Essential for MP4 HEVC compatibility in QuickTime/Finder
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                 ]
             } else if use_hw && is_windows {
-                // H.264 NVENC - Windows NVIDIA
+                // HEVC NVENC - Windows NVIDIA
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "h264_nvenc".to_string(),
+                    "hevc_nvenc".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "p1".to_string(), // Fastest
+                    "p1".to_string(),
                     "-tune".to_string(),
                     "hq".to_string(),
                     "-rc".to_string(),
                     "vbr".to_string(),
                     "-cq".to_string(),
-                    "22".to_string(),
+                    "24".to_string(),
+                    "-tag:v".to_string(),
+                    "hvc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                 ]
             } else {
-                // Software H.264 - veryfast for speed
+                // Software HEVC
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "libx264".to_string(),
+                    "libx265".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "veryfast".to_string(),
+                    "ultrafast".to_string(),
                     "-crf".to_string(),
-                    "22".to_string(),
+                    "24".to_string(),
+                    "-tag:v".to_string(),
+                    "hvc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                 ]
@@ -212,8 +219,8 @@ async fn encode_video(
     let height = height.unwrap_or(1080);
     let use_hw = use_hw.unwrap_or(true); // Default to hardware encoding
 
-    // Use WebP frames (smaller file size than PNG)
-    let input_pattern = PathBuf::from(&frames_dir).join("frame_%05d.webp");
+    // Use PNG frames (more compatible than WebP for raw streams)
+    let input_pattern = PathBuf::from(&frames_dir).join("frame_%05d.png");
     let input_pattern_str = input_pattern.to_string_lossy().to_string();
     let output_path_owned = output_path.clone();
 
@@ -222,7 +229,7 @@ async fn encode_video(
         .filter_map(|entry| {
             let entry = entry.ok()?;
             let name = entry.file_name().to_string_lossy().to_string();
-            if name.starts_with("frame_") && name.ends_with(".webp") {
+            if name.starts_with("frame_") && name.ends_with(".png") {
                 Some(())
             } else {
                 None
