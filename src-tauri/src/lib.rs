@@ -472,6 +472,9 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "hvc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
+                    "-color_primaries".to_string(), "bt709".to_string(),
+                    "-color_trc".to_string(), "bt709".to_string(),
+                    "-colorspace".to_string(), "bt709".to_string(),
                 ]);
             } else if use_hw && is_windows {
                 args.extend(vec![
@@ -493,6 +496,9 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "hvc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
+                    "-color_primaries".to_string(), "bt709".to_string(),
+                    "-color_trc".to_string(), "bt709".to_string(),
+                    "-colorspace".to_string(), "bt709".to_string(),
                 ]);
             } else {
                 // Software encoding fallback
@@ -511,6 +517,9 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "hvc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
+                    "-color_primaries".to_string(), "bt709".to_string(),
+                    "-color_trc".to_string(), "bt709".to_string(),
+                    "-colorspace".to_string(), "bt709".to_string(),
                 ]);
             }
         }

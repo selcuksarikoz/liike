@@ -29,6 +29,8 @@ type ImageRendererProps = {
   shadowColor?: string;
   shadowOpacity?: number;
   shadowBlur?: number;
+  shadowX?: number;
+  shadowY?: number;
   layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative';
   animationInfo?: AnimationInfo;
   playing?: boolean;
@@ -204,6 +206,8 @@ const DeviceRendererComponent = ({
   shadowOpacity = 40,
   shadowColor = '#000000',
   shadowBlur = 30,
+  shadowX = 0,
+  shadowY = 20,
   layout = 'single',
   animationInfo,
   playing = true,
@@ -231,8 +235,8 @@ const DeviceRendererComponent = ({
     const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
     // drop-shadow(x-offset y-offset blur color)
-    return `drop-shadow(0px ${shadowBlur / 2}px ${shadowBlur}px ${rgba})`;
-  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur]);
+    return `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px ${rgba})`;
+  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowX, shadowY]);
 
   const aspectValue = getAspectRatioValue(aspectRatio);
 
@@ -656,6 +660,8 @@ export const DeviceRenderer = memo(DeviceRendererComponent, (prev, next) => {
   if (prev.shadowOpacity !== next.shadowOpacity) return false;
   if (prev.shadowColor !== next.shadowColor) return false;
   if (prev.shadowBlur !== next.shadowBlur) return false;
+  if (prev.shadowX !== next.shadowX) return false;
+  if (prev.shadowY !== next.shadowY) return false;
   if (prev.isPreview !== next.isPreview) return false;
   if (prev.playing !== next.playing) return false;
 

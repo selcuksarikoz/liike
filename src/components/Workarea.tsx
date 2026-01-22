@@ -14,7 +14,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     setMediaAssets, mediaAssets,
     canvasWidth, canvasHeight, canvasCornerRadius,
     canvasBorderWidth, canvasBorderColor,
-    shadowType, shadowOpacity, shadowBlur, shadowColor,
+    shadowType, shadowOpacity, shadowBlur, shadowColor, shadowX, shadowY,
     stylePreset,
     deviceScale, imageAspectRatio, imageLayout,
     cornerRadius,
@@ -289,6 +289,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   shadowOpacity={shadowOpacity}
                   shadowBlur={shadowBlur}
                   shadowColor={shadowColor}
+                  shadowX={shadowX}
+                  shadowY={shadowY}
                   stylePreset={stylePreset}
                   scale={deviceScale}
                   aspectRatio={imageAspectRatio}

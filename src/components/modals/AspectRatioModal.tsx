@@ -24,7 +24,7 @@ export const AspectRatioModal = ({ isOpen, onClose }: AspectRatioModalProps) => 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Image Aspect Ratio" position="center">
+    <Modal isOpen={isOpen} onClose={onClose} title="Image & Video Aspect Ratio" position="center">
       <div className="p-4">
         <div className="grid grid-cols-3 gap-3">
           {ASPECT_RATIOS.map(({ value, label, ratio }) => {

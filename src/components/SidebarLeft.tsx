@@ -227,7 +227,7 @@ export const SidebarLeft = () => {
         {/* Aspect Ratio */}
         <div className="border-t border-ui-border pt-6">
           <h2 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-ui-text">
-            Image Aspect Ratio
+            Image & Video Aspect Ratio
           </h2>
           <DropdownTrigger
             icon="aspect_ratio"
