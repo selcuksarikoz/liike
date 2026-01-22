@@ -12,6 +12,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     backgroundGradient,
     backgroundType, backgroundColor, backgroundImage,
     setMediaAssets, mediaAssets,
+    setDurationMs,
     canvasWidth, canvasHeight, canvasCornerRadius,
     canvasBorderWidth, canvasBorderColor,
     shadowType, shadowOpacity, shadowBlur, shadowColor, shadowX, shadowY,
@@ -123,6 +124,19 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
       const newAssets = [...mediaAssets];
       newAssets[activeMediaIndex] = { url, type: isVideo ? 'video' : 'image' };
       setMediaAssets(newAssets);
+
+      // If video, update duration to match video length
+      if (isVideo) {
+        const tempVideo = document.createElement('video');
+        tempVideo.preload = 'metadata';
+        tempVideo.onloadedmetadata = () => {
+          const duration = tempVideo.duration * 1000;
+          if (duration > 0 && isFinite(duration)) {
+             setDurationMs(Math.round(duration));
+          }
+        };
+        tempVideo.src = url;
+      }
     }
   };
 

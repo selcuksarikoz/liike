@@ -41,6 +41,16 @@ const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
   }
 };
 
+// Pause/seek HTML5 Video elements
+const pauseAndSeekVideos = (node: HTMLElement, timeMs: number) => {
+  const videos = node.querySelectorAll('video');
+  const seconds = timeMs / 1000;
+  for (const video of videos) {
+    video.pause();
+    video.currentTime = seconds;
+  }
+};
+
 // Wait for DOM update (minimal wait for speed)
 const waitForRender = (ms = 16) =>
   new Promise<void>((resolve) => {
@@ -186,6 +196,50 @@ const preloadResources = async (node: HTMLElement) => {
  * Helper: Convert DOM node to SVG data URL using foreignObject
  * This is much faster than html-to-image because it doesn't clone styles
  */
+const convertVideosToImages = async (sourceNode: HTMLElement, cloneNode: HTMLElement) => {
+  const sourceVideos = sourceNode.querySelectorAll('video');
+  const cloneVideos = cloneNode.querySelectorAll('video');
+
+  const sourceVideoArray = Array.from(sourceVideos);
+  const cloneVideoArray = Array.from(cloneVideos);
+
+  for (let i = 0; i < sourceVideoArray.length; i++) {
+     const sourceVideo = sourceVideoArray[i];
+     const cloneVideo = cloneVideoArray[i];
+
+     if (!sourceVideo || !cloneVideo) continue;
+     if (sourceVideo.videoWidth === 0 || sourceVideo.videoHeight === 0) continue;
+
+     try {
+        const width = sourceVideo.videoWidth;
+        const height = sourceVideo.videoHeight;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+           ctx.drawImage(sourceVideo, 0, 0, width, height);
+           const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+           
+           const img = document.createElement('img');
+           img.src = dataUrl;
+           img.style.cssText = cloneVideo.style.cssText;
+           img.className = cloneVideo.className;
+           img.style.width = '100%'; 
+           img.style.height = '100%';
+           img.style.objectFit = 'cover';
+           
+           if (cloneVideo.parentNode) {
+              cloneVideo.parentNode.replaceChild(img, cloneVideo);
+           }
+        }
+     } catch (e) {
+        console.error('[StreamRender] Video conversion failed:', e);
+     }
+  }
+};
+
 const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height: number): Promise<string> => {
   // Clone the node
   const clone = node.cloneNode(true) as HTMLElement;
@@ -201,6 +255,9 @@ const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height: number
   
   // Convert background images to data URLs (using cache)
   await convertBackgroundImagesToDataUrls(clone);
+  
+  // Convert videos to static images (frame capture)
+  await convertVideosToImages(node, clone);
   
   const serializer = new XMLSerializer();
   const nodeString = serializer.serializeToString(clone);
@@ -396,6 +453,7 @@ export const useStreamingRender = () => {
            const { playheadMs } = useTimelineStore.getState();
            seekTimeline(playheadMs);
            pauseAndSeekAnimations(node, playheadMs);
+           pauseAndSeekVideos(node, playheadMs);
            await waitForRender(50); // Convert DOM to canvas needs a settled DOM
 
            // Capture frame
@@ -505,6 +563,7 @@ export const useStreamingRender = () => {
         // Seek to start
         seekTimeline(0);
         pauseAndSeekAnimations(node, 0);
+        pauseAndSeekVideos(node, 0);
 
         // Preload resources (ensure images are cached before detailed capture)
         await preloadResources(node);
@@ -526,6 +585,7 @@ export const useStreamingRender = () => {
           // Seek timeline
           seekTimeline(timeMs);
           pauseAndSeekAnimations(node, timeMs);
+          pauseAndSeekVideos(node, timeMs);
           await waitForRender(8); // Minimal wait for speed
 
           // Capture frame to raw RGBA
@@ -590,6 +650,9 @@ export const useStreamingRender = () => {
   );
 
   const cancel = useCallback(async () => {
+    // Stop playback immediately
+    useTimelineStore.getState().setIsPlaying(false);
+    
     abortControllerRef.current?.abort();
     
     if (encoderIdRef.current) {

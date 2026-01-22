@@ -221,7 +221,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
     }
   }, []);
 
-  const handleApplyPreset = (preset: LayoutPreset) => {
+  const handleApplyPreset = (preset: LayoutPreset, layout: import('../store/renderStore').ImageLayout) => {
     setActivePresetId(preset.id);
 
     // Apply layout to canvas (keep current background, only apply rotation)
@@ -229,6 +229,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
       rotationX: preset.rotationX,
       rotationY: preset.rotationY,
       rotationZ: preset.rotationZ,
+      imageLayout: layout,
     });
 
     // Add to timeline if it has animations (replace existing)
@@ -321,7 +322,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
                 key={preset.id}
                 preset={preset}
                 isActive={activePresetId === preset.id}
-                onApply={() => handleApplyPreset(preset)}
+                onApply={() => handleApplyPreset(preset, 'single')}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
                 mediaAssets={mediaAssets.length > 0 ? [mediaAssets[0]] : [null]}
@@ -358,7 +359,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
                 key={preset.id}
                 preset={preset}
                 isActive={activePresetId === preset.id}
-                onApply={() => handleApplyPreset(preset)}
+                onApply={() => handleApplyPreset(preset, 'side-by-side')}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
                 mediaAssets={[mediaAssets[0] || null, mediaAssets[1] || null]}
@@ -395,7 +396,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
                 key={preset.id}
                 preset={preset}
                 isActive={activePresetId === preset.id}
-                onApply={() => handleApplyPreset(preset)}
+                onApply={() => handleApplyPreset(preset, 'trio-row')}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
                 mediaAssets={[mediaAssets[0] || null, mediaAssets[1] || null, mediaAssets[2] || null]}
@@ -432,7 +433,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
                 key={preset.id}
                 preset={preset}
                 isActive={activePresetId === preset.id}
-                onApply={() => handleApplyPreset(preset)}
+                onApply={() => handleApplyPreset(preset, 'grid')}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
                 mediaAssets={[mediaAssets[0] || null, mediaAssets[1] || null, mediaAssets[2] || null, mediaAssets[3] || null]}

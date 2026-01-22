@@ -434,7 +434,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                 "-c:v".to_string(),
                 "libvpx-vp9".to_string(),
                 "-crf".to_string(),
-                "28".to_string(),
+                "20".to_string(), // High quality
                 "-b:v".to_string(),
                 "0".to_string(),
                 "-pix_fmt".to_string(),
@@ -465,7 +465,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-q:v".to_string(),
-                    "65".to_string(),
+                    "85".to_string(), // High quality (65->85)
                     "-realtime".to_string(),
                     "1".to_string(),
                     "-tag:v".to_string(),
@@ -485,13 +485,13 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "p1".to_string(),
+                    "p4".to_string(), // Medium (better qual than p1)
                     "-tune".to_string(),
                     "hq".to_string(),
                     "-rc".to_string(),
                     "vbr".to_string(),
                     "-cq".to_string(),
-                    "24".to_string(),
+                    "19".to_string(), // High quality (24->19)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
@@ -510,9 +510,9 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "ultrafast".to_string(),
+                    "veryfast".to_string(), // Better compression than ultrafast
                     "-crf".to_string(),
-                    "24".to_string(),
+                    "18".to_string(), // High quality (24->18)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
