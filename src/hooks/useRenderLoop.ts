@@ -319,10 +319,12 @@ export const useRenderLoop = () => {
         skipFonts: false,
         preferredFontFormat: 'woff2' as const,
         // Ensure proper rendering of shadows and transforms
-        // For PNG/WebP: make background transparent
+        // For PNG/WebP: make background transparent and remove outer window shadow/border
         style: useTransparency ? {
           transformStyle: 'preserve-3d',
           backgroundColor: 'transparent',
+          boxShadow: 'none',
+          border: 'none',
         } : {
           transformStyle: 'preserve-3d',
         },
