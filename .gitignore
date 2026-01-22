@@ -4,3 +4,5 @@ src-tauri/target
 dist/
 
 .DS_Store
+
+.env

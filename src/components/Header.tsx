@@ -67,14 +67,14 @@ export const Header = ({ onRender }: HeaderProps) => {
     <header className="col-span-3 flex h-14 items-center justify-between border-b border-ui-border bg-ui-bg px-6">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
-          <div className="flex w-8 h-8 items-center justify-center rounded bg-accent text-black font-bold">
-            <Video className="w-4.5 h-4.5" />
+          <div className="flex w-8 h-8 items-center justify-center rounded-md overflow-hidden bg-accent text-black font-bold">
+            <img src="logo.png" alt="" className="w-full h-full" />
           </div>
           <h1 className="text-sm font-bold tracking-tight uppercase text-white">
             {/* // appname */}
           </h1>
         </div>
-        <nav className="flex items-center gap-4 border-l border-ui-border pl-6">
+        {/* <nav className="flex items-center gap-4 border-l border-ui-border pl-6">
           <div className="flex gap-1">
             <button className="p-1 rounded text-ui-muted hover:bg-ui-highlight/30 transition-all">
               <Undo2 className="w-5 h-5" />
@@ -83,7 +83,7 @@ export const Header = ({ onRender }: HeaderProps) => {
               <Redo2 className="w-5 h-5" />
             </button>
           </div>
-        </nav>
+        </nav> */}
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 rounded-lg border border-ui-highlight/40 bg-ui-highlight/20 px-3 py-1.5">
