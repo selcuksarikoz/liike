@@ -15,7 +15,6 @@ export type AnimationType =
   | 'shake'
   | 'pulse'
   | 'swing'
-  | 'flip'
   | 'elastic-rotate'
   | 'converge'
   | 'diverge'
@@ -433,16 +432,6 @@ export const ANIMATION_PRESETS: AnimationPreset[] = [
     icon: '360',
     color: '#A78BFA',
     duration: 1500,
-    easing: 'ease-in-out',
-    category: 'Combo',
-  },
-  {
-    id: 'flip-pop',
-    name: 'Flip Pop',
-    animations: ['flip', 'zoom-out', 'bounce'],
-    icon: 'flip',
-    color: '#E879F9',
-    duration: 1800,
     easing: 'ease-in-out',
     category: 'Combo',
   },

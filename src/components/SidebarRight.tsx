@@ -1,19 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { CameraStylePanel } from './CameraStylePanel';
-import { LayoutsPanel } from './LayoutsPanel';
+import { AnimationsPanel } from './AnimationsPanel';
 import { BackgroundModal } from './BackgroundModal';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { ANIMATION_PRESETS, STAGGER_DEFAULTS } from '../constants/animations';
 
-export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad';
+export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative';
 
 const FILTER_OPTIONS: { id: LayoutFilter; label: string; icon: string }[] = [
   { id: 'single', label: 'Single', icon: 'crop_square' },
   { id: 'duo', label: 'Duo', icon: 'view_column_2' },
   { id: 'trio', label: 'Trio', icon: 'view_week' },
   { id: 'quad', label: 'Quad', icon: 'grid_view' },
+  { id: 'creative', label: 'Mix', icon: 'auto_awesome_mosaic' },
 ];
 
 // Mini preview animation component
@@ -90,6 +91,28 @@ const FilterPreview = ({ filter, isActive }: { filter: LayoutFilter; isActive: b
     );
   }
 
+  if (filter === 'creative') {
+    return (
+      <div ref={containerRef} className="grid grid-cols-2 gap-0.5 w-6 h-5 place-items-center">
+        <div
+           ref={(el) => { elementsRef.current[0] = el; }}
+           className={`rounded-sm col-span-2 ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
+           style={{ width: 14, height: 6 }}
+        />
+        <div
+           ref={(el) => { elementsRef.current[1] = el; }}
+           className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
+           style={{ width: 7, height: 7 }}
+        />
+        <div
+           ref={(el) => { elementsRef.current[2] = el; }}
+           className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
+           style={{ width: 7, height: 7 }}
+        />
+      </div>
+    );
+  }
+
   // Quad - 2x2 grid
   return (
     <div ref={containerRef} className="grid grid-cols-2 gap-0.5 w-6 h-5 place-items-center">
@@ -118,6 +141,11 @@ const getFilterFromLayout = (layout: string): LayoutFilter => {
       return 'trio';
     case 'grid':
       return 'quad';
+    case 'masonry':
+    case 'mosaic':
+    case 'film-strip':
+    case 'creative':
+      return 'creative';
     default:
       return 'single';
   }
@@ -158,6 +186,9 @@ export const SidebarRight = () => {
         break;
       case 'quad':
         setImageLayout('grid');
+        break;
+      case 'creative':
+        setImageLayout('masonry');
         break;
     }
     setLayoutFilter(filter);
@@ -216,7 +247,7 @@ export const SidebarRight = () => {
               : 'text-ui-muted hover:text-ui-text'
           }`}
         >
-          Layouts
+          Animations
         </button>
         <button
           onClick={() => setActiveTab('style')}
@@ -261,7 +292,7 @@ export const SidebarRight = () => {
       )}
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        {activeTab === 'layouts' && <LayoutsPanel filter={layoutFilter} />}
+        {activeTab === 'layouts' && <AnimationsPanel filter={layoutFilter} />}
         {activeTab === 'style' && <CameraStylePanel />}
       </div>
 

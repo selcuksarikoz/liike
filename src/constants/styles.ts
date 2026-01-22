@@ -236,7 +236,7 @@ export const FRAMES_DATA = [
 ];
 
 export type LayoutAnimation = {
-  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'flip' | 'spiral' | 'fan' | 'domino' | 'elastic-rotate' | 'converge' | 'diverge' | 'glitch' | 'wobble-3d' | 'rotate-3d' | 'elevator' | 'skew-slide' | 'none';
+  type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'spiral' | 'fan' | 'domino' | 'elastic-rotate' | 'converge' | 'diverge' | 'glitch' | 'wobble-3d' | 'rotate-3d' | 'elevator' | 'skew-slide' | 'none';
   duration: number;
   easing: string;
   intensity?: number;
@@ -428,18 +428,6 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     animations: [{ type: 'rotate', duration: 5000, easing: 'linear', intensity: 360 }],
     durationMs: 5000,
   },
-  {
-    id: 'flip-card',
-    name: 'Card Flip',
-    rotationX: 0,
-    rotationY: 0,
-    rotationZ: 0,
-    backgroundGradient: 'from-amber-500 via-yellow-500 to-orange-500',
-    icon: 'flip',
-    color: '#F59E0B',
-    animations: [{ type: 'flip', duration: 1800, easing: 'ease-in-out', intensity: 180 }],
-    durationMs: 3000,
-  },
 
   // Attention Grabbers
   {
@@ -568,18 +556,6 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       { type: 'zoom-up', duration: 1000, easing: 'ease-out', intensity: 1.2 },
     ],
     durationMs: 2500,
-  },
-  {
-    id: 'duo-flip-reveal',
-    name: 'Double Flip',
-    rotationX: 0,
-    rotationY: 0,
-    rotationZ: 0,
-    backgroundGradient: 'from-teal-600 via-cyan-600 to-sky-600',
-    icon: 'autorenew',
-    color: '#14B8A6',
-    animations: [{ type: 'flip', duration: 1400, easing: 'ease-in-out', intensity: 180 }],
-    durationMs: 3000,
   },
 
   // Playful Duos
@@ -732,18 +708,6 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       { type: 'pulse', duration: 600, easing: 'ease-in-out', intensity: 1.08 },
     ],
     durationMs: 3200,
-  },
-  {
-    id: 'trio-flip-chain',
-    name: 'Flip Chain',
-    rotationX: 0,
-    rotationY: 0,
-    rotationZ: 0,
-    backgroundGradient: 'from-sky-600 via-blue-600 to-indigo-700',
-    icon: 'flip',
-    color: '#0EA5E9',
-    animations: [{ type: 'flip', duration: 900, easing: 'ease-in-out', intensity: 180, stagger: 200 }],
-    durationMs: 3000,
   },
 
   // Slide Combos

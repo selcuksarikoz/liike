@@ -13,6 +13,9 @@ const ASPECT_RATIOS: { value: AspectRatio; label: string; ratio: number | null }
   { value: '9:16', label: 'Story', ratio: 0.5625 },
   { value: '16:9', label: 'Landscape', ratio: 1.778 },
   { value: '4:3', label: 'Standard', ratio: 1.333 },
+  { value: '3:2', label: 'Classic', ratio: 1.5 },
+  { value: '2:3', label: 'Classic V', ratio: 0.666 },
+  { value: '21:9', label: 'Cinema', ratio: 2.333 },
 ];
 
 export const AspectRatioModal = ({ isOpen, onClose }: AspectRatioModalProps) => {

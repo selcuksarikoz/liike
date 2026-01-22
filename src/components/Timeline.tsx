@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { 
   X, SkipBack, Play, Pause, SkipForward, Clapperboard, ZoomOut, ZoomIn,
   Cloud, Trophy, Heart, Smartphone, Zap, RefreshCw, Magnet, Sparkles, 
-  Box, BoxSelect, ArrowUpFromLine, Component, Maximize, Scan
+  Box, BoxSelect, ArrowUpFromLine, Component, Maximize
 } from 'lucide-react';
 import { useTimelineStore, ANIMATION_PRESETS, type TimelineClip, type AnimationPreset } from '../store/timelineStore';
 import { useRenderStore } from '../store/renderStore';
@@ -26,7 +26,6 @@ const getPresetIcon = (iconName: string, className?: string) => {
     case 'elevator': return <ArrowUpFromLine {...props} />;
     case 'bolt': return <Component {...props} />;
     case '360': return <Maximize {...props} />;
-    case 'flip': return <Scan {...props} />;
     default: return <Clapperboard {...props} />;
   }
 };

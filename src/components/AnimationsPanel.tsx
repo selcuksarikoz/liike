@@ -184,9 +184,9 @@ const AnimatedLayoutCard = ({
   );
 };
 
-type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad';
+type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative';
 
-export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) => {
+export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) => {
   const {
     cornerRadius,
     mediaAssets,
@@ -301,6 +301,7 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
   const showDuo = filter === 'duo';
   const showTrio = filter === 'trio';
   const showQuad = filter === 'quad';
+  const showCreative = filter === 'creative';
 
   return (
     <div className="p-4">
@@ -448,6 +449,107 @@ export const LayoutsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) =
                 backgroundImage={backgroundImage}
               />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Creative Layout Animations */}
+      {showCreative && (
+        <div className="mb-6 space-y-8">
+          {/* Masonry */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <LayoutGrid className="w-4 h-4 text-pink-400" />
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+                Masonry
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {singleAnimations.slice(0, 3).map((preset) => (
+                <AnimatedLayoutCard
+                  key={`masonry-${preset.id}`}
+                  preset={preset}
+                  isActive={activePresetId === preset.id}
+                  onApply={() => handleApplyPreset(preset, 'masonry')}
+                  onDragStart={(e) => handlePresetDragStart(e, preset)}
+                  cornerRadius={cornerRadius}
+                  mediaAssets={mediaAssets}
+                  stylePreset={stylePreset}
+                  shadowType={shadowType}
+                  shadowOpacity={shadowOpacity}
+                  aspectRatio={imageAspectRatio}
+                  layout="masonry"
+                  backgroundType={backgroundType}
+                  backgroundGradient={backgroundGradient}
+                  backgroundColor={backgroundColor}
+                  backgroundImage={backgroundImage}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Mosaic */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <LayoutGrid className="w-4 h-4 text-orange-400" />
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+                Mosaic
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {singleAnimations.slice(3, 6).map((preset) => (
+                <AnimatedLayoutCard
+                  key={`mosaic-${preset.id}`}
+                  preset={preset}
+                  isActive={activePresetId === preset.id}
+                  onApply={() => handleApplyPreset(preset, 'mosaic')}
+                  onDragStart={(e) => handlePresetDragStart(e, preset)}
+                  cornerRadius={cornerRadius}
+                  mediaAssets={mediaAssets}
+                  stylePreset={stylePreset}
+                  shadowType={shadowType}
+                  shadowOpacity={shadowOpacity}
+                  aspectRatio={imageAspectRatio}
+                  layout="mosaic"
+                  backgroundType={backgroundType}
+                  backgroundGradient={backgroundGradient}
+                  backgroundColor={backgroundColor}
+                  backgroundImage={backgroundImage}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Film Strip */}
+           <div>
+            <div className="flex items-center gap-2 mb-3">
+              <LayoutGrid className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+                Film Strip
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {singleAnimations.slice(6, 9).map((preset) => (
+                <AnimatedLayoutCard
+                  key={`film-${preset.id}`}
+                  preset={preset}
+                  isActive={activePresetId === preset.id}
+                  onApply={() => handleApplyPreset(preset, 'film-strip')}
+                  onDragStart={(e) => handlePresetDragStart(e, preset)}
+                  cornerRadius={cornerRadius}
+                  mediaAssets={mediaAssets}
+                  stylePreset={stylePreset}
+                  shadowType={shadowType}
+                  shadowOpacity={shadowOpacity}
+                  aspectRatio={imageAspectRatio}
+                  layout="film-strip"
+                  backgroundType={backgroundType}
+                  backgroundGradient={backgroundGradient}
+                  backgroundColor={backgroundColor}
+                  backgroundImage={backgroundImage}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}

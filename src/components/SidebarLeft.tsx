@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, X, Square, Columns2, Rows2, LayoutGrid, Layers, CircleDot } from 'lucide-react';
+import { Plus, X, Square, Columns2, Rows2, LayoutGrid, Layers, CircleDot, Film, Grid3x3, LayoutTemplate } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import type { ImageLayout } from '../store/renderStore';
 import { FrameSelectorModal } from './modals/FrameSelectorModal';
@@ -13,6 +13,9 @@ const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = 
   { value: 'side-by-side', label: 'Side', icon: <Columns2 className="w-5 h-5" /> },
   { value: 'stacked', label: 'Stack', icon: <Rows2 className="w-5 h-5" /> },
   { value: 'grid', label: 'Grid', icon: <LayoutGrid className="w-5 h-5" /> },
+  { value: 'masonry', label: 'Masonry', icon: <LayoutTemplate className="w-5 h-5" /> },
+  { value: 'mosaic', label: 'Mosaic', icon: <Grid3x3 className="w-5 h-5" /> },
+  { value: 'film-strip', label: 'Film', icon: <Film className="w-5 h-5" /> },
   { value: 'overlap', label: 'Overlap', icon: <Layers className="w-5 h-5" /> },
   { value: 'fan', label: 'Fan', icon: <CircleDot className="w-5 h-5" /> },
   { value: 'creative', label: 'Mix', icon: <LayoutGrid className="w-5 h-5 rotate-45" /> },

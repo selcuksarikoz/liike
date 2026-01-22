@@ -20,8 +20,8 @@ export type RenderStatus = {
 
 type StylePreset = 'default' | 'glass-light' | 'glass-dark' | 'neon-glow' | 'cyber' | 'gradient-border' | 'frost' | 'liquid' | 'hologram' | 'inset-dark' | 'outline' | 'border' | 'double-border';
 type ShadowType = 'none' | 'soft' | 'float' | 'dream' | 'glow';
-export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3';
-export type ImageLayout = 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative';
+export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3' | '21:9' | '2:3' | '3:2';
+export type ImageLayout = 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative' | 'masonry' | 'mosaic' | 'film-strip';
 export type BackgroundType = 'gradient' | 'solid' | 'image';
 
 export type MediaAsset = {

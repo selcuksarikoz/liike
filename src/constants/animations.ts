@@ -80,7 +80,6 @@ export const DEFAULT_INTENSITIES: Record<string, number> = {
   // Rotation animations
   rotate: 360,
   swing: 15,
-  flip: 180,
   spiral: 360,
   fan: 30,
   domino: 15,
@@ -439,16 +438,6 @@ export const createLayoutAnimation = (
         options: { duration, easing: EASINGS.sineInOut, iterations: Infinity },
       };
 
-    case 'flip':
-      return {
-        keyframes: [
-          { transform: 'rotateY(0deg)' },
-          { transform: 'rotateY(180deg)' },
-          { transform: 'rotateY(0deg)' },
-        ],
-        options: { duration, easing: EASINGS.easeInOut, iterations: Infinity },
-      };
-
     case 'shake':
       return {
         keyframes: [
@@ -683,11 +672,6 @@ export const calculateAnimationValue = (
       const swingAngle = loopProgress * intensity;
       return {
         transform: `rotate(${swingAngle}deg)`,
-      };
-
-    case 'flip':
-      return {
-        transform: `rotateY(${halfLoopProgress * 180}deg)`,
       };
 
     case 'spiral':
