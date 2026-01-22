@@ -176,7 +176,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     },
   },
   {
-    id: 'gradient-border',
+    id: 'gradient-glow',
     label: 'Gradient',
     css: {
       background: 'linear-gradient(#18181b, #18181b) padding-box, linear-gradient(45deg, #f43f5e, #8b5cf6) border-box',

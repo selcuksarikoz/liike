@@ -107,7 +107,6 @@ export const RenderControls = ({ stageRef, loop }: Props) => {
 
       <div className="mt-2 text-xs text-slate-400">
         Frames: {state.currentFrame}/{state.totalFrames} · Output: {state.outputPath || 'temp'}{' '}
-        {state.framesDir ? `(frames @ ${state.framesDir})` : ''}
       </div>
 
       {state.error ? (

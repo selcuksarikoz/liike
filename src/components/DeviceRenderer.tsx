@@ -4,7 +4,7 @@ import { STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
 import { combineAnimations, CSS_TRANSITIONS } from '../constants/animations';
 
-export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3';
+export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3' | '21:9' | '2:3' | '3:2';
 
 type AnimationInfo = {
   animations: { type: string; intensity?: number }[];
@@ -31,7 +31,7 @@ type ImageRendererProps = {
   shadowBlur?: number;
   shadowX?: number;
   shadowY?: number;
-  layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative';
+  layout?: 'single' | 'side-by-side' | 'stacked' | 'trio-row' | 'trio-column' | 'grid' | 'overlap' | 'fan' | 'creative' | 'masonry' | 'mosaic' | 'film-strip';
   animationInfo?: AnimationInfo;
   playing?: boolean;
 };

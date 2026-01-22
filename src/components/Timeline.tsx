@@ -30,12 +30,15 @@ const getPresetIcon = (iconName: string, className?: string) => {
   }
 };
 
+// ... imports
+
 type DragState = {
-  clipId: string;
-  type: 'move' | 'resize-start' | 'resize-end';
+  type: 'move' | 'resize-start' | 'resize-end' | 'scrub';
+  clipId?: string;
   startX: number;
-  initialStartMs: number;
-  initialDurationMs: number;
+  initialStartMs?: number;
+  initialDurationMs?: number;
+  initialPlayheadMs?: number;
 };
 
 const TimelineClipComponent = ({
@@ -50,7 +53,7 @@ const TimelineClipComponent = ({
   zoom: number;
   isSelected: boolean;
   onSelect: () => void;
-  onDragStart: (e: React.MouseEvent, type: DragState['type']) => void;
+  onDragStart: (e: React.MouseEvent, type: Exclude<DragState['type'], 'scrub'>) => void;
   onDelete: () => void;
 }) => {
   const width = (clip.durationMs / MS_PER_SECOND) * PIXELS_PER_SECOND * zoom;
@@ -111,6 +114,20 @@ const TimelineClipComponent = ({
       <div className="absolute top-0.5 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[8px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
         {(clip.durationMs / 1000).toFixed(2)}s
       </div>
+
+       {/* Icon only if width permits */}
+      {width > 30 && clip.icon && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-white/50">
+           {getPresetIcon(clip.icon, "w-4 h-4")}
+        </div>
+      )}
+      
+      {/* Name if width permits */}
+      {width > 60 && (
+         <div className="absolute bottom-1 left-2 text-[9px] font-medium text-white/90 pointer-events-none truncate max-w-[80%]">
+            {clip.name}
+         </div>
+      )}
     </div>
   );
 };
@@ -161,33 +178,7 @@ export const Timeline = () => {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [showPresets, setShowPresets] = useState(true);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if focus is on an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-      // Space: play/pause
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (playheadMs >= durationMs && !isPlaying) {
-          setPlayhead(0);
-          setIsPlaying(true);
-        } else {
-          setIsPlaying(!isPlaying);
-        }
-      }
-
-      // Backspace/Delete: remove selected clip
-      if ((e.code === 'Backspace' || e.code === 'Delete') && selectedClipId) {
-        e.preventDefault();
-        removeClip(selectedClipId);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [playheadMs, durationMs, isPlaying, selectedClipId, setPlayhead, setIsPlaying, removeClip]);
+  // ... Keyboard shortcuts
 
   const totalWidth = (durationMs / MS_PER_SECOND) * PIXELS_PER_SECOND * zoom;
   const timeMarkers = Array.from(
@@ -198,23 +189,31 @@ export const Timeline = () => {
   // Handle dragging
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!dragState || !timelineRef.current) return;
+      if (!dragState) return;
+
+      if (dragState.type === 'scrub') {
+        const deltaX = e.clientX - dragState.startX;
+        const deltaMs = (deltaX / (PIXELS_PER_SECOND * zoom)) * MS_PER_SECOND;
+        const newPlayheadMs = Math.max(0, (dragState.initialPlayheadMs || 0) + deltaMs);
+        setPlayhead(newPlayheadMs);
+        return;
+      }
 
       const deltaX = e.clientX - dragState.startX;
       const deltaMs = (deltaX / (PIXELS_PER_SECOND * zoom)) * MS_PER_SECOND;
 
-      if (dragState.type === 'move') {
+      if (dragState.type === 'move' && dragState.clipId && dragState.initialStartMs !== undefined) {
         const newStartMs = Math.max(0, dragState.initialStartMs + deltaMs);
         moveClip(dragState.clipId, newStartMs);
-      } else if (dragState.type === 'resize-end') {
+      } else if (dragState.type === 'resize-end' && dragState.clipId && dragState.initialDurationMs !== undefined) {
         const newDuration = Math.max(100, dragState.initialDurationMs + deltaMs);
         resizeClip(dragState.clipId, newDuration);
-      } else if (dragState.type === 'resize-start') {
+      } else if (dragState.type === 'resize-start' && dragState.clipId && dragState.initialDurationMs !== undefined) {
         const newDuration = Math.max(100, dragState.initialDurationMs - deltaMs);
         resizeClip(dragState.clipId, newDuration, true);
       }
     },
-    [dragState, zoom, moveClip, resizeClip]
+    [dragState, zoom, moveClip, resizeClip, setPlayhead]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -232,12 +231,34 @@ export const Timeline = () => {
     }
   }, [dragState, handleMouseMove, handleMouseUp]);
 
+  // Handle scrubbing start (ruler or playhead)
+  const handleScrubStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!timelineRef.current) return;
+    
+    // Calculate initial playhead position based on click
+    const rect = timelineRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const scrollLeft = timelineRef.current.scrollLeft;
+    const ms = Math.max(0, ((x + scrollLeft) / (PIXELS_PER_SECOND * zoom)) * MS_PER_SECOND);
+    
+    // If clicking directly, jump there first
+    setPlayhead(ms);
+
+    setDragState({
+      type: 'scrub',
+      startX: e.clientX,
+      initialPlayheadMs: ms,
+    });
+  };
+
   const handleClipDragStart = (
     e: React.MouseEvent,
     clip: TimelineClip,
-    type: DragState['type']
+    type: Exclude<DragState['type'], 'scrub'>
   ) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragState({
       clipId: clip.id,
       type,
@@ -247,6 +268,10 @@ export const Timeline = () => {
     });
     selectClip(clip.id);
   };
+
+  // ... imports 
+
+  // ... existing code ...
 
   const handlePresetDragStart = (e: React.DragEvent, preset: AnimationPreset) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'animation-preset', preset }));
@@ -262,7 +287,8 @@ export const Timeline = () => {
       const parsed = JSON.parse(data);
       const rect = timelineRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
-      const startMs = Math.max(0, (x / (PIXELS_PER_SECOND * zoom)) * MS_PER_SECOND);
+      const scrollLeft = timelineRef.current.scrollLeft;
+      const startMs = Math.max(0, ((x + scrollLeft) / (PIXELS_PER_SECOND * zoom)) * MS_PER_SECOND);
 
       if (parsed.type === 'animation-preset') {
         const preset = parsed.preset as AnimationPreset;
@@ -293,7 +319,7 @@ export const Timeline = () => {
               animationPreset: {
                 id: preset.id,
                 name: preset.name,
-                animations: preset.animations.map((a: { type: string }) => a.type).filter((t: string) => t !== 'none'),
+                animations: preset.animations.map((a: any) => a.type).filter((t: any) => t !== 'none') as any[],
                 icon: preset.icon,
                 color: preset.color,
                 duration: preset.durationMs,
@@ -313,14 +339,6 @@ export const Timeline = () => {
     e.dataTransfer.dropEffect = 'copy';
   };
 
-  const handleTimelineClick = (e: React.MouseEvent) => {
-    if (!timelineRef.current) return;
-    const rect = timelineRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const ms = Math.max(0, (x / (PIXELS_PER_SECOND * zoom)) * MS_PER_SECOND);
-    setPlayhead(ms);
-  };
-
   const playheadPosition = (playheadMs / MS_PER_SECOND) * PIXELS_PER_SECOND * zoom;
 
   const formatTime = (seconds: number) => {
@@ -334,12 +352,13 @@ export const Timeline = () => {
 
   return (
     <footer className="col-span-3 flex h-64 flex-col border-t border-ui-border bg-ui-bg cursor-pointer">
-      {/* Toolbar */}
+      {/* ... Toolbar ... */}
       <div className="flex h-12 items-center justify-between border-b border-ui-border bg-ui-panel/30 px-4">
+        {/* ... existing toolbar ... */}
         <div className="flex items-center gap-4">
-          {/* Playback Controls */}
           <div className="flex items-center gap-1">
-            <button
+             {/* ... playback controls ... */}
+             <button
               onClick={() => setPlayhead(0)}
               className="rounded p-1.5 hover:bg-ui-highlight/40 flex items-center justify-center"
             >
@@ -358,13 +377,11 @@ export const Timeline = () => {
               <SkipForward className="w-5 h-5" />
             </button>
           </div>
-
-          {/* Time Display */}
-          <div className="text-[13px] font-mono text-accent">
+           {/* ... Time Display ... */}
+           <div className="text-[13px] font-mono text-accent">
             {currentTimeFormatted}s <span className="text-ui-text">/ {totalTimeFormatted}s</span>
           </div>
 
-          {/* Toggle Presets Panel */}
           <button
             onClick={() => setShowPresets(!showPresets)}
             className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors ${
@@ -375,7 +392,7 @@ export const Timeline = () => {
             Animations
           </button>
         </div>
-
+        
         {/* Zoom Controls */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
@@ -399,13 +416,13 @@ export const Timeline = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Animation Presets Panel */}
         {showPresets && (
-          <div className="w-48 border-r border-ui-border bg-ui-panel/20 overflow-y-auto no-scrollbar">
-            <div className="p-2 pb-6">
+          <div className="w-48 border-r border-ui-border bg-ui-panel/20 overflow-y-auto no-scrollbar flex-shrink-0">
+             {/* ... content ... */}
+             <div className="p-2 pb-6">
               <h3 className="text-[9px] font-bold uppercase tracking-widest text-ui-muted mb-3 px-1">
                 Drag to Timeline
               </h3>
               
-              {/* Group by category */}
               {['Basic', 'Creative', '3D', 'Combo'].map((category) => {
                 const categoryPresets = ANIMATION_PRESETS.filter(p => (p.category || 'Basic') === category);
                 if (categoryPresets.length === 0) return null;
@@ -433,18 +450,18 @@ export const Timeline = () => {
           </div>
         )}
 
-        {/* Track Labels */}
-        <div className="flex w-28 flex-col text-[11px] font-medium uppercase text-ui-text flex-shrink-0">
-          <div className="flex h-8 items-center border-b border-ui-border px-3 text-[9px] tracking-widest">
+        {/* Track Labels - Added z-30, relative, bg-ui-bg to prevent scroll overlap */}
+        <div className="flex w-28 flex-col text-[11px] font-medium uppercase text-ui-text flex-shrink-0 z-30 relative bg-ui-bg border-r border-ui-border shadow-md">
+          <div className="flex h-8 items-center border-b border-ui-border px-3 text-[9px] tracking-widest bg-ui-panel/10">
             Tracks
           </div>
           <div className="flex-1 overflow-hidden">
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="flex h-14 items-center border-b border-ui-border px-3 hover:bg-ui-highlight/10"
+                className="flex h-14 items-center border-b border-ui-border px-3 hover:bg-ui-highlight/10 truncate"
               >
-                <span className="text-[10px]">{track.name}</span>
+                <span className="text-[10px] truncate">{track.name}</span>
               </div>
             ))}
           </div>
@@ -453,8 +470,12 @@ export const Timeline = () => {
         {/* Timeline Content */}
         <div
           ref={timelineRef}
-          className="relative flex-1 overflow-x-auto overflow-y-hidden z-10"
-          onClick={handleTimelineClick}
+          className="relative flex-1 overflow-x-auto overflow-y-hidden z-10 select-none"
+          onMouseDown={(e) => {
+            // Only scrub if clicking on empty space (ruler or track bg, not clips)
+            // Clips stopPropagation so this works
+            handleScrubStart(e)
+          }}
         >
           {/* Time Ruler */}
           <div className="relative flex h-8 items-center border-b border-ui-border bg-ui-panel/20">
@@ -462,7 +483,7 @@ export const Timeline = () => {
               {timeMarkers.map((second) => (
                 <div
                   key={second}
-                  className="flex items-center border-r border-ui-border/50 px-2 text-[10px] font-mono text-ui-text/60"
+                  className="flex items-center border-r border-ui-border/50 px-2 text-[10px] font-mono text-ui-text/60 pointer-events-none"
                   style={{ width: `${PIXELS_PER_SECOND * zoom}px` }}
                 >
                   {formatTime(second)}
@@ -471,7 +492,7 @@ export const Timeline = () => {
             </div>
           </div>
 
-        {/* Track Rows */}
+          {/* Track Rows */}
           <div className="relative min-w-full" style={{ width: `${Math.max(totalWidth, 2000)}px` }}>
             {tracks.map((track) => (
               <div
@@ -481,7 +502,7 @@ export const Timeline = () => {
                 onDragOver={handleTrackDragOver}
               >
                 {/* Grid lines */}
-                <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 pointer-events-none opacity-50">
                   {timeMarkers.map((second) => (
                     <div
                       key={second}
@@ -491,7 +512,7 @@ export const Timeline = () => {
                   ))}
                 </div>
 
-                {/* Clips container with slight padding */}
+                {/* Clips container */}
                 <div className="absolute inset-y-0 left-0 right-0">
                   {track.clips.map((clip) => (
                     <TimelineClipComponent
@@ -506,9 +527,9 @@ export const Timeline = () => {
                   ))}
                 </div>
 
-                {/* Drop zone indicator - visible when empty */}
+                {/* Drop zone indicator */}
                 {track.clips.length === 0 && (
-                  <div className="absolute inset-2 flex items-center justify-center border-2 border-dashed border-ui-border/40 rounded-lg text-[10px] text-ui-muted uppercase tracking-widest font-medium group-hover/track:border-ui-border/60 group-hover/track:text-ui-text/60 transition-all pointer-events-none">
+                  <div className="absolute inset-2 flex items-center justify-center border-2 border-dashed border-ui-border/40 rounded-lg text-[10px] text-ui-muted uppercase tracking-widest font-medium group-hover/track:border-ui-border/60 group-hover/track:text-ui-text/60 transition-all pointer-events-none opacity-0 group-hover/track:opacity-100">
                     Drop {track.type} here
                   </div>
                 )}
@@ -516,16 +537,22 @@ export const Timeline = () => {
             ))}
           </div>
 
-          {/* Playhead - GPU accelerated with transform */}
+          {/* Playhead */}
           <div
-            className="absolute top-0 bottom-0 z-40 pointer-events-none will-change-transform"
+            className="absolute top-0 bottom-0 z-40 will-change-transform pointer-events-none"
             style={{ transform: `translateX(${playheadPosition}px)` }}
           >
             {/* Playhead line */}
             <div className="absolute top-0 bottom-0 left-0 w-0.5 -translate-x-1/2 bg-accent shadow-[0_0_8px_var(--color-accent)] opacity-80" />
             
             {/* Playhead handle */}
-            <div className="absolute -top-1 left-0 -translate-x-1/2 w-4 h-5 bg-accent rounded-b-md flex items-center justify-center shadow-lg cursor-ew-resize pointer-events-auto hover:bg-accent-hover transition-colors">
+            <div 
+               className="absolute -top-1 left-0 -translate-x-1/2 w-4 h-5 bg-accent rounded-b-md flex items-center justify-center shadow-lg cursor-ew-resize pointer-events-auto hover:bg-accent-hover transition-colors"
+               onMouseDown={(e) => {
+                 e.stopPropagation();
+                 handleScrubStart(e);
+               }}
+            >
               <div className="w-0.5 h-2.5 bg-black/40 rounded-full" />
             </div>
           </div>

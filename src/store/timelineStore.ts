@@ -108,6 +108,23 @@ const defaultTracks: TimelineTrack[] = [
   },
 ];
 
+// Helper to update render duration based on max clip end time
+const updateRenderDuration = (tracks: TimelineTrack[]) => {
+  let maxEndTime = 0;
+  tracks.forEach((track) => {
+    track.clips.forEach((clip) => {
+      const endTime = clip.startMs + clip.durationMs;
+      if (endTime > maxEndTime) {
+        maxEndTime = endTime;
+      }
+    });
+  });
+
+  // Minimum duration of 5s or the max clip time
+  const newDuration = Math.max(5000, maxEndTime);
+  useRenderStore.getState().setDurationMs(newDuration);
+};
+
 export const useTimelineStore = create<TimelineStore>((set, get) => ({
   tracks: defaultTracks,
   selectedClipId: null,
@@ -120,43 +137,56 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
       ...clipData,
       id: generateId(),
     };
-    set((state) => ({
-      tracks: state.tracks.map((track) =>
+    
+    set((state) => {
+      const newTracks = state.tracks.map((track) =>
         track.id === trackId
           ? { ...track, clips: [...track.clips, clip] }
           : track
-      ),
-    }));
+      );
+      updateRenderDuration(newTracks);
+      return { tracks: newTracks };
+    });
   },
 
   updateClip: (clipId, updates) => {
-    set((state) => ({
-      tracks: state.tracks.map((track) => ({
+    set((state) => {
+      const newTracks = state.tracks.map((track) => ({
         ...track,
         clips: track.clips.map((clip) =>
           clip.id === clipId ? { ...clip, ...updates } : clip
         ),
-      })),
-    }));
+      }));
+      updateRenderDuration(newTracks);
+      return { tracks: newTracks };
+    });
   },
 
   removeClip: (clipId) => {
-    set((state) => ({
-      tracks: state.tracks.map((track) => ({
+    set((state) => {
+      const newTracks = state.tracks.map((track) => ({
         ...track,
         clips: track.clips.filter((clip) => clip.id !== clipId),
-      })),
-      selectedClipId: state.selectedClipId === clipId ? null : state.selectedClipId,
-    }));
+      }));
+      updateRenderDuration(newTracks);
+      return {
+        tracks: newTracks,
+        selectedClipId: state.selectedClipId === clipId ? null : state.selectedClipId,
+      };
+    });
   },
 
   clearTrack: (trackId) => {
-    set((state) => ({
-      tracks: state.tracks.map((track) =>
+    set((state) => {
+      const newTracks = state.tracks.map((track) =>
         track.id === trackId ? { ...track, clips: [] } : track
-      ),
-      selectedClipId: null,
-    }));
+      );
+      updateRenderDuration(newTracks);
+      return {
+        tracks: newTracks,
+        selectedClipId: null,
+      };
+    });
   },
 
   selectClip: (clipId) => {
@@ -194,8 +224,8 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
 
     const targetTrackId = newTrackId || sourceTrackId;
 
-    set((state) => ({
-      tracks: state.tracks.map((track) => {
+    set((state) => {
+      const newTracks = state.tracks.map((track) => {
         if (track.id === sourceTrackId && track.id === targetTrackId) {
           // Same track, just update position
           return {
@@ -218,25 +248,19 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
           };
         }
         return track;
-      }),
-    }));
-
-    // Update render duration if clip end exceeds current duration
-    if (clipToMove) {
-      const newEndTime = Math.max(0, newStartMs) + clipToMove.durationMs;
-      const currentDuration = useRenderStore.getState().durationMs;
-      if (newEndTime > currentDuration) {
-        useRenderStore.getState().setDurationMs(newEndTime);
-      }
-    }
+      });
+      
+      updateRenderDuration(newTracks);
+      return { tracks: newTracks };
+    });
   },
 
   resizeClip: (clipId, newDurationMs, fromStart = false) => {
     const minDuration = 100;
     const duration = Math.max(minDuration, newDurationMs);
 
-    set((state) => ({
-      tracks: state.tracks.map((track) => ({
+    set((state) => {
+      const newTracks = state.tracks.map((track) => ({
         ...track,
         clips: track.clips.map((clip) => {
           if (clip.id !== clipId) return clip;
@@ -250,24 +274,11 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
           }
           return { ...clip, durationMs: duration };
         }),
-      })),
-    }));
-
-    // Update render duration to match longest clip end time
-    const state = get();
-    let maxEndTime = 0;
-    state.tracks.forEach((track) => {
-      track.clips.forEach((clip) => {
-        const endTime = clip.startMs + clip.durationMs;
-        if (endTime > maxEndTime) {
-          maxEndTime = endTime;
-        }
-      });
+      }));
+      
+      updateRenderDuration(newTracks);
+      return { tracks: newTracks };
     });
-
-    if (maxEndTime > 0) {
-      useRenderStore.getState().setDurationMs(maxEndTime);
-    }
   },
 
   toggleTrackMute: (trackId) => {
