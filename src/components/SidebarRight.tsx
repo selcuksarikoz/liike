@@ -1,11 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
-import { CameraStylePanel } from './CameraStylePanel';
-import { AnimationsPanel } from './AnimationsPanel';
-import { BackgroundModal } from './BackgroundModal';
+import { CircleDot, Columns2, Film, Grid3x3, Layers, LayoutGrid, LayoutTemplate, Rows2, Square } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { FRAMES_DATA } from '../constants/styles';
+import type { ImageLayout } from '../store/renderStore';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { ANIMATION_PRESETS, STAGGER_DEFAULTS } from '../constants/animations';
+import { AnimationsPanel } from './AnimationsPanel';
+import { BackgroundModal } from './BackgroundModal';
+import { FilterPreview } from './FilterPreview';
+import { AspectRatioModal } from './modals/AspectRatioModal';
+import { FrameSelectorModal } from './modals/FrameSelectorModal';
+import { DropdownTrigger } from './ui/Dropdown';
+import { ActionCard, ControlGroup, SidebarContainer, SidebarContent, SidebarHeader, SidebarSection, TabButton, TabContainer } from './ui/SidebarPrimitives';
+import { SliderControl } from './ui/SliderControl';
 
 export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative';
 
@@ -17,116 +23,18 @@ const FILTER_OPTIONS: { id: LayoutFilter; label: string; icon: string }[] = [
   { id: 'creative', label: 'Mix', icon: 'auto_awesome_mosaic' },
 ];
 
-// Mini preview animation component
-const FilterPreview = ({ filter, isActive }: { filter: LayoutFilter; isActive: boolean }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const elementsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const animationsRef = useRef<Animation[]>([]);
-
-  useEffect(() => {
-    if (!isActive || !containerRef.current) return;
-
-    const elements = elementsRef.current.filter(Boolean) as Element[];
-    if (elements.length === 0) return;
-
-    // Cancel previous animations
-    animationsRef.current.forEach(anim => anim.cancel());
-    animationsRef.current = [];
-
-    // Animate with stagger using Web Animations API
-    const { keyframes, options } = ANIMATION_PRESETS.filterPreview;
-    elements.forEach((el, i) => {
-      const anim = el.animate([...keyframes], {
-        ...options,
-        delay: i * STAGGER_DEFAULTS.filters,
-      });
-      animationsRef.current.push(anim);
-    });
-
-    return () => {
-      animationsRef.current.forEach(anim => anim.cancel());
-    };
-  }, [isActive, filter]);
-
-  // Different layouts for each filter type
-  if (filter === 'single') {
-    return (
-      <div ref={containerRef} className="flex items-center justify-center w-6 h-5">
-        <div
-          ref={(el) => { elementsRef.current[0] = el; }}
-          className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
-          style={{ width: 16, height: 16 }}
-        />
-      </div>
-    );
-  }
-
-  if (filter === 'duo') {
-    return (
-      <div ref={containerRef} className="flex items-center justify-center gap-0.5 w-6 h-5">
-        {[0, 1].map((i) => (
-          <div
-            key={i}
-            ref={(el) => { elementsRef.current[i] = el; }}
-            className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
-            style={{ width: 7, height: 14 }}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (filter === 'trio') {
-    return (
-      <div ref={containerRef} className="flex items-center justify-center gap-0.5 w-6 h-5">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            ref={(el) => { elementsRef.current[i] = el; }}
-            className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
-            style={{ width: 5, height: 12 }}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (filter === 'creative') {
-    return (
-      <div ref={containerRef} className="grid grid-cols-2 gap-0.5 w-6 h-5 place-items-center">
-        <div
-           ref={(el) => { elementsRef.current[0] = el; }}
-           className={`rounded-sm col-span-2 ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
-           style={{ width: 14, height: 6 }}
-        />
-        <div
-           ref={(el) => { elementsRef.current[1] = el; }}
-           className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
-           style={{ width: 7, height: 7 }}
-        />
-        <div
-           ref={(el) => { elementsRef.current[2] = el; }}
-           className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
-           style={{ width: 7, height: 7 }}
-        />
-      </div>
-    );
-  }
-
-  // Quad - 2x2 grid
-  return (
-    <div ref={containerRef} className="grid grid-cols-2 gap-0.5 w-6 h-5 place-items-center">
-      {[0, 1, 2, 3].map((i) => (
-        <div
-          key={i}
-          ref={(el) => { elementsRef.current[i] = el; }}
-          className={`rounded-sm ${isActive ? 'bg-black/90' : 'bg-current opacity-50'}`}
-          style={{ width: 7, height: 7 }}
-        />
-      ))}
-    </div>
-  );
-};
+const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = [
+  { value: 'single', label: 'Single', icon: <Square className="w-5 h-5" /> },
+  { value: 'side-by-side', label: 'Side', icon: <Columns2 className="w-5 h-5" /> },
+  { value: 'stacked', label: 'Stack', icon: <Rows2 className="w-5 h-5" /> },
+  { value: 'grid', label: 'Grid', icon: <LayoutGrid className="w-5 h-5" /> },
+  { value: 'masonry', label: 'Masonry', icon: <LayoutTemplate className="w-5 h-5" /> },
+  { value: 'mosaic', label: 'Mosaic', icon: <Grid3x3 className="w-5 h-5" /> },
+  { value: 'film-strip', label: 'Film', icon: <Film className="w-5 h-5" /> },
+  { value: 'overlap', label: 'Overlap', icon: <Layers className="w-5 h-5" /> },
+  { value: 'fan', label: 'Fan', icon: <CircleDot className="w-5 h-5" /> },
+  { value: 'creative', label: 'Mix', icon: <LayoutGrid className="w-5 h-5 rotate-45" /> },
+];
 
 // Map imageLayout from store to filter type
 const getFilterFromLayout = (layout: string): LayoutFilter => {
@@ -152,10 +60,28 @@ const getFilterFromLayout = (layout: string): LayoutFilter => {
 };
 
 export const SidebarRight = () => {
-  const [activeTab, setActiveTab] = useState<'layouts' | 'style'>('layouts');
+  const [activeTab, setActiveTab] = useState<'canvas' | 'animations'>('canvas');
   const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
+  const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
+  const [isAspectRatioModalOpen, setIsAspectRatioModalOpen] = useState(false);
 
-  const { backgroundType, backgroundGradient, backgroundColor, backgroundImage, setImageLayout, imageLayout } = useRenderStore();
+  const { 
+    backgroundType, 
+    backgroundGradient, 
+    backgroundColor, 
+    backgroundImage, 
+    setImageLayout, 
+    imageLayout,
+    canvasWidth,
+    canvasHeight,
+    imageAspectRatio,
+    canvasCornerRadius,
+    setCanvasCornerRadius,
+    canvasBorderWidth,
+    setCanvasBorderWidth,
+    canvasBorderColor,
+    setCanvasBorderColor,
+  } = useRenderStore();
   const { setIsPlaying, setPlayhead, clearTrack } = useTimelineStore();
 
   // Derive initial layoutFilter from store's imageLayout
@@ -194,6 +120,14 @@ export const SidebarRight = () => {
     setLayoutFilter(filter);
   };
 
+  const getCurrentFrameLabel = () => {
+    for (const group of FRAMES_DATA) {
+      const frame = group.frames.find((f) => f.width === canvasWidth && f.height === canvasHeight);
+      if (frame) return frame.label;
+    }
+    return `${canvasWidth} × ${canvasHeight}`;
+  };
+
   // Generate preview style for background button
   const getBackgroundPreviewStyle = () => {
     switch (backgroundType) {
@@ -218,52 +152,35 @@ export const SidebarRight = () => {
   };
 
   return (
-    <aside className="flex w-80 flex-col border-l border-ui-border bg-ui-bg-secondary h-full overflow-hidden">
+    <SidebarContainer side="right">
       {/* Background Button */}
-      <div className="p-3 border-b border-ui-border">
-        <button
+      <SidebarSection borderBottom padded>
+        <ActionCard
+          label="Background"
+          value={backgroundType}
           onClick={() => setIsBackgroundModalOpen(true)}
-          className="w-full flex items-center gap-3 p-2 rounded-xl border border-ui-border hover:border-accent/50 hover:bg-ui-panel/50 transition-all group"
-        >
-          <div
-            className={`w-10 h-10 rounded-lg border border-ui-border overflow-hidden flex-shrink-0 ${getGradientClass()}`}
-            style={getBackgroundPreviewStyle()}
-          />
-          <div className="flex-1 text-left">
-            <div className="text-[11px] font-medium text-white">Background</div>
-            <div className="text-[9px] text-ui-muted capitalize">{backgroundType}</div>
-          </div>
-          <ChevronRight className="w-4.5 h-4.5 text-ui-muted group-hover:text-accent transition-colors" />
-        </button>
-      </div>
+          preview={
+            <div
+              className={`w-10 h-10 rounded-lg border border-ui-border overflow-hidden flex-shrink-0 ${getGradientClass()}`}
+              style={getBackgroundPreviewStyle()}
+            />
+          }
+        />
+      </SidebarSection>
 
       {/* Tab Switcher */}
-      <div className="flex border-b border-ui-border">
-        <button
-          onClick={() => setActiveTab('layouts')}
-          className={`flex-1 py-3 text-[11px] font-bold uppercase tracking-widest transition-colors ${
-            activeTab === 'layouts'
-              ? 'text-white border-b-2 border-accent bg-ui-panel'
-              : 'text-ui-muted hover:text-ui-text'
-          }`}
-        >
+      <TabContainer>
+        <TabButton active={activeTab === 'canvas'} onClick={() => setActiveTab('canvas')}>
+          Canvas
+        </TabButton>
+        <TabButton active={activeTab === 'animations'} onClick={() => setActiveTab('animations')}>
           Animations
-        </button>
-        <button
-          onClick={() => setActiveTab('style')}
-          className={`flex-1 py-3 text-[11px] font-bold uppercase tracking-widest transition-colors ${
-            activeTab === 'style'
-              ? 'text-white border-b-2 border-accent bg-ui-panel'
-              : 'text-ui-muted hover:text-ui-text'
-          }`}
-        >
-          Style
-        </button>
-      </div>
+        </TabButton>
+      </TabContainer>
 
-      {/* Layout Filter (only show when layouts tab is active) */}
-      {activeTab === 'layouts' && (
-        <div className="p-2 border-b border-ui-border bg-ui-bg-secondary">
+      {/* Layout Filter (only show when animations tab is active) */}
+      {activeTab === 'animations' && (
+        <SidebarSection borderBottom padded>
           <div className="relative flex bg-ui-panel/50 rounded-lg p-1">
             {/* Sliding indicator */}
             <div
@@ -288,19 +205,118 @@ export const SidebarRight = () => {
               </button>
             ))}
           </div>
-        </div>
+        </SidebarSection>
       )}
 
-      <div className="flex-1 overflow-y-auto no-scrollbar">
-        {activeTab === 'layouts' && <AnimationsPanel filter={layoutFilter} />}
-        {activeTab === 'style' && <CameraStylePanel />}
-      </div>
+      <SidebarContent>
+        {activeTab === 'animations' && <AnimationsPanel filter={layoutFilter} />}
+        
+        {activeTab === 'canvas' && (
+          <div className="flex flex-col">
+             {/* Frame Selection */}
+             <SidebarSection padded>
+               <SidebarHeader>Canvas Size</SidebarHeader>
+               <DropdownTrigger
+                 icon="crop"
+                 label={getCurrentFrameLabel()}
+                 value={`${canvasWidth} × ${canvasHeight}`}
+                 onClick={() => setIsFrameModalOpen(true)}
+               />
+             </SidebarSection>
 
-      {/* Background Modal */}
+             <div className="h-px bg-ui-border mx-4" />
+
+             {/* Canvas Style */}
+             <SidebarSection padded>
+               <SidebarHeader>Canvas Style</SidebarHeader>
+               <ControlGroup>
+                 <SliderControl
+                   label="Corner Radius"
+                   icon={<CircleDot className="w-3.5 h-3.5" />}
+                   value={canvasCornerRadius}
+                   min={0}
+                   max={100}
+                   unit="px"
+                   onChange={setCanvasCornerRadius}
+                 />
+                 <SliderControl
+                   label="Border Width"
+                   icon={<Square className="w-3.5 h-3.5" />}
+                   value={canvasBorderWidth}
+                   min={0}
+                   max={20}
+                   unit="px"
+                   onChange={setCanvasBorderWidth}
+                 />
+                 {canvasBorderWidth > 0 && (
+                   <div className="flex items-center justify-between pt-1">
+                      <label className="text-[10px] text-ui-muted">Border Color</label>
+                      <div className="flex items-center gap-2">
+                         <span className="text-[10px] text-ui-text font-mono uppercase">{canvasBorderColor}</span>
+                         <input 
+                           type="color"
+                           value={canvasBorderColor}
+                           onChange={(e) => setCanvasBorderColor(e.target.value)}
+                           className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent"
+                         />
+                      </div>
+                   </div>
+                 )}
+               </ControlGroup>
+             </SidebarSection>
+
+             <div className="h-px bg-ui-border mx-4" />
+
+             {/* Aspect Ratio */}
+             <SidebarSection padded>
+               <SidebarHeader>Media Aspect Ratio</SidebarHeader>
+               <DropdownTrigger
+                 icon="aspect_ratio"
+                 label={imageAspectRatio === 'free' ? 'Free' : imageAspectRatio}
+                 value={imageAspectRatio === 'free' ? 'No constraint' : `${imageAspectRatio} ratio`}
+                 onClick={() => setIsAspectRatioModalOpen(true)}
+               />
+             </SidebarSection>
+             
+             <div className="h-px bg-ui-border mx-4" />
+
+             {/* Layout */}
+             <SidebarSection padded>
+               <SidebarHeader>Layout</SidebarHeader>
+               <div className="grid grid-cols-3 gap-2">
+                 {LAYOUTS.map(({ value, label, icon }) => (
+                   <button
+                     key={value}
+                     onClick={() => setImageLayout(value)}
+                     className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg transition-all border ${
+                       imageLayout === value
+                         ? 'bg-accent text-black border-accent'
+                         : 'bg-ui-panel text-ui-text border-transparent hover:bg-ui-highlight hover:text-white hover:border-accent/30'
+                     }`}
+                   >
+                     {icon}
+                     <span className="text-[8px] font-medium uppercase">{label}</span>
+                   </button>
+                 ))}
+               </div>
+             </SidebarSection>
+          </div>
+        )}
+      </SidebarContent>
+
+      {/* Modals */}
       <BackgroundModal
         isOpen={isBackgroundModalOpen}
         onClose={() => setIsBackgroundModalOpen(false)}
       />
-    </aside>
+      <FrameSelectorModal 
+        isOpen={isFrameModalOpen} 
+        onClose={() => setIsFrameModalOpen(false)} 
+      />
+      <AspectRatioModal
+        isOpen={isAspectRatioModalOpen}
+        onClose={() => setIsAspectRatioModalOpen(false)}
+      />
+    </SidebarContainer>
   );
 };

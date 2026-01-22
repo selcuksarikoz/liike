@@ -1,4 +1,4 @@
-import { useRef, useEffect, type ReactNode } from 'react';
+import { useRef, useEffect } from 'react';
 import {
   ArrowUpDown,
   ArrowLeftRight,
@@ -13,15 +13,13 @@ import {
   Move3d,
   Sparkles,
   Square,
-  RotateCcwIcon,
-  ArrowDownToLine,
-  Check,
 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { STYLE_PRESETS, SHADOW_TYPES } from '../constants/styles';
 import { DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
 
 import { SliderControl } from './ui/SliderControl';
+import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
 
 export const CameraStylePanel = () => {
   const {
@@ -89,28 +87,27 @@ export const CameraStylePanel = () => {
     }
   };
 
-  const SectionHeader = ({ title, section, icon }: { title: string; section: string; icon: ReactNode }) => (
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center gap-2">
-        <span className="text-accent">{icon}</span>
-        <h3 className="text-[10px] uppercase font-bold text-ui-muted tracking-widest">{title}</h3>
-      </div>
-      <button
-        onClick={() => handleReset(section)}
-        className="text-[9px] text-ui-muted hover:text-accent transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
-      >
-        <RotateCcw className="w-3 h-3" />
-        Reset
-      </button>
-    </div>
+  const ResetButton = ({ section }: { section: string }) => (
+    <button
+      onClick={() => handleReset(section)}
+      className="text-[9px] text-ui-muted hover:text-accent transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
+    >
+      <RotateCcw className="w-3 h-3" />
+      Reset
+    </button>
   );
 
   return (
-    <div ref={containerRef} className="p-4 space-y-5">
+    <div ref={containerRef} className="space-y-6">
       {/* 3D Rotation */}
       <div className="style-section group">
-        <SectionHeader title="3D Rotation" section="rotation" icon={<Box className="w-4 h-4" />} />
-        <div className="space-y-3 bg-ui-panel/50 rounded-xl p-3">
+        <SidebarHeader 
+          icon={<Box className="w-4 h-4" />} 
+          action={<ResetButton section="rotation" />}
+        >
+          3D Rotation
+        </SidebarHeader>
+        <ControlGroup>
           <SliderControl
             label="Tilt X"
             icon={<ArrowUpDown className="w-3.5 h-3.5" />}
@@ -138,13 +135,18 @@ export const CameraStylePanel = () => {
             unit="°"
             onChange={setRotationZ}
           />
-        </div>
+        </ControlGroup>
       </div>
 
       {/* Transform */}
       <div className="style-section group">
-        <SectionHeader title="Transform" section="transform" icon={<Move3d className="w-4 h-4" />} />
-        <div className="space-y-3 bg-ui-panel/50 rounded-xl p-3">
+        <SidebarHeader 
+          icon={<Move3d className="w-4 h-4" />} 
+          action={<ResetButton section="transform" />}
+        >
+          Transform
+        </SidebarHeader>
+        <ControlGroup>
           <SliderControl
             label="Scale"
             icon={<Maximize2 className="w-3.5 h-3.5" />}
@@ -164,15 +166,14 @@ export const CameraStylePanel = () => {
             unit="px"
             onChange={setCornerRadius}
           />
-        </div>
+        </ControlGroup>
       </div>
 
       {/* Style Preset */}
       <div className="style-section">
-        <div className="flex items-center gap-2 mb-3">
-          <Palette className="w-4 h-4 text-accent" />
-          <h3 className="text-[10px] uppercase font-bold text-ui-muted tracking-widest">Frame Style</h3>
-        </div>
+        <SidebarHeader icon={<Palette className="w-4 h-4" />}>
+          Frame Style
+        </SidebarHeader>
         <div className="grid grid-cols-4 gap-2">
           {STYLE_PRESETS.map((preset) => {
             const isActive = stylePreset === preset.id;
@@ -204,10 +205,14 @@ export const CameraStylePanel = () => {
         </div>
       </div>
 
-      {/* Shadow */}
       {/* Shadow & Glow */}
       <div className="style-section group">
-        <SectionHeader title="Shadow & Glow" section="shadow" icon={<CloudFog className="w-4 h-4" />} />
+        <SidebarHeader 
+          icon={<CloudFog className="w-4 h-4" />} 
+          action={<ResetButton section="shadow" />}
+        >
+          Shadow & Glow
+        </SidebarHeader>
         
         {/* Shadow Presets */}
         <div className="grid grid-cols-5 gap-2 mb-4">
@@ -277,7 +282,7 @@ export const CameraStylePanel = () => {
 
         {/* Manual Controls */}
         {shadowType !== 'none' && (
-          <div className="bg-ui-panel/50 rounded-xl p-3 space-y-3">
+          <ControlGroup>
              <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
                   <Palette className="w-3.5 h-3.5 text-ui-muted" />
@@ -312,16 +317,15 @@ export const CameraStylePanel = () => {
               unit="px"
               onChange={setShadowBlur}
             />
-          </div>
+          </ControlGroup>
         )}
       </div>
 
       {/* Quick Presets */}
       <div className="style-section">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-accent" />
-          <h3 className="text-[10px] uppercase font-bold text-ui-muted tracking-widest">Creative Angles</h3>
-        </div>
+        <SidebarHeader icon={<Sparkles className="w-4 h-4" />}>
+          Creative Angles
+        </SidebarHeader>
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: 'Isometric', icon: <Box className="w-3.5 h-3.5" />, action: () => { setRotationX(30); setRotationY(-45); setRotationZ(0); setDeviceScale(0.85); } },
@@ -335,7 +339,7 @@ export const CameraStylePanel = () => {
               key={preset.label}
               onClick={() => {
                 if (containerRef.current) {
-                  const anim = containerRef.current.animate(
+                  containerRef.current.animate(
                     [
                       { opacity: 1 },
                       { opacity: 0.8 },
