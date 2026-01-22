@@ -27,7 +27,7 @@
     "active": true,
     "targets": "all",
     "macOS": {
-      "signingIdentity": null
+      "signingIdentity": "Developer ID Application: selcuk sarikoz (S29MS2CJC7)"
     },
     "icon": [
       "icons/32x32.png",

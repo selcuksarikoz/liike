@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import bg1 from '../assets/bg/1.webp';
 
 export type ExportFormat = 'mp4' | 'webm' | 'mov' | 'png' | 'gif' | 'webp';
 
@@ -105,7 +106,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   backgroundGradient: 'from-[#1c3b4a] via-[#141b1e] to-[#0a0f12]',
   backgroundType: 'image',
   backgroundColor: '#1a1a2e',
-  backgroundImage: "/src/assets/bg/1.webp",
+  backgroundImage: bg1,
   mediaAssets: [],
   canvasWidth: 1080,
   canvasHeight: 1080,
