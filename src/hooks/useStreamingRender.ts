@@ -193,6 +193,9 @@ const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height: number
   // Inline all computed styles for the clone
   await inlineStyles(node, clone);
   
+  // Fix potential layout shifts in SVG
+  clone.style.margin = '0';
+  
   // Convert images to data URLs (using cache)
   await convertImagesToDataUrls(clone);
   
@@ -257,12 +260,16 @@ const captureFrame = async (
     alpha: false 
   })!;
 
+  // High quality scaling
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
   // Get the current computed styles and render state
   const nodeRect = node.getBoundingClientRect();
   const scaleX = outputWidth / nodeRect.width;
   const scaleY = outputHeight / nodeRect.height;
   const scale = Math.min(scaleX, scaleY);
-
+  
   // Fill background (get from node's computed style)
   const computedStyle = window.getComputedStyle(node);
   ctx.fillStyle = computedStyle.backgroundColor || '#000000';
@@ -298,7 +305,7 @@ const captureFrame = async (
  * ~50x faster than html-to-image based approach.
  */
 export const useStreamingRender = () => {
-  const { setRenderStatus, resetRenderStatus, canvasWidth, canvasHeight } = useRenderStore();
+  const { setRenderStatus, resetRenderStatus, canvasWidth, canvasHeight, renderQuality } = useRenderStore();
   const [state, setState] = useState<StreamingRenderState>({
     isRendering: false,
     progress: 0,
@@ -334,7 +341,7 @@ export const useStreamingRender = () => {
       outputName = 'liike_export',
       format = 'mp4',
     }: StreamingRenderOptions) => {
-      console.log('[StreamRender] Starting streaming export:', { format, durationMs, fps });
+      console.log('[StreamRender] Starting streaming export:', { format, durationMs, fps, renderQuality });
 
       if (!node) {
         const error = 'Missing node to render.';
@@ -347,8 +354,9 @@ export const useStreamingRender = () => {
       console.log('[StreamRender] Config:', { durationMs, fps });
       
       const totalFrames = Math.max(1, Math.ceil((durationMs / 1000) * fps));
-      const outputWidth = canvasWidth || 1080;
-      const outputHeight = canvasHeight || 1080;
+      const qualityMultiplier = renderQuality === '4k' ? 2 : 1;
+      const outputWidth = (canvasWidth || 1080) * qualityMultiplier;
+      const outputHeight = (canvasHeight || 1080) * qualityMultiplier;
       
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -395,6 +403,10 @@ export const useStreamingRender = () => {
            canvas.width = outputWidth;
            canvas.height = outputHeight;
            const ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: false })!;
+           
+           // High quality smoothing
+           ctx.imageSmoothingEnabled = true;
+           ctx.imageSmoothingQuality = 'high';
            
            // Background
            const computedStyle = window.getComputedStyle(node);
@@ -574,7 +586,7 @@ export const useStreamingRender = () => {
         }
       }
     },
-    [resetState, setRenderStatus, canvasWidth, canvasHeight]
+    [resetState, setRenderStatus, canvasWidth, canvasHeight, renderQuality]
   );
 
   const cancel = useCallback(async () => {

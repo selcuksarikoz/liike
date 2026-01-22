@@ -57,6 +57,7 @@ type RenderStore = RenderSettings & {
   imageLayout: ImageLayout;
   // Render status
   renderStatus: RenderStatus;
+  renderQuality: '1080p' | '4k';
   // Setters
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
@@ -74,6 +75,7 @@ type RenderStore = RenderSettings & {
   setCanvasSize: (width: number, height: number) => void;
   setDurationMs: (durationMs: number) => void;
   setFps: (fps: number) => void;
+  setRenderQuality: (quality: '1080p' | '4k') => void;
   setOutputName: (outputName: string) => void;
   setStylePreset: (preset: StylePreset) => void;
   setShadowType: (type: ShadowType) => void;
@@ -129,6 +131,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   imageAspectRatio: 'free',
   imageLayout: 'single',
   renderStatus: initialRenderStatus,
+  renderQuality: '1080p',
   // Setters
   setRotationX: (rotationX) => set({ rotationX }),
   setRotationY: (rotationY) => set({ rotationY }),
@@ -146,6 +149,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setCanvasSize: (width, height) => set({ canvasWidth: width, canvasHeight: height }),
   setDurationMs: (durationMs) => set({ durationMs }),
   setFps: (fps) => set({ fps }),
+  setRenderQuality: (renderQuality) => set({ renderQuality }),
   setOutputName: (outputName) => set({ outputName }),
   setStylePreset: (stylePreset) => set({ stylePreset }),
   setShadowType: (shadowType) => set({ shadowType }),

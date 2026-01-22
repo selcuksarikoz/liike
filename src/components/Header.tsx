@@ -46,7 +46,7 @@ type RemoteVersionInfo = {
 };
 
 export const Header = ({ onRender }: HeaderProps) => {
-  const { renderStatus, fps, setFps } = useRenderStore();
+  const { renderStatus, fps, setFps, renderQuality, setRenderQuality } = useRenderStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -326,7 +326,6 @@ export const Header = ({ onRender }: HeaderProps) => {
           </button>
           {isDropdownOpen && (
             <div className="absolute top-full right-0 mt-2 w-56 z-50 overflow-hidden rounded-xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200">
-              {/* FPS Selector */}
               <div className="px-3 py-2.5 border-b border-ui-border">
                 <div className="text-[10px] text-ui-muted uppercase tracking-wider mb-2">Frame Rate</div>
                 <div className="flex gap-1">
@@ -341,6 +340,26 @@ export const Header = ({ onRender }: HeaderProps) => {
                       }`}
                     >
                       {fpsOption}fps
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quality Selector */}
+              <div className="px-3 py-2.5 border-b border-ui-border">
+                <div className="text-[10px] text-ui-muted uppercase tracking-wider mb-2">Quality</div>
+                <div className="flex gap-1">
+                  {(['1080p', '4k'] as const).map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setRenderQuality(q)}
+                      className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        renderQuality === q
+                          ? 'bg-accent text-black'
+                          : 'bg-ui-highlight/30 text-ui-muted hover:bg-ui-highlight/50 hover:text-white'
+                      }`}
+                    >
+                      {q.toUpperCase()}
                     </button>
                   ))}
                 </div>
