@@ -2,7 +2,9 @@
   "$schema": "../node_modules/@tauri-apps/cli/schemas/desktop-capabilities.json",
   "identifier": "default",
   "description": "Default capabilities for Liike (fs + shell for render pipeline).",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     {
@@ -16,29 +18,77 @@
     },
     {
       "identifier": "fs:allow-mkdir",
-      "allow": [{ "path": "$TEMP/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$HOME/**" }]
+      "allow": [
+        {
+          "path": "$TEMP/**"
+        },
+        {
+          "path": "$DOWNLOAD/**"
+        },
+        {
+          "path": "$HOME/**"
+        }
+      ]
     },
     {
       "identifier": "fs:allow-remove",
-      "allow": [{ "path": "$TEMP/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$HOME/**" }]
+      "allow": [
+        {
+          "path": "$TEMP/**"
+        },
+        {
+          "path": "$DOWNLOAD/**"
+        },
+        {
+          "path": "$HOME/**"
+        }
+      ]
     },
     {
       "identifier": "fs:scope",
-      "allow": [{ "path": "$TEMP/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$DESKTOP/**" }, { "path": "$HOME/**" }]
+      "allow": [
+        {
+          "path": "$TEMP/**"
+        },
+        {
+          "path": "$DOWNLOAD/**"
+        },
+        {
+          "path": "$DESKTOP/**"
+        },
+        {
+          "path": "$HOME/**"
+        }
+      ]
     },
     {
       "identifier": "shell:allow-spawn"
     },
     {
-      "identifier": "shell:allow-execute"
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "unzip",
+          "cmd": "/usr/bin/unzip",
+          "args": true
+        }
+      ]
     },
     {
       "identifier": "shell:allow-stdin-write"
     },
     {
       "identifier": "shell:allow-open",
-      "allow": [{ "path": "$DOWNLOAD/**" }, { "path": "$HOME/**" }]
+      "allow": [
+        {
+          "path": "$DOWNLOAD/**"
+        },
+        {
+          "path": "$HOME/**"
+        }
+      ]
     },
-    "dialog:default"
+    "dialog:default",
+    "http:default"
   ]
 }
