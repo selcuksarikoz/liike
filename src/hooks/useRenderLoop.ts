@@ -100,7 +100,7 @@ const canvasToBlob = async (
   // PNG/WebP: lossless (undefined = max quality), JPEG: 0.95 high quality
   const quality = format === 'jpeg' ? 0.95 : undefined;
 
-  if (typeof OffscreenCanvas !== 'undefined') {
+  if (typeof OffscreenCanvas !== 'undefined' && format !== 'png') {
     const offscreen = new OffscreenCanvas(canvas.width, canvas.height);
     const ctx = offscreen.getContext('2d');
     if (ctx) {
@@ -335,7 +335,14 @@ export const useRenderLoop = () => {
         if (isImageExport) {
           console.log(`[Render] ${format.toUpperCase()} export - capturing 1x and 2x versions`);
           // Force DOM to settle with longer wait
-          await waitForRender(150);
+          await waitForRender(800);
+          
+          // Warmup (Image export)
+          try {
+            await toCanvas(node, { ...captureOptions, pixelRatio: 1 });
+          } catch (e) {
+            console.warn('[Render] Warmup failed:', e);
+          }
 
           const blobFormat = format === 'webp' ? 'webp' : 'png';
 
