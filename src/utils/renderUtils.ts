@@ -359,7 +359,7 @@ export const arrayToBase64 = (data: Uint8ClampedArray): string => {
 
 // Helper: Render text overlay directly on canvas using Canvas 2D API
 // This bypasses SVG foreignObject font issues
-const renderTextOverlay = (
+export const renderTextOverlay = (
   ctx: CanvasRenderingContext2D,
   canvasWidth: number,
   canvasHeight: number,
@@ -441,7 +441,7 @@ const renderTextOverlay = (
     const translateY = translateMatch ? parseFloat(translateMatch[1]) * scale : 0;
 
     ctx.globalAlpha = headlineAnim.opacity;
-    ctx.font = `${fontWeight} ${fontSize * scale}px ${fontFamily}`;
+    ctx.font = `${fontWeight} ${fontSize * scale}px "${fontFamily}"`;  // Quote font family for multi-word fonts
     ctx.fillStyle = color;
     ctx.shadowColor = 'rgba(0,0,0,0.4)';
     ctx.shadowBlur = 4 * scale;
@@ -470,7 +470,7 @@ const renderTextOverlay = (
     const translateY = translateMatch ? parseFloat(translateMatch[1]) * scale : 0;
 
     ctx.globalAlpha = taglineAnim.opacity * 0.9;
-    ctx.font = `400 ${taglineFontSize * scale}px ${fontFamily}`;
+    ctx.font = `400 ${taglineFontSize * scale}px "${fontFamily}"`;  // Quote font family for multi-word fonts
     ctx.fillStyle = color;
     ctx.shadowColor = 'rgba(0,0,0,0.3)';
     ctx.shadowBlur = 3 * scale;

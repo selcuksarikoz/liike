@@ -14,10 +14,12 @@ import {
   pauseAndSeekVideos,
   waitForRender,
   preloadResources,
+  preloadFonts,
   captureFrame,
   arrayToBase64,
   nodeToSvgDataUrl,
   loadImage,
+  renderTextOverlay,
 } from '../utils/renderUtils';
 
 export type StreamingRenderOptions = {
@@ -133,13 +135,16 @@ export const useStreamingRender = () => {
           phase: 'capturing',
         });
 
-        try {
+         try {
            // Seek timeline to current playhead
            const { playheadMs } = useTimelineStore.getState();
            seekTimeline(playheadMs);
            pauseAndSeekAnimations(node, playheadMs);
            pauseAndSeekVideos(node, playheadMs);
            await waitForRender(50); // Convert DOM to canvas needs a settled DOM
+
+           // Preload fonts for text overlay rendering
+           await preloadFonts(node);
 
            // Capture frame logic (Inline here because we need Blob, captureFrame returns RGBA)
            const canvas = document.createElement('canvas');
@@ -187,6 +192,9 @@ export const useStreamingRender = () => {
            const img = await loadImage(svgData);
            ctx.drawImage(img, 0, 0, nodeRect.width, nodeRect.height);
            ctx.restore();
+
+           // Render text overlay on canvas (uses Canvas 2D API for proper font rendering)
+           renderTextOverlay(ctx, outputWidth, outputHeight, scale);
 
            // Convert to blob and write to disk
            const blob = await new Promise<Blob | null>(resolve => 
@@ -266,8 +274,9 @@ export const useStreamingRender = () => {
         pauseAndSeekAnimations(node, 0);
         pauseAndSeekVideos(node, 0);
 
-        // Preload resources (images, videos)
+        // Preload resources (images, videos) and fonts for text overlay
         await preloadResources(node);
+        await preloadFonts(node);
 
         await waitForRender(50);
 
