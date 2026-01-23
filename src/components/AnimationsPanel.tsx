@@ -73,15 +73,15 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
       imageLayout: layout,
     });
 
-    // Text overlay remains unchanged - user can remove via text tab if needed
+    // Clear text overlay and timeline when switching to a layout animation
+    setTextOverlay({ enabled: false });
+    clearTrack('track-animation');
 
     const hasAnimation = preset.animations.some((a) => a.type !== 'none');
     if (hasAnimation) {
       setIsPlaying(false);
       setDurationMs(preset.durationMs);
       setPlayhead(0);
-      // Clear existing layout animations, replace with new one (text animations stay)
-      clearTrack('track-animation');
       addClip('track-animation', {
         trackId: 'track-animation',
         type: 'animation',
@@ -408,7 +408,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                       setIsPlaying(false);
                       setDurationMs(preset.durationMs);
                       setPlayhead(0);
-                      // Don't clear existing animations - user can remove them manually
+                      clearTrack('track-animation');
                       addClip('track-animation', {
                         trackId: 'track-animation',
                         type: 'animation',
