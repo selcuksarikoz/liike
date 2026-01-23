@@ -1,6 +1,6 @@
 import { MediaContainer } from '../MediaContainer';
 import { getStaggeredAnimationStyle, getLayoutTransition } from '../../utils/animationHelpers';
-import type { LayoutBaseProps } from './types';
+import { getContainerCSS, type LayoutBaseProps } from './types';
 
 // Grid layout (2x2)
 export const GridLayout = ({

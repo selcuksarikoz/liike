@@ -107,6 +107,8 @@ export const CameraStylePanel = () => {
         setRotationX(0);
         setRotationY(0);
         setRotationZ(0);
+        setDeviceScale(1);
+        setCornerRadius(12);
         break;
       case 'transform':
         setDeviceScale(1);

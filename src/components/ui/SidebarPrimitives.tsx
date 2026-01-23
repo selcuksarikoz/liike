@@ -181,63 +181,6 @@ export const UploadBox = ({
   </div>
 );
 
-// Media Slot (for the grid of uploaded items)
-export const MediaSlot = ({
-  index,
-  mediaAsset,
-  onClick,
-  onRemove,
-  isActive,
-}: {
-  index: number;
-  mediaAsset: { url: string; type: 'image' | 'video' } | null;
-  onClick: () => void;
-  onRemove: (e: React.MouseEvent) => void;
-  isActive?: boolean;
-}) => (
-  <div
-    onClick={onClick}
-    className={`aspect-square rounded-lg border bg-ui-panel/40 relative overflow-hidden group ${
-      !mediaAsset
-        ? 'opacity-30 border-dashed border-ui-border hover:opacity-100 hover:border-accent/50 cursor-pointer'
-        : 'cursor-pointer border-ui-border'
-    } ${isActive ? 'ring-2 ring-accent' : ''}`}
-  >
-    {mediaAsset ? (
-      <>
-        {mediaAsset.type === 'video' ? (
-          <video
-            src={mediaAsset.url}
-            className="w-full h-full object-cover"
-            muted
-            autoPlay
-            loop
-            playsInline
-          />
-        ) : (
-          <img
-            src={mediaAsset.url}
-            alt={`Upload ${index + 1}`}
-            className="w-full h-full object-cover"
-          />
-        )}
-        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={onRemove}
-            className="rounded-full bg-black/50 p-1 hover:bg-red-500/80 text-white backdrop-blur-sm transition-colors"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </div>
-      </>
-    ) : (
-      <div className="flex h-full w-full items-center justify-center">
-        <Plus className="w-4 h-4 text-ui-muted group-hover:text-accent" />
-      </div>
-    )}
-  </div>
-);
-
 // Grouped controls container (like a card)
 export const ControlGroup = ({
   children,

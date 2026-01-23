@@ -2,6 +2,12 @@ import type { ReactNode } from 'react';
 import type { MediaAsset, AspectRatio } from '../../store/renderStore';
 import type { AnimationInfo } from '../../utils/animationHelpers';
 
+// Helper to strip dropShadow from styleCSS for container usage
+export const getContainerCSS = (styleCSS: React.CSSProperties & { dropShadow?: string }) => {
+  const { dropShadow: _, ...containerCSS } = styleCSS;
+  return containerCSS;
+};
+
 export type LayoutBaseProps = {
   containerRef: React.RefObject<HTMLDivElement | null>;
   containerStyle: React.CSSProperties;

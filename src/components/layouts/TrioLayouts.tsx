@@ -1,6 +1,6 @@
 import { MediaContainer } from '../MediaContainer';
 import { getStaggeredAnimationStyle, getLayoutTransition } from '../../utils/animationHelpers';
-import type { LayoutBaseProps } from './types';
+import { getContainerCSS, type LayoutBaseProps } from './types';
 
 // Trio row layout (3 images horizontal)
 export const TrioRowLayout = ({

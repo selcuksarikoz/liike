@@ -2,7 +2,6 @@ import { useRef } from 'react';
 import { useRenderStore } from '../store/renderStore';
 import { CameraStylePanel } from './CameraStylePanel';
 import {
-  MediaSlot,
   SidebarContainer,
   SidebarContent,
   SidebarHeader,
@@ -10,19 +9,11 @@ import {
   UploadBox,
 } from './ui/SidebarPrimitives';
 
-const IMAGE_SLOTS = [0, 1, 2, 3];
-
 export const SidebarLeft = () => {
   const { setMediaAssets, mediaAssets } = useRenderStore();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const inputRef0 = useRef<HTMLInputElement>(null);
-  const inputRef1 = useRef<HTMLInputElement>(null);
-  const inputRef2 = useRef<HTMLInputElement>(null);
-  const inputRef3 = useRef<HTMLInputElement>(null);
-
-  const fileInputRefs = [inputRef0, inputRef1, inputRef2, inputRef3];
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
@@ -30,23 +21,14 @@ export const SidebarLeft = () => {
     const filesToProcess = files.slice(0, 4);
 
     filesToProcess.forEach((file, i) => {
-      const targetIndex = index + i;
-      if (targetIndex >= 4) return;
-
+      if (i >= 4) return;
       const url = URL.createObjectURL(file);
       const isVideo = file.type.startsWith('video/');
-      newAssets[targetIndex] = { url, type: isVideo ? 'video' : 'image' };
+      newAssets[i] = { url, type: isVideo ? 'video' : 'image' };
     });
 
     setMediaAssets(newAssets);
     e.target.value = '';
-  };
-
-  const handleRemoveMedia = (index: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newAssets = [...mediaAssets];
-    newAssets[index] = null;
-    setMediaAssets(newAssets);
   };
 
   return (
@@ -56,27 +38,15 @@ export const SidebarLeft = () => {
         <SidebarSection borderBottom>
           <SidebarHeader>Images & Videos</SidebarHeader>
 
-          <UploadBox onClick={() => fileInputRefs[0].current?.click()} maxItems={4} />
-
-          <div className="grid grid-cols-4 gap-2">
-            {IMAGE_SLOTS.map((index) => (
-              <div key={index}>
-                <input
-                  ref={fileInputRefs[index]}
-                  type="file"
-                  className="hidden"
-                  accept="image/*,video/mp4,video/quicktime,video/webm"
-                  onChange={(e) => handleFileSelect(e, index)}
-                />
-                <MediaSlot
-                  index={index}
-                  mediaAsset={mediaAssets[index]}
-                  onClick={() => fileInputRefs[index].current?.click()}
-                  onRemove={(e) => handleRemoveMedia(index, e)}
-                />
-              </div>
-            ))}
-          </div>
+          <input
+            ref={inputRef}
+            type="file"
+            className="hidden"
+            accept="image/*,video/mp4,video/quicktime,video/webm"
+            multiple
+            onChange={handleFileSelect}
+          />
+          <UploadBox onClick={() => inputRef.current?.click()} maxItems={4} />
         </SidebarSection>
 
         {/* Visual Style */}
