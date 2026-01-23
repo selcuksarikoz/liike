@@ -73,12 +73,14 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
       imageLayout: layout,
     });
 
+    // Text overlay remains unchanged - user can remove via text tab if needed
+
     const hasAnimation = preset.animations.some((a) => a.type !== 'none');
     if (hasAnimation) {
       setIsPlaying(false);
-      // Set duration to match the animation preset duration
       setDurationMs(preset.durationMs);
       setPlayhead(0);
+      // Clear existing layout animations, replace with new one (text animations stay)
       clearTrack('track-animation');
       addClip('track-animation', {
         trackId: 'track-animation',
@@ -338,26 +340,52 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                       setActivePresetId(preset.id);
                       // Preload the font
                       loadGoogleFont('Manrope');
-                      // Map layout to devicePosition and deviceAnimation
+                      // Map layout to devicePosition
                       let devicePosition: 'center' | 'top' | 'bottom' | 'left' | 'right' = 'center';
-                      let deviceAnimation = 'slide-up';
 
                       if (preset.layout === 'text-top-device-bottom') {
                         devicePosition = 'bottom';
-                        deviceAnimation = 'slide-up';
                       } else if (preset.layout === 'text-bottom-device-top') {
                         devicePosition = 'top';
-                        deviceAnimation = 'slide-down';
                       } else if (preset.layout === 'text-left-device-right') {
                         devicePosition = 'right';
-                        deviceAnimation = 'slide-left';
                       } else if (preset.layout === 'text-right-device-left') {
                         devicePosition = 'left';
-                        deviceAnimation = 'slide-right';
                       } else if (preset.layout === 'text-center-device-behind') {
                         devicePosition = 'center';
-                        deviceAnimation = 'zoom-in';
                       }
+
+                      // Creative device animations based on text animation type
+                      const getCreativeDeviceAnimation = () => {
+                        // Match device animation to text animation style for cohesive presentation
+                        switch (preset.textAnimation) {
+                          case 'blur':
+                          case 'zoom-blur':
+                            return 'zoom-in'; // Dramatic zoom with text blur
+                          case 'bounce':
+                            return 'bounce-in'; // Bouncy entrance
+                          case 'elastic':
+                            return 'bounce-in'; // Elastic text + bouncy device
+                          case 'flip':
+                            return 'flip-up'; // 3D flip entrance
+                          case 'glitch':
+                            return Math.random() > 0.5 ? 'zoom-out' : 'rotate-in'; // Chaotic entrance
+                          case 'wave':
+                            return 'rise'; // Smooth rise with wave text
+                          case 'typewriter':
+                            return 'fade'; // Subtle fade for dramatic reveal
+                          case 'scale':
+                            return 'zoom-in'; // Scale together
+                          case 'slide-up':
+                            return devicePosition === 'bottom' ? 'peek-bottom' : 'rise';
+                          case 'slide-down':
+                            return 'drop'; // Drop from above
+                          default:
+                            return 'rise';
+                        }
+                      };
+
+                      const deviceAnimation = getCreativeDeviceAnimation();
 
                       setTextOverlay({
                         enabled: true,
@@ -380,7 +408,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                       setIsPlaying(false);
                       setDurationMs(preset.durationMs);
                       setPlayhead(0);
-                      clearTrack('track-animation');
+                      // Don't clear existing animations - user can remove them manually
                       addClip('track-animation', {
                         trackId: 'track-animation',
                         type: 'animation',

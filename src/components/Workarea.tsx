@@ -42,7 +42,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     imageLayout,
     cornerRadius,
     applyPreset,
-    renderStatus,
     frameMode,
     deviceType,
     textOverlay,
@@ -63,14 +62,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
       return { opacity: 1, transform: 'none' };
     }
 
-    // Check if we're in export mode
-    const isExporting = renderStatus.isRendering;
-
-    // Show device fully visible in editor when paused at start (NOT during export)
-    if (!isPlaying && playheadMs === 0 && !isExporting) {
-      return { opacity: 1, transform: 'none' };
-    }
-
     // Device animation starts after a delay (synced with text animation)
     const startDelay = 400 / speedMultiplier;
     const animDuration = 800 / speedMultiplier;
@@ -78,8 +69,9 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     const delayedPlayhead = Math.max(0, playheadMs - startDelay);
     const progress = Math.min(1, delayedPlayhead / animDuration);
 
+    // Always use animation keyframes - this ensures element starts hidden when animation is active
     return generateDeviceKeyframes(deviceAnim, progress);
-  }, [textOverlay.deviceAnimation, textOverlay.enabled, playheadMs, isPlaying, speedMultiplier, renderStatus.isRendering]);
+  }, [textOverlay.deviceAnimation, textOverlay.enabled, playheadMs, speedMultiplier]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);

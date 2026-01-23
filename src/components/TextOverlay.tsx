@@ -3,17 +3,13 @@ import { generateTextKeyframes, ANIMATION_SPEED_MULTIPLIERS, type TextAnimationT
 import { useRenderStore, type TextPosition } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 
-// Check if we're in export mode (rendering video/image)
-const useIsExporting = () => useRenderStore((state) => state.renderStatus.isRendering);
-
 type TextOverlayProps = {
   isPreview?: boolean;
 };
 
 export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => {
   const { textOverlay, durationMs, animationSpeed } = useRenderStore();
-  const { playheadMs, isPlaying } = useTimelineStore();
-  const isExporting = useIsExporting();
+  const { playheadMs } = useTimelineStore();
 
   // Get speed multiplier
   const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed];
@@ -23,26 +19,22 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
 
   // Calculate animation progress for headline (0 to 1)
   const headlineProgress = useMemo(() => {
-    // Show fully visible in editor when paused at start (NOT during export)
-    if (!isPlaying && playheadMs === 0 && !isExporting) return 1;
     // Wait for startDelay before beginning animation
     const delayedPlayhead = Math.max(0, playheadMs - startDelay);
     if (delayedPlayhead === 0) return 0;
     // Headline animates in first 30% of duration, adjusted by speed
     const animDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
     return Math.min(1, delayedPlayhead / animDuration);
-  }, [playheadMs, durationMs, isPlaying, isExporting, speedMultiplier, startDelay]);
+  }, [playheadMs, durationMs, speedMultiplier, startDelay]);
 
   // Calculate animation progress for tagline (staggered, starts after headline)
   const taglineProgress = useMemo(() => {
-    // Show fully visible in editor when paused at start (NOT during export)
-    if (!isPlaying && playheadMs === 0 && !isExporting) return 1;
     // Tagline starts after startDelay + 15% of duration
     const staggerDelay = startDelay + ((durationMs || 3000) * 0.15) / speedMultiplier;
     const animDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
     const delayedPlayhead = Math.max(0, playheadMs - staggerDelay);
     return Math.min(1, delayedPlayhead / animDuration);
-  }, [playheadMs, durationMs, isPlaying, isExporting, speedMultiplier, startDelay]);
+  }, [playheadMs, durationMs, speedMultiplier, startDelay]);
 
   if (!textOverlay.enabled) return null;
 
