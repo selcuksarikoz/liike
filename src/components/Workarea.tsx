@@ -347,6 +347,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             {/* Animation wrapper - only apply outer animation for single layout */}
             <div
               ref={animatedDeviceRef}
+              data-device-animation={textOverlay.deviceAnimation || 'none'}
+              data-base-transform={imageLayout === 'single' ? (animationStyle.transform || 'none') : 'none'}
+              data-pos-transform={mediaOffsetX !== 0 || mediaOffsetY !== 0 ? `translate(${mediaOffsetX}%, ${mediaOffsetY}%)` : 'none'}
+              data-base-opacity={imageLayout === 'single' ? String(animationStyle.opacity ?? 1) : '1'}
               className="transition-all ease-out w-full h-full"
               style={{
                 transitionDuration: `${transitionDuration}ms`,

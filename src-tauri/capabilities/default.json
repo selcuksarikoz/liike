@@ -71,6 +71,21 @@
           "name": "unzip",
           "cmd": "/usr/bin/unzip",
           "args": true
+        },
+        {
+          "name": "open",
+          "cmd": "/usr/bin/open",
+          "args": true
+        },
+        {
+          "name": "explorer",
+          "cmd": "explorer",
+          "args": true
+        },
+        {
+          "name": "xdg-open",
+          "cmd": "xdg-open",
+          "args": true
         }
       ]
     },

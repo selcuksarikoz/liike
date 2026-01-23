@@ -6,8 +6,10 @@ import { mkdir } from '@tauri-apps/plugin-fs';
 import { getEmbeddedFontCSS, loadFontsForExport, fetchGoogleFontCSS } from '../services/fontService';
 import {
   generateTextKeyframes,
+  generateDeviceKeyframes,
   ANIMATION_SPEED_MULTIPLIERS,
   type TextAnimationType,
+  type DeviceAnimationType,
 } from '../constants/textAnimations';
 
 // Seek timeline synchronously
@@ -438,6 +440,40 @@ export const nodeToSvgDataUrl = async (
   // Fix potential layout shifts in SVG
   clone.style.margin = '0';
 
+  // Apply device animation explicitly (React state-based animations need manual application)
+  // We rebuild the transform from scratch using data attributes to avoid timing issues
+  const deviceAnimElement = clone.querySelector('[data-device-animation]') as HTMLElement | null;
+  if (deviceAnimElement) {
+    const animationType = deviceAnimElement.dataset.deviceAnimation as DeviceAnimationType;
+    const baseTransform = deviceAnimElement.dataset.baseTransform || 'none';
+    const posTransform = deviceAnimElement.dataset.posTransform || 'none';
+    const baseOpacity = parseFloat(deviceAnimElement.dataset.baseOpacity || '1');
+
+    // Calculate device animation for current playhead
+    let deviceAnimTransform = 'none';
+    let deviceOpacity = 1;
+
+    if (animationType && animationType !== 'none') {
+      const { animationSpeed } = useRenderStore.getState();
+      const { playheadMs } = useTimelineStore.getState();
+      const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1;
+      const startDelay = 400 / speedMultiplier;
+      const animDuration = 800 / speedMultiplier;
+      const delayedPlayhead = Math.max(0, playheadMs - startDelay);
+      const progress = Math.min(1, delayedPlayhead / animDuration);
+      const animStyle = generateDeviceKeyframes(animationType, progress);
+      deviceAnimTransform = animStyle.transform;
+      deviceOpacity = animStyle.opacity;
+    }
+
+    // Combine transforms (same logic as Workarea)
+    const transforms = [baseTransform, posTransform, deviceAnimTransform]
+      .filter((t) => t && t !== 'none')
+      .join(' ');
+    deviceAnimElement.style.transform = transforms || 'none';
+    deviceAnimElement.style.opacity = String(baseOpacity * deviceOpacity);
+  }
+
   // Convert images to data URLs (using cache)
   await convertImagesToDataUrls(clone);
 
@@ -865,15 +901,12 @@ export const captureFrame = async (
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // Get the source node dimensions (may be smaller than output due to preview scaling)
+  // Get display dimensions (what's actually rendered on screen)
   const nodeRect = node.getBoundingClientRect();
 
-  // Calculate scale and offset for centering
-  const scaleX = outputWidth / nodeRect.width;
-  const scaleY = outputHeight / nodeRect.height;
-  const scale = Math.min(scaleX, scaleY);
-  const offsetX = (outputWidth - nodeRect.width * scale) / 2;
-  const offsetY = (outputHeight - nodeRect.height * scale) / 2;
+  // Scale factor from display to output
+  // Display: 200x200 (what user sees) -> Output: 1080x1080 (what user wants)
+  const scale = outputWidth / nodeRect.width;
 
   // Get computed styles for background
   const computedStyle = window.getComputedStyle(node);
@@ -898,6 +931,7 @@ export const captureFrame = async (
 
   // Use foreignObject SVG approach for non-video content
   // Videos are handled separately below because SVG foreignObject can't render them
+  // Pass display dimensions as source, output dimensions as target - SVG will scale up
   const svgUrl = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
   const img = await loadImage(svgUrl);
 
@@ -918,7 +952,9 @@ export const captureFrame = async (
       }
       ctx.clip();
   }
-  captureVideoFrames(node, ctx, nodeRect, scale, offsetX, offsetY);
+  // Video frames need display-to-output scale since videos are positioned in display space
+  const displayToOutputScale = outputWidth / nodeRect.width;
+  captureVideoFrames(node, ctx, nodeRect, displayToOutputScale, 0, 0);
   ctx.restore();
 
   // Get raw RGBA pixel data

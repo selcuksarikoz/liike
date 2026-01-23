@@ -1,8 +1,22 @@
 import { useCallback, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { join } from '@tauri-apps/api/path';
-import { open } from '@tauri-apps/plugin-shell';
+import { join, dirname } from '@tauri-apps/api/path';
+import { Command } from '@tauri-apps/plugin-shell';
+import { platform } from '@tauri-apps/plugin-os';
 import { useRenderStore } from '../store/renderStore';
+
+const revealInFileManager = async (filePath: string) => {
+  const os = platform();
+  if (os === 'macos') {
+    await Command.create('open', ['-R', filePath]).execute();
+  } else if (os === 'windows') {
+    await Command.create('explorer', ['/select,', filePath]).execute();
+  } else {
+    // Linux: xdg-open only opens folders, can't select file
+    const folder = await dirname(filePath);
+    await Command.create('xdg-open', [folder]).execute();
+  }
+};
 import type { ExportFormat } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import {
@@ -224,7 +238,7 @@ export const useStreamingRender = () => {
            console.log('[StreamRender] Image saved:', outputPath);
            setState(prev => ({ ...prev, isRendering: false, progress: 1, phase: 'done' }));
            setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
-           await open(exportFolder);
+           await revealInFileManager(outputPath);
            
         } catch (error) {
            const errorMsg = (error as Error).message || String(error);
@@ -314,10 +328,14 @@ export const useStreamingRender = () => {
 
           // Wait for React to re-render and browser to compute styles
           // Videos need more time to decode frames after seeking
-          // Animations also need time for transforms to settle
+          // Device animations are inline styles, not Web Animations API
           const hasVideos = mediaAssets.some(a => a?.type === 'video');
-          const hasAnimations = node.getAnimations({ subtree: true }).length > 0;
-          const waitTime = frameIndex === 0 ? 50 : (hasVideos ? 32 : (hasAnimations ? 16 : 8));
+          const hasWebAnimations = node.getAnimations({ subtree: true }).length > 0;
+          const { textOverlay } = useRenderStore.getState();
+          const hasDeviceAnimation = textOverlay.deviceAnimation && textOverlay.deviceAnimation !== 'none';
+          const hasAnimations = hasWebAnimations || hasDeviceAnimation;
+          // Device animations need extra time for React to re-render after Zustand update
+          const waitTime = frameIndex === 0 ? 50 : (hasVideos ? 32 : (hasDeviceAnimation ? 32 : (hasAnimations ? 16 : 8)));
           await waitForRender(waitTime);
 
           if (abortController.signal.aborted) return;
@@ -363,8 +381,8 @@ export const useStreamingRender = () => {
         }));
         setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
 
-        // Open export folder
-        await open(exportFolder);
+        // Reveal exported file in Finder
+        await revealInFileManager(outputPath);
       } catch (error) {
         const errorMsg = (error as Error).message || String(error);
         console.error('[StreamRender] Error:', errorMsg);
