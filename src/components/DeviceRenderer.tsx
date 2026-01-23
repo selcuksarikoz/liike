@@ -331,7 +331,7 @@ const DeviceRendererComponent = ({
       <div className="flex h-full w-full items-center justify-center">
         <div
           ref={containerRef}
-          className="relative overflow-hidden transition-[transform,border-radius,box-shadow] duration-300 ease-out"
+          className="relative transition-[transform,border-radius,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
             width: aspectValue ? 'auto' : sizePercent,
@@ -361,7 +361,7 @@ const DeviceRendererComponent = ({
           style={{
             ...containerStyle,
             width: isPreview ? '100%' : '90%',
-            height: aspectValue ? undefined : (isPreview ? '100%' : '75%'),
+            height: aspectValue ? undefined : isPreview ? '100%' : '75%',
             maxHeight: sizePercent,
           }}
         >
@@ -411,7 +411,7 @@ const DeviceRendererComponent = ({
           className="relative flex flex-col gap-4 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: aspectValue ? undefined : (isPreview ? '100%' : '70%'),
+            width: aspectValue ? undefined : isPreview ? '100%' : '70%',
             height: isPreview ? '100%' : '90%',
             maxWidth: sizePercent,
           }}
@@ -463,7 +463,7 @@ const DeviceRendererComponent = ({
           style={{
             ...containerStyle,
             width: isPreview ? '100%' : '95%',
-            height: aspectValue ? undefined : (isPreview ? '100%' : '60%'),
+            height: aspectValue ? undefined : isPreview ? '100%' : '60%',
             maxHeight: isPreview ? '100%' : '75%',
           }}
         >
@@ -513,7 +513,7 @@ const DeviceRendererComponent = ({
           className="relative flex flex-col gap-3 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: aspectValue ? undefined : (isPreview ? '100%' : '55%'),
+            width: aspectValue ? undefined : isPreview ? '100%' : '55%',
             height: isPreview ? '100%' : '95%',
             maxWidth: isPreview ? '100%' : '70%',
           }}

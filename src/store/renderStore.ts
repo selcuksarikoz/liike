@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import bg1 from '../assets/bg/1.webp';
+import type { AnimationSpeed } from '../constants/textAnimations';
 
 export type ExportFormat = 'mp4' | 'webm' | 'mov' | 'png' | 'gif' | 'webp';
 
@@ -34,6 +35,17 @@ export type TextPosition =
   | 'center-left' | 'center' | 'center-right'
   | 'bottom-left' | 'bottom-center' | 'bottom-right';
 
+export type DevicePosition =
+  | 'center'
+  | 'top'
+  | 'bottom'
+  | 'left'
+  | 'right'
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right';
+
 export type TextOverlay = {
   enabled: boolean;
   text: string; // combined text for backwards compat
@@ -48,6 +60,8 @@ export type TextOverlay = {
   animation: string; // text animation type
   layout: string; // text-device layout type
   deviceOffset: number; // negative = overflow bottom
+  devicePosition: DevicePosition; // where the device sits
+  deviceAnimateIn: boolean; // whether device animates in
 };
 
 type RenderStore = RenderSettings & {
@@ -76,6 +90,8 @@ type RenderStore = RenderSettings & {
   shadowY: number;
   imageAspectRatio: AspectRatio;
   imageLayout: ImageLayout;
+  // Animation speed
+  animationSpeed: AnimationSpeed;
   // Render status
   renderStatus: RenderStatus;
   renderQuality: '1080p' | '4k';
@@ -108,6 +124,7 @@ type RenderStore = RenderSettings & {
   setShadowY: (px: number) => void;
   setImageAspectRatio: (ratio: AspectRatio) => void;
   setImageLayout: (layout: ImageLayout) => void;
+  setAnimationSpeed: (speed: AnimationSpeed) => void;
   applyPreset: (preset: Partial<RenderStore>) => void;
   setRenderStatus: (status: Partial<RenderStatus>) => void;
   resetRenderStatus: () => void;
@@ -160,6 +177,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   shadowY: 20,
   imageAspectRatio: 'free',
   imageLayout: 'single',
+  animationSpeed: 'normal',
   renderStatus: initialRenderStatus,
   renderQuality: '1080p',
   
@@ -181,6 +199,8 @@ export const useRenderStore = create<RenderStore>((set) => ({
     animation: 'blur',
     layout: 'text-top-device-bottom',
     deviceOffset: -20,
+    devicePosition: 'center',
+    deviceAnimateIn: false,
   },
 
   // Setters
@@ -212,6 +232,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setShadowY: (shadowY) => set({ shadowY }),
   setImageAspectRatio: (imageAspectRatio) => set({ imageAspectRatio }),
   setImageLayout: (imageLayout) => set({ imageLayout }),
+  setAnimationSpeed: (animationSpeed) => set({ animationSpeed }),
   applyPreset: (preset) => set((state) => ({ ...state, ...preset })),
   setRenderStatus: (status) => set((state) => ({ renderStatus: { ...state.renderStatus, ...status } })),
   resetRenderStatus: () => set({ renderStatus: initialRenderStatus }),
@@ -221,7 +242,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setTextOverlay: (overlay) => set((state) => ({ 
     textOverlay: { ...state.textOverlay, ...overlay } 
   })),
-  clearTextOverlay: () => set((state) => ({ 
-    textOverlay: { ...state.textOverlay, enabled: false, text: 'Your Text Here' } 
+  clearTextOverlay: () => set((state) => ({
+    textOverlay: { ...state.textOverlay, enabled: false, text: 'Your Text Here', deviceAnimateIn: false }
   })),
 }));

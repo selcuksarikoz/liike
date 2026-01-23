@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { generateTextKeyframes } from '../constants/textAnimations';
+import { generateTextKeyframes, ANIMATION_SPEED_MULTIPLIERS, type TextAnimationType } from '../constants/textAnimations';
 import { useRenderStore, type TextPosition } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 
@@ -8,26 +8,29 @@ type TextOverlayProps = {
 };
 
 export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => {
-  const { textOverlay, durationMs } = useRenderStore();
+  const { textOverlay, durationMs, animationSpeed } = useRenderStore();
   const { playheadMs, isPlaying } = useTimelineStore();
+
+  // Get speed multiplier
+  const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed];
 
   // Calculate animation progress for headline (0 to 1)
   const headlineProgress = useMemo(() => {
     if (!isPlaying && playheadMs === 0) return 1;
-    // Headline animates in first 30% of duration
-    const animDuration = (durationMs || 3000) * 0.3;
+    // Headline animates in first 30% of duration, adjusted by speed
+    const animDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
     return Math.min(1, playheadMs / animDuration);
-  }, [playheadMs, durationMs, isPlaying]);
+  }, [playheadMs, durationMs, isPlaying, speedMultiplier]);
 
   // Calculate animation progress for tagline (staggered, starts at 15%)
   const taglineProgress = useMemo(() => {
     if (!isPlaying && playheadMs === 0) return 1;
-    // Tagline starts after 15% of duration, animates for 30%
-    const staggerDelay = (durationMs || 3000) * 0.15;
-    const animDuration = (durationMs || 3000) * 0.3;
+    // Tagline starts after 15% of duration, animates for 30%, adjusted by speed
+    const staggerDelay = ((durationMs || 3000) * 0.15) / speedMultiplier;
+    const animDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
     const delayedPlayhead = Math.max(0, playheadMs - staggerDelay);
     return Math.min(1, delayedPlayhead / animDuration);
-  }, [playheadMs, durationMs, isPlaying]);
+  }, [playheadMs, durationMs, isPlaying, speedMultiplier]);
 
   if (!textOverlay.enabled) return null;
 
@@ -91,7 +94,7 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
   };
 
   // Get animation styles
-  const animationType = (animation || 'blur') as 'fade' | 'slide-up' | 'slide-down' | 'scale' | 'blur';
+  const animationType = (animation || 'blur') as TextAnimationType;
   const headlineAnimStyles = generateTextKeyframes(animationType, headlineProgress);
   const taglineAnimStyles = generateTextKeyframes(animationType, taglineProgress);
 
@@ -107,7 +110,8 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     opacity: headlineAnimStyles.opacity,
     transform: headlineAnimStyles.transform,
     filter: headlineAnimStyles.filter,
-    willChange: 'opacity, transform, filter',
+    clipPath: headlineAnimStyles.clipPath,
+    willChange: 'opacity, transform, filter, clip-path',
   };
 
   // Tagline style (animated with stagger)
@@ -122,7 +126,8 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     opacity: taglineAnimStyles.opacity * 0.9,
     transform: taglineAnimStyles.transform,
     filter: taglineAnimStyles.filter,
-    willChange: 'opacity, transform, filter',
+    clipPath: taglineAnimStyles.clipPath,
+    willChange: 'opacity, transform, filter, clip-path',
   };
 
   return (

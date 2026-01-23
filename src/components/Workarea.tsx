@@ -323,29 +323,66 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 transform: (() => {
                   const baseTransform =
                     imageLayout === 'single' ? animationStyle.transform : 'none';
-                  if (!textOverlay.enabled || !textOverlay.layout) return baseTransform;
 
-                  const layout = textOverlay.layout;
-                  const offset = textOverlay.deviceOffset || -20;
+                  // Calculate device position transform
+                  const devicePos = textOverlay.devicePosition || 'center';
+                  let posTransform = '';
 
-                  let offsetTransform = '';
-                  // Device at bottom with overflow (negative offset = overflow bottom)
-                  if (layout === 'text-top-device-bottom') {
-                    // Push device down so it overflows the canvas
-                    offsetTransform = `translateY(calc(20% - ${offset}px)) scale(0.75)`;
-                  } else if (layout === 'text-bottom-device-top') {
-                    offsetTransform = `translateY(calc(-20% + ${offset}px)) scale(0.75)`;
-                  } else if (layout === 'text-left-device-right') {
-                    offsetTransform = 'translateX(25%) scale(0.8)';
-                  } else if (layout === 'text-right-device-left') {
-                    offsetTransform = 'translateX(-25%) scale(0.8)';
-                  } else if (layout === 'text-split-device-center') {
-                    offsetTransform = 'scale(0.8)';
+                  // Position-based transforms (applied when text is enabled)
+                  if (textOverlay.enabled) {
+                    const offset = textOverlay.deviceOffset || -20;
+
+                    switch (devicePos) {
+                      case 'top':
+                        posTransform = `translateY(calc(-20% + ${offset}px)) scale(0.75)`;
+                        break;
+                      case 'bottom':
+                        posTransform = `translateY(calc(20% - ${offset}px)) scale(0.75)`;
+                        break;
+                      case 'left':
+                        posTransform = 'translateX(-25%) scale(0.8)';
+                        break;
+                      case 'right':
+                        posTransform = 'translateX(25%) scale(0.8)';
+                        break;
+                      case 'top-left':
+                        posTransform = 'translate(-20%, -15%) scale(0.7)';
+                        break;
+                      case 'top-right':
+                        posTransform = 'translate(20%, -15%) scale(0.7)';
+                        break;
+                      case 'bottom-left':
+                        posTransform = `translate(-20%, calc(15% - ${offset}px)) scale(0.7)`;
+                        break;
+                      case 'bottom-right':
+                        posTransform = `translate(20%, calc(15% - ${offset}px)) scale(0.7)`;
+                        break;
+                      case 'center':
+                      default:
+                        // Check legacy layout for backwards compatibility
+                        const layout = textOverlay.layout;
+                        if (layout === 'text-top-device-bottom') {
+                          posTransform = `translateY(calc(20% - ${offset}px)) scale(0.75)`;
+                        } else if (layout === 'text-bottom-device-top') {
+                          posTransform = `translateY(calc(-20% + ${offset}px)) scale(0.75)`;
+                        } else if (layout === 'text-left-device-right') {
+                          posTransform = 'translateX(25%) scale(0.8)';
+                        } else if (layout === 'text-right-device-left') {
+                          posTransform = 'translateX(-25%) scale(0.8)';
+                        } else if (layout === 'text-center-device-behind') {
+                          posTransform = 'scale(0.85)';
+                        } else if (layout === 'text-overlay') {
+                          posTransform = 'scale(0.9)';
+                        }
+                        break;
+                    }
                   }
 
-                  return baseTransform === 'none'
-                    ? offsetTransform
-                    : `${baseTransform} ${offsetTransform}`;
+                  // Combine transforms
+                  if (baseTransform === 'none' && !posTransform) return 'none';
+                  if (baseTransform === 'none') return posTransform;
+                  if (!posTransform) return baseTransform;
+                  return `${baseTransform} ${posTransform}`;
                 })(),
                 opacity: imageLayout === 'single' ? (animationStyle.opacity ?? 1) : 1,
               }}

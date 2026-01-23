@@ -1,8 +1,8 @@
-import { Columns2, Heart, LayoutGrid, Sparkles, Type } from 'lucide-react';
+import { Columns2, Heart, LayoutGrid, Sparkles, Type, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { LayoutPreset } from '../constants/styles';
 import { LAYOUT_PRESETS } from '../constants/styles';
-import { TEXT_DEVICE_PRESETS } from '../constants/textAnimations';
+import { TEXT_DEVICE_PRESETS, type AnimationSpeed } from '../constants/textAnimations';
 import { useFavorites } from '../store/favoritesStore';
 import type { ImageLayout } from '../store/renderStore';
 import { useRenderStore } from '../store/renderStore';
@@ -11,6 +11,12 @@ import { loadGoogleFont } from '../hooks/useFontLoader';
 import { AnimatedLayoutCard } from './animations/AnimatedLayoutCard';
 import { TextAnimationCard } from './animations/TextAnimationCard';
 import { TextEditor } from './TextEditor';
+
+const SPEED_OPTIONS: { value: AnimationSpeed; label: string; icon: string }[] = [
+  { value: 'slow', label: 'Slow', icon: '🐢' },
+  { value: 'normal', label: 'Normal', icon: '▶️' },
+  { value: 'fast', label: 'Fast', icon: '⚡' },
+];
 
 export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative' | 'favorites' | 'text';
 
@@ -47,6 +53,8 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     backgroundColor,
     backgroundImage,
     setTextOverlay,
+    animationSpeed,
+    setAnimationSpeed,
   } = useRenderStore();
 
   const { addClip, clearTrack, setPlayhead, setIsPlaying } = useTimelineStore();
@@ -57,9 +65,6 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
 
   const handleApplyPreset = (preset: LayoutPreset, layout: ImageLayout) => {
     setActivePresetId(preset.id);
-
-    // Clear text overlay when selecting a non-text animation
-    setTextOverlay({ enabled: false });
 
     applyPreset({
       rotationX: preset.rotationX,
@@ -160,6 +165,32 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
 
   return (
     <div className="p-4">
+      {/* Animation Speed Selector - Always visible */}
+      <div className="mb-4 p-3 bg-ui-panel/30 rounded-lg border border-ui-border/50">
+        <div className="flex items-center gap-2 mb-2">
+          <Zap className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-ui-muted">
+            Animation Speed
+          </span>
+        </div>
+        <div className="flex gap-1">
+          {SPEED_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setAnimationSpeed(option.value)}
+              className={`flex-1 py-1.5 px-2 rounded-md text-[10px] font-medium transition-all ${
+                animationSpeed === option.value
+                  ? 'bg-amber-500 text-black'
+                  : 'bg-ui-panel/50 text-ui-muted hover:bg-ui-panel hover:text-white'
+              }`}
+            >
+              <span className="mr-1">{option.icon}</span>
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {filter === 'single' && (
         <Section
           icon={<Sparkles className="w-4 h-4 text-accent" />}
@@ -306,6 +337,13 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                       setActivePresetId(preset.id);
                       // Preload the font
                       loadGoogleFont('Manrope');
+                      // Map layout to devicePosition
+                      let devicePosition: 'center' | 'top' | 'bottom' | 'left' | 'right' = 'center';
+                      if (preset.layout === 'text-top-device-bottom') devicePosition = 'bottom';
+                      else if (preset.layout === 'text-bottom-device-top') devicePosition = 'top';
+                      else if (preset.layout === 'text-left-device-right') devicePosition = 'right';
+                      else if (preset.layout === 'text-right-device-left') devicePosition = 'left';
+
                       setTextOverlay({
                         enabled: true,
                         text: `${preset.headline}\n${preset.tagline}`,
@@ -319,6 +357,8 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                         taglineFontSize: preset.taglineFontSize,
                         color: preset.color,
                         deviceOffset: preset.deviceOffset ?? -20,
+                        devicePosition,
+                        deviceAnimateIn: true,
                       });
 
                       setIsPlaying(false);
