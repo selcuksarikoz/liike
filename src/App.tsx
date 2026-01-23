@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useStreamingRender } from './hooks/useStreamingRender';
 import { useRenderStore } from './store/renderStore';
 import type { ExportFormat } from './store/renderStore';
@@ -7,9 +7,17 @@ import { SidebarLeft } from './components/SidebarLeft';
 import { SidebarRight } from './components/SidebarRight';
 import { Workarea } from './components/Workarea';
 import { Timeline } from './components/Timeline';
+import { initializeFonts } from './services/fontService';
 
 const App = () => {
   const stageRef = useRef<HTMLDivElement>(null);
+
+  // Initialize fonts on app startup
+  useEffect(() => {
+    initializeFonts((progress, fontName) => {
+      console.log(`[Fonts] ${Math.round(progress * 100)}% - ${fontName}`);
+    }).catch(console.error);
+  }, []);
 
   // Fast streaming hook for all formats (video & image)
   const loop = useStreamingRender();

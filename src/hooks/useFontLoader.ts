@@ -1,4 +1,4 @@
-// Lazy Google Font loader - only loads fonts when selected
+// Lazy Google Font loader - loads from local cache first, falls back to Google Fonts
 const loadedFonts = new Set<string>();
 
 export const loadGoogleFont = (fontFamily: string): void => {
@@ -7,7 +7,14 @@ export const loadGoogleFont = (fontFamily: string): void => {
   // Mark as loading to prevent duplicate requests
   loadedFonts.add(fontFamily);
 
-  // Create link element for Google Fonts
+  // Check if local fonts style already exists (injected by fontService)
+  const localFontsStyle = document.getElementById('liike-local-fonts');
+  if (localFontsStyle?.textContent?.includes(`font-family: '${fontFamily}'`)) {
+    // Font is available locally, no need to load from Google
+    return;
+  }
+
+  // Fallback: Create link element for Google Fonts
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@100;200;300;400;500;600;700;800;900&display=swap`;

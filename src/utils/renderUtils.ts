@@ -3,6 +3,7 @@ import { useTimelineStore } from '../store/timelineStore';
 import type { ExportFormat } from '../store/renderStore';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { mkdir } from '@tauri-apps/plugin-fs';
+import { getEmbeddedFontCSS } from '../services/fontService';
 
 // Seek timeline synchronously
 export const seekTimeline = (timeMs: number) => {
@@ -214,31 +215,70 @@ export const preloadResources = async (node: HTMLElement) => {
   console.log('[StreamRender] Resources preloaded.');
 };
 
+// Extract font families used in a DOM tree
+const extractUsedFonts = (node: HTMLElement): Set<string> => {
+  const fonts = new Set<string>();
+  const elements = [node, ...Array.from(node.querySelectorAll('*'))] as HTMLElement[];
+
+  for (const el of elements) {
+    const computed = window.getComputedStyle(el);
+    const fontFamily = computed.fontFamily;
+    if (fontFamily) {
+      // Parse font-family string (e.g., "'Manrope', sans-serif")
+      const families = fontFamily.split(',').map(f => f.trim().replace(/['"]/g, ''));
+      for (const family of families) {
+        if (family && !['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui'].includes(family)) {
+          fonts.add(family);
+        }
+      }
+    }
+  }
+
+  return fonts;
+};
+
 // Helper: Convert DOM node to SVG data URL using foreignObject
 export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height: number): Promise<string> => {
   // Clone the node
   const clone = node.cloneNode(true) as HTMLElement;
-  
+
   // Inline all computed styles for the clone
   await inlineStyles(node, clone);
-  
+
   // Fix potential layout shifts in SVG
   clone.style.margin = '0';
-  
+
   // Convert images to data URLs (using cache)
   await convertImagesToDataUrls(clone);
-  
+
   // Convert background images to data URLs (using cache)
   await convertBackgroundImagesToDataUrls(clone);
-  
+
   // Convert videos to static images (frame capture)
   await convertVideosToImages(node, clone);
-  
+
+  // Extract and embed fonts used in the node
+  const usedFonts = extractUsedFonts(node);
+  let fontStyles = '';
+  for (const fontName of usedFonts) {
+    try {
+      const fontCSS = await getEmbeddedFontCSS(fontName);
+      fontStyles += fontCSS;
+    } catch {
+      // Font not available locally, skip
+    }
+  }
+
   const serializer = new XMLSerializer();
   const nodeString = serializer.serializeToString(clone);
-  
+
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <defs>
+        <style type="text/css">
+          ${fontStyles}
+        </style>
+      </defs>
       <foreignObject width="100%" height="100%">
         <div xmlns="http://www.w3.org/1999/xhtml">
           ${nodeString}
@@ -246,7 +286,7 @@ export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height:
       </foreignObject>
     </svg>
   `;
-  
+
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 };
 
