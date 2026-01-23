@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Columns2, LayoutGrid, Heart, Type } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
+import type { MediaAsset, ImageLayout, AspectRatio, BackgroundType } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { LAYOUT_PRESETS, type LayoutPreset } from '../constants/styles';
+import { LAYOUT_PRESETS } from '../constants/styles';
+import type { LayoutPreset } from '../constants/styles';
 import { DeviceRenderer } from './DeviceRenderer';
 import {
   ANIMATION_PRESETS,
@@ -12,12 +14,8 @@ import {
   STAGGER_DEFAULTS,
 } from '../constants/animations';
 import { useFavorites } from '../store/favoritesStore';
-import {
-  TEXT_DEVICE_PRESETS,
-  TEXT_ANIMATIONS,
-  type TextDevicePreset,
-  type TextAnimationType,
-} from '../constants/textAnimations';
+import { TEXT_DEVICE_PRESETS, TEXT_ANIMATIONS } from '../constants/textAnimations';
+import type { TextDevicePreset, TextAnimationType } from '../constants/textAnimations';
 import { TextEditor } from './TextEditor';
 
 const AnimatedLayoutCard = ({
@@ -44,13 +42,13 @@ const AnimatedLayoutCard = ({
   onApply: () => void;
   onDragStart: (e: React.DragEvent) => void;
   cornerRadius: number;
-  mediaAssets: (import('../store/renderStore').MediaAsset | null)[];
+  mediaAssets: (MediaAsset | null)[];
   stylePreset?: string;
   shadowType?: string;
   shadowOpacity?: number;
-  aspectRatio?: import('../store/renderStore').AspectRatio;
-  layout?: import('../store/renderStore').ImageLayout;
-  backgroundType: import('../store/renderStore').BackgroundType;
+  aspectRatio?: AspectRatio;
+  layout?: ImageLayout;
+  backgroundType: BackgroundType;
   backgroundGradient: string;
   backgroundColor: string;
   backgroundImage: string | null;

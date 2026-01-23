@@ -1,24 +1,10 @@
 import { Type, Palette, AlignCenter, Sparkles, X } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
+import type { TextOverlay } from '../store/renderStore';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
 import { SliderControl } from './ui/SliderControl';
-import { TEXT_ANIMATIONS, TEXT_DEVICE_PRESETS } from '../constants/textAnimations';
-
-const FONT_OPTIONS = [
-  { label: 'Inter', value: 'Inter, system-ui, sans-serif' },
-  { label: 'Roboto', value: 'Roboto, sans-serif' },
-  { label: 'Outfit', value: 'Outfit, sans-serif' },
-  { label: 'Poppins', value: 'Poppins, sans-serif' },
-  { label: 'Montserrat', value: 'Montserrat, sans-serif' },
-  { label: 'Playfair', value: 'Playfair Display, serif' },
-  { label: 'Space Grotesk', value: 'Space Grotesk, sans-serif' },
-];
-
-const POSITION_OPTIONS: { label: string; value: 'top' | 'center' | 'bottom' }[] = [
-  { label: 'Top', value: 'top' },
-  { label: 'Center', value: 'center' },
-  { label: 'Bottom', value: 'bottom' },
-];
+import { TEXT_ANIMATIONS } from '../constants/textAnimations';
+import { FONT_OPTIONS, TEXT_POSITION_OPTIONS } from '../constants/ui';
 
 export const TextEditor = () => {
   const { textOverlay, setTextOverlay, clearTextOverlay } = useRenderStore();
@@ -131,7 +117,7 @@ export const TextEditor = () => {
       <div>
         <SidebarHeader icon={<AlignCenter className="w-4 h-4" />}>Position</SidebarHeader>
         <div className="grid grid-cols-3 gap-2">
-          {POSITION_OPTIONS.map((pos) => {
+          {TEXT_POSITION_OPTIONS.map((pos) => {
             const isActive = textOverlay.position === pos.value;
             return (
               <button

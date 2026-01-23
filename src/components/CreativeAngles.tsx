@@ -11,7 +11,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
-import { SidebarHeader } from './ui/SidebarPrimitives';
+import { SidebarHeader, GridButton } from './ui/SidebarPrimitives';
 import { useState } from 'react';
 
 const CREATIVE_PRESETS = [
@@ -109,25 +109,16 @@ export const CreativeAngles = () => {
       <SidebarHeader icon={<Sparkles className="w-4 h-4" />}>Creative Angles</SidebarHeader>
       <div className="grid grid-cols-3 gap-2">
         {CREATIVE_PRESETS.map((preset) => {
-          const isActive = preset === selectedCreativeAngle;
-          const IconComponent = preset.icon;
+          const Icon = preset.icon;
           return (
-            <button
+            <GridButton
               key={preset.label}
+              active={preset === selectedCreativeAngle}
               onClick={() => handlePresetClick(preset)}
-              className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
-                isActive
-                  ? 'bg-accent/20 border-accent text-accent'
-                  : 'border-ui-border hover:border-ui-muted bg-ui-panel/30 text-ui-muted hover:text-white'
-              }`}
-            >
-              <span className="text-ui-muted group-hover:text-accent transition-colors">
-                <IconComponent className="w-3.5 h-3.5" />
-              </span>
-              <span className="text-[9px] font-medium text-ui-muted group-hover:text-white transition-colors">
-                {preset.label}
-              </span>
-            </button>
+              icon={<Icon className="w-4 h-4" />}
+              label={preset.label}
+              title={preset.label}
+            />
           );
         })}
       </div>

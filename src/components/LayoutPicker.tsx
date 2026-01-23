@@ -9,9 +9,10 @@ import {
   Layers,
   CircleDot,
 } from 'lucide-react';
-import { useRenderStore, type ImageLayout } from '../store/renderStore';
+import { useRenderStore } from '../store/renderStore';
+import type { ImageLayout } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { SidebarHeader } from './ui/SidebarPrimitives';
+import { SidebarHeader, GridButton } from './ui/SidebarPrimitives';
 
 const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = [
   { value: 'single', label: 'Single', icon: <Square className="w-4 h-4" /> },
@@ -42,24 +43,16 @@ export const LayoutPicker = () => {
     <div>
       <SidebarHeader icon={<LayoutGrid className="w-4 h-4" />}>Layout</SidebarHeader>
       <div className="grid grid-cols-3 gap-2">
-        {LAYOUTS.map(({ value, label, icon }) => {
-          const isActive = imageLayout === value;
-          return (
-            <button
-              key={value}
-              onClick={() => handleLayoutChange(value)}
-              className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
-                isActive
-                  ? 'bg-accent/20 border-accent text-accent'
-                  : 'border-ui-border hover:border-ui-muted bg-ui-panel/30 text-ui-muted hover:text-white'
-              }`}
-              title={label}
-            >
-              {icon}
-              <span className="text-[8px] font-medium">{label}</span>
-            </button>
-          );
-        })}
+        {LAYOUTS.map(({ value, label, icon }) => (
+          <GridButton
+            key={value}
+            active={imageLayout === value}
+            onClick={() => handleLayoutChange(value)}
+            icon={icon}
+            label={label}
+            title={label}
+          />
+        ))}
       </div>
     </div>
   );

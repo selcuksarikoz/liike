@@ -2,7 +2,8 @@ import { useCallback, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { join } from '@tauri-apps/api/path';
 import { open } from '@tauri-apps/plugin-shell';
-import { useRenderStore, type ExportFormat } from '../store/renderStore';
+import { useRenderStore } from '../store/renderStore';
+import type { ExportFormat } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { 
   getExportFolder, 

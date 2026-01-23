@@ -1,22 +1,12 @@
 import { Modal } from './Modal';
-import { useRenderStore, type AspectRatio } from '../../store/renderStore';
+import { useRenderStore } from '../../store/renderStore';
+import type { AspectRatio } from '../../store/renderStore';
+import { ASPECT_RATIOS } from '../../constants/ui';
 
 type AspectRatioModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
-
-const ASPECT_RATIOS: { value: AspectRatio; label: string; ratio: number | null }[] = [
-  { value: 'free', label: 'Free', ratio: null },
-  { value: '1:1', label: 'Square', ratio: 1 },
-  { value: '4:5', label: 'Portrait', ratio: 0.8 },
-  { value: '9:16', label: 'Story', ratio: 0.5625 },
-  { value: '16:9', label: 'Landscape', ratio: 1.778 },
-  { value: '4:3', label: 'Standard', ratio: 1.333 },
-  { value: '3:2', label: 'Classic', ratio: 1.5 },
-  { value: '2:3', label: 'Classic V', ratio: 0.666 },
-  { value: '21:9', label: 'Cinema', ratio: 2.333 },
-];
 
 export const AspectRatioModal = ({ isOpen, onClose }: AspectRatioModalProps) => {
   const { imageAspectRatio, setImageAspectRatio } = useRenderStore();
@@ -53,12 +43,12 @@ export const AspectRatioModal = ({ isOpen, onClose }: AspectRatioModalProps) => 
                   }}
                 />
 
-                <div className={`text-sm font-bold mb-1 ${isActive ? 'text-accent' : 'text-white'}`}>
+                <div
+                  className={`text-sm font-bold mb-1 ${isActive ? 'text-accent' : 'text-white'}`}
+                >
                   {value}
                 </div>
-                <div className="text-[10px] text-ui-muted text-center leading-tight">
-                  {label}
-                </div>
+                <div className="text-[10px] text-ui-muted text-center leading-tight">{label}</div>
               </button>
             );
           })}

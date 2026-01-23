@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { generateTextKeyframes, type TextAnimationType } from '../constants/textAnimations';
 
 type TextOverlayProps = {
   isPreview?: boolean;
@@ -16,6 +15,15 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     if (!isPlaying && playheadMs === 0) return 1; // Show full text when not playing
     return Math.min(1, playheadMs / (durationMs || 3000));
   }, [playheadMs, durationMs, isPlaying]);
+
+  // Dynamic font size scaling for long text
+  const adjustedFontSize = useMemo(() => {
+    const { text = '', fontSize = 48 } = textOverlay || {};
+    let size = isPreview ? Math.max(12, fontSize * 0.25) : fontSize;
+    if (text.length > 50) size *= 0.8;
+    if (text.length > 100) size *= 0.6;
+    return size;
+  }, [textOverlay.fontSize, textOverlay.text, isPreview]);
 
   if (!textOverlay.enabled) return null;
 
@@ -78,14 +86,6 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
         return { ...baseStyle, top: 0, height: '25%' };
     }
   };
-
-  // Dynamic font size scaling for long text
-  const adjustedFontSize = useMemo(() => {
-    let size = isPreview ? Math.max(12, fontSize * 0.25) : fontSize;
-    if (text.length > 50) size *= 0.8;
-    if (text.length > 100) size *= 0.6;
-    return size;
-  }, [fontSize, text.length, isPreview]);
 
   // Simple text styles without complex animations for now
   const textStyle: React.CSSProperties = {

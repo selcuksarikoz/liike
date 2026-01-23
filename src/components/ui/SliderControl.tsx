@@ -1,4 +1,5 @@
-import { useRef, useEffect, type ReactNode } from 'react';
+import { useRef, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { DURATIONS, EASINGS } from '../../constants/animations';
 
 type SliderControlProps = {
@@ -29,11 +30,12 @@ export const SliderControl = ({
       const percent = ((value - min) / (max - min)) * 100;
       // Clamp percent between 0 and 100
       const clampedPercent = Math.min(Math.max(percent, 0), 100);
-      
-      fillRef.current.animate(
-        [{ width: `${clampedPercent}%` }],
-        { duration: DURATIONS.fast, easing: EASINGS.easeOut, fill: 'forwards' }
-      );
+
+      fillRef.current.animate([{ width: `${clampedPercent}%` }], {
+        duration: DURATIONS.fast,
+        easing: EASINGS.easeOut,
+        fill: 'forwards',
+      });
     }
   }, [value, min, max]);
 
@@ -45,14 +47,15 @@ export const SliderControl = ({
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
           {icon && (
-            <span className="text-ui-muted group-hover:text-accent transition-colors">
-              {icon}
-            </span>
+            <span className="text-ui-muted group-hover:text-accent transition-colors">{icon}</span>
           )}
-          <span className="text-[10px] text-ui-muted group-hover:text-white transition-colors capitalize">{label}</span>
+          <span className="text-[10px] text-ui-muted group-hover:text-white transition-colors capitalize">
+            {label}
+          </span>
         </div>
         <span className="text-[10px] font-mono text-accent">
-          {typeof value === 'number' && !Number.isInteger(step) ? value.toFixed(2) : value}{unit}
+          {typeof value === 'number' && !Number.isInteger(step) ? value.toFixed(2) : value}
+          {unit}
         </span>
       </div>
       <div className="relative h-6 flex items-center">

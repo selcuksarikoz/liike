@@ -1,6 +1,6 @@
 import { flushSync } from 'react-dom';
 import { useTimelineStore } from '../store/timelineStore';
-import { type ExportFormat } from '../store/renderStore';
+import type { ExportFormat } from '../store/renderStore';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { mkdir } from '@tauri-apps/plugin-fs';
 

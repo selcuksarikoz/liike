@@ -27,11 +27,7 @@ export const SidebarContent = ({
 }: {
   children: React.ReactNode;
   className?: string;
-}) => (
-  <div className={`flex-1 overflow-y-auto no-scrollbar ${className}`}>
-    {children}
-  </div>
-);
+}) => <div className={`flex-1 overflow-y-auto no-scrollbar ${className}`}>{children}</div>;
 
 // Section with optional border
 export const SidebarSection = ({
@@ -125,7 +121,7 @@ export const ActionCard = ({
         {icon}
       </div>
     ) : null}
-    
+
     <div className="flex-1">
       <div className="text-[11px] font-medium text-white">{label}</div>
       {value && <div className="text-[9px] text-ui-muted capitalize">{value}</div>}
@@ -141,23 +137,28 @@ export const GridButton = ({
   icon,
   label,
   children,
+  className = '',
+  title,
 }: {
   active: boolean;
   onClick: () => void;
   icon?: React.ReactNode;
   label?: string;
   children?: React.ReactNode;
+  className?: string;
+  title?: string;
 }) => (
   <button
     onClick={onClick}
-    className={`flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-lg transition-all border ${
+    title={title}
+    className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
       active
-        ? 'bg-accent text-black border-accent'
-        : 'bg-ui-panel text-ui-text border-transparent hover:bg-ui-highlight hover:text-white hover:border-accent/30'
-    }`}
+        ? 'bg-accent/20 border-accent text-accent'
+        : 'border-ui-border hover:border-ui-muted bg-ui-panel/30 text-ui-muted hover:text-white'
+    } ${className}`}
   >
     {children || icon}
-    {label && <span className="text-[8px] font-medium uppercase">{label}</span>}
+    {label && <span className="text-[8px] font-medium">{label}</span>}
   </button>
 );
 
@@ -174,9 +175,7 @@ export const UploadBox = ({
     className="mb-4 flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-ui-border bg-ui-panel/40 py-2 hover:bg-ui-highlight hover:border-accent/50 cursor-pointer transition-colors group"
   >
     <div className="text-center">
-      <p className="text-[10px] font-medium text-ui-text group-hover:text-white">
-        Click to Upload
-      </p>
+      <p className="text-[10px] font-medium text-ui-text group-hover:text-white">Click to Upload</p>
       <p className="text-[9px] text-ui-muted">Max {maxItems} items</p>
     </div>
   </div>
@@ -222,7 +221,7 @@ export const MediaSlot = ({
             className="w-full h-full object-cover"
           />
         )}
-         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onRemove}
             className="rounded-full bg-black/50 p-1 hover:bg-red-500/80 text-white backdrop-blur-sm transition-colors"
@@ -246,8 +245,4 @@ export const ControlGroup = ({
 }: {
   children: React.ReactNode;
   className?: string;
-}) => (
-  <div className={`bg-ui-panel/40 rounded-xl p-3 space-y-3 ${className}`}>
-    {children}
-  </div>
-);
+}) => <div className={`bg-ui-panel/40 rounded-xl p-3 space-y-3 ${className}`}>{children}</div>;

@@ -1,6 +1,6 @@
 import { CircleDot, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { FRAMES_DATA } from '../constants/styles';
+import { FRAMES_DATA, getFrameLabel } from '../constants/styles';
 import type { ImageLayout } from '../store/renderStore';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
@@ -124,15 +124,6 @@ export const SidebarRight = () => {
     }
     setLayoutFilter(filter);
   };
-
-  const getCurrentFrameLabel = () => {
-    for (const group of FRAMES_DATA) {
-      const frame = group.frames.find((f) => f.width === canvasWidth && f.height === canvasHeight);
-      if (frame) return frame.label;
-    }
-    return `${canvasWidth} × ${canvasHeight}`;
-  };
-
   // Generate preview style for background button
   const getBackgroundPreviewStyle = () => {
     switch (backgroundType) {
@@ -225,7 +216,7 @@ export const SidebarRight = () => {
               <SidebarHeader>Canvas Size</SidebarHeader>
               <DropdownTrigger
                 icon="crop"
-                label={getCurrentFrameLabel()}
+                label={getFrameLabel(canvasWidth, canvasHeight)}
                 value={`${canvasWidth} × ${canvasHeight}`}
                 onClick={() => setIsFrameModalOpen(true)}
               />

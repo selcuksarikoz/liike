@@ -235,6 +235,14 @@ export const FRAMES_DATA = [
   }
 ];
 
+export const getFrameLabel = (width: number, height: number): string => {
+  for (const group of FRAMES_DATA) {
+    const frame = group.frames.find((f) => f.width === width && f.height === height);
+    if (frame) return frame.label;
+  }
+  return `${width} × ${height}`;
+};
+
 export type LayoutAnimation = {
   type: 'float' | 'bounce' | 'rotate' | 'zoom' | 'zoom-in' | 'zoom-out' | 'zoom-up' | 'zoom-down' | 'slide' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'pulse' | 'swing' | 'shake' | 'spiral' | 'fan' | 'domino' | 'elastic-rotate' | 'converge' | 'diverge' | 'glitch' | 'wobble-3d' | 'rotate-3d' | 'elevator' | 'skew-slide' | 'none';
   duration: number;

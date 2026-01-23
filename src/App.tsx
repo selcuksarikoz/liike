@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useStreamingRender } from './hooks/useStreamingRender';
-import { useRenderStore, type ExportFormat } from './store/renderStore';
+import { useRenderStore } from './store/renderStore';
+import type { ExportFormat } from './store/renderStore';
 import { Header } from './components/Header';
 import { SidebarLeft } from './components/SidebarLeft';
 import { SidebarRight } from './components/SidebarRight';
@@ -9,10 +10,10 @@ import { Timeline } from './components/Timeline';
 
 const App = () => {
   const stageRef = useRef<HTMLDivElement>(null);
-  
+
   // Fast streaming hook for all formats (video & image)
   const loop = useStreamingRender();
-  
+
   const { durationMs, fps, outputName } = useRenderStore();
 
   const handleRender = (format: ExportFormat) => {
