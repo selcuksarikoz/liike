@@ -279,13 +279,6 @@ export const Header = ({ onRender }: HeaderProps) => {
 
             <button
               onClick={() => {
-                // Dispatch abort event that useRenderLoop listens to, OR
-                // slightly hacky but effective: set a global flag or use store
-                useRenderStore
-                  .getState()
-                  .setRenderStatus({ error: 'Cancelled by user', isRendering: false });
-                // The loop needs to detect this change!
-                // I will add a mechanism in useRenderLoop to watch this.
                 window.dispatchEvent(new CustomEvent('cancel-render'));
               }}
               className="mt-8 px-8 py-3 rounded-full bg-ui-panel border border-ui-border text-ui-muted hover:bg-ui-highlight hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"

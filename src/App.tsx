@@ -27,6 +27,15 @@ const App = () => {
   // Fast streaming hook for all formats (video & image)
   const loop = useStreamingRender();
 
+  // Listen for cancel-render event from Header
+  useEffect(() => {
+    const handleCancelRender = () => {
+      loop.cancel();
+    };
+    window.addEventListener('cancel-render', handleCancelRender);
+    return () => window.removeEventListener('cancel-render', handleCancelRender);
+  }, [loop.cancel]);
+
   const { durationMs, fps, outputName } = useRenderStore();
 
   const handleRender = (format: ExportFormat) => {
