@@ -20,7 +20,7 @@ export const TrioRowLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
         className="relative flex gap-3 transition-transform duration-300 ease-out"
@@ -84,7 +84,7 @@ export const TrioColumnLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
         className="relative flex flex-col gap-3 transition-transform duration-300 ease-out"
@@ -147,7 +147,7 @@ export const FanLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
         className="relative flex gap-2 transition-transform duration-300 ease-out"
@@ -202,7 +202,7 @@ export const MasonryLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 gap-2 transition-transform duration-300 ease-out"
@@ -292,7 +292,7 @@ export const MosaicLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 grid-rows-2 gap-3 transition-transform duration-300 ease-out"
@@ -426,7 +426,7 @@ export const SpotlightLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
         className="relative flex gap-3 transition-transform duration-300 ease-out"
@@ -499,7 +499,7 @@ export const AsymmetricLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
         className="relative grid gap-2 transition-transform duration-300 ease-out"

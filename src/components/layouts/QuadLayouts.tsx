@@ -21,7 +21,7 @@ export const GridLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 gap-3 transition-transform duration-300 ease-out"
@@ -92,7 +92,7 @@ export const OverlapLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out"
@@ -166,7 +166,7 @@ export const CreativeLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
         className="relative w-full h-full transition-transform duration-300 ease-out"
@@ -426,7 +426,7 @@ export const ScatteredLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
         className="relative w-full h-full transition-transform duration-300 ease-out"
@@ -486,7 +486,7 @@ export const CascadeLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out"

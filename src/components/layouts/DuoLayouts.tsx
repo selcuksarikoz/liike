@@ -18,7 +18,6 @@ export const SideBySideLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-
   return (
     <div className="flex h-full w-full items-center justify-center">
       <div
@@ -82,7 +81,6 @@ export const StackedLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-
   return (
     <div className="flex h-full w-full items-center justify-center">
       <div
@@ -151,10 +149,10 @@ export const DiagonalLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
-        className="relative transition-transform duration-300 ease-out"
+        className="relative transition-transform duration-300 ease-out overflow-hidden"
         style={{ ...containerStyle, width: '90%', height: '90%' }}
       >
         {[0, 1].map((index) => {
@@ -214,10 +212,10 @@ export const PolaroidLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
-        className="relative transition-transform duration-300 ease-out"
+        className="relative transition-transform duration-300 ease-out overflow-hidden"
         style={{ ...containerStyle, width: '90%', height: '90%' }}
       >
         {[0, 1].map((index) => {
