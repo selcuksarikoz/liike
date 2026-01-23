@@ -5,7 +5,7 @@ export type StylePreset = {
     background?: string;
     backdropFilter?: string;
     border?: string;
-    boxShadow?: string;
+    dropShadow?: string; // CSS filter drop-shadow value (e.g., "0 4px 30px rgba(0,0,0,0.4)")
     opacity?: number;
     padding?: string;
   };
@@ -54,7 +54,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     css: {
       background: 'rgba(0, 0, 0, 0.8)',
       border: '2px solid #00ff88',
-      boxShadow: '0 0 20px rgba(0, 255, 136, 0.5), inset 0 0 20px rgba(0, 255, 136, 0.1)',
+      dropShadow: '0 0 20px rgba(0, 255, 136, 0.5)',
     },
   },
   {
@@ -63,7 +63,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     css: {
       background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(148, 0, 211, 0.2) 100%)',
       border: '2px solid rgba(0, 212, 255, 0.6)',
-      boxShadow: '0 0 30px rgba(148, 0, 211, 0.3)',
+      dropShadow: '0 0 30px rgba(148, 0, 211, 0.3)',
     },
   },
   {
@@ -81,7 +81,6 @@ export const STYLE_PRESETS: StylePreset[] = [
       background: 'rgba(255, 255, 255, 0.1)',
       backdropFilter: 'blur(30px) saturate(180%)',
       border: '1px solid rgba(255, 255, 255, 0.3)',
-      boxShadow: 'inset 0 0 30px rgba(255, 255, 255, 0.1)',
     },
   },
   {
@@ -90,7 +89,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     css: {
       background: 'linear-gradient(135deg, rgba(255, 100, 50, 0.8) 0%, rgba(255, 50, 100, 0.8) 100%)',
       border: '2px solid rgba(255, 200, 100, 0.5)',
-      boxShadow: '0 10px 40px rgba(255, 100, 50, 0.3)',
+      dropShadow: '0 10px 40px rgba(255, 100, 50, 0.3)',
     },
   },
   {
@@ -100,7 +99,7 @@ export const STYLE_PRESETS: StylePreset[] = [
       background: 'linear-gradient(135deg, rgba(120, 200, 255, 0.3) 0%, rgba(200, 120, 255, 0.3) 50%, rgba(255, 180, 120, 0.3) 100%)',
       backdropFilter: 'blur(10px)',
       border: '1px solid rgba(255, 255, 255, 0.4)',
-      boxShadow: '0 0 40px rgba(120, 200, 255, 0.2)',
+      dropShadow: '0 0 40px rgba(120, 200, 255, 0.2)',
     },
   },
   {
@@ -108,7 +107,6 @@ export const STYLE_PRESETS: StylePreset[] = [
     label: 'Inset',
     css: {
       background: 'linear-gradient(145deg, #1a1a1a, #2d2d2d)',
-      boxShadow: 'inset 5px 5px 15px #0d0d0d, inset -5px -5px 15px #333333',
     },
   },
   {
@@ -125,7 +123,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     css: {
       background: 'transparent',
       border: '8px solid #ffffff',
-      boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4)',
+      dropShadow: '0 4px 30px rgba(0, 0, 0, 0.4)',
     },
   },
   {
@@ -134,7 +132,6 @@ export const STYLE_PRESETS: StylePreset[] = [
     css: {
       background: 'transparent',
       border: '4px double rgba(255, 255, 255, 0.8)',
-      boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.2)',
     },
   },
   {
@@ -143,7 +140,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     css: {
       background: '#ffffff',
       border: '1px solid #e5e5e5',
-      boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)',
+      dropShadow: '0 10px 30px rgba(0,0,0,0.1)',
     },
   },
   {
@@ -153,7 +150,7 @@ export const STYLE_PRESETS: StylePreset[] = [
       background: '#ffffff',
       border: 'none',
       padding: '12px 12px 36px 12px',
-      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+      dropShadow: '0 4px 6px rgba(0,0,0,0.1)',
     },
   },
   {
@@ -163,7 +160,7 @@ export const STYLE_PRESETS: StylePreset[] = [
       background: 'rgba(255, 255, 255, 0.05)',
       backdropFilter: 'blur(16px) saturate(180%)',
       border: '1px solid rgba(255, 255, 255, 0.2)',
-      boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+      dropShadow: '0 8px 32px rgba(31, 38, 135, 0.15)',
     },
   },
   {
@@ -172,7 +169,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     css: {
       background: 'rgba(5, 5, 5, 0.9)',
       border: '1px solid #00f2ff',
-      boxShadow: '0 0 15px rgba(0, 242, 255, 0.3), inset 0 0 15px rgba(0, 242, 255, 0.1)',
+      dropShadow: '0 0 15px rgba(0, 242, 255, 0.3)',
     },
   },
   {
@@ -181,7 +178,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     css: {
       background: 'linear-gradient(#18181b, #18181b) padding-box, linear-gradient(45deg, #f43f5e, #8b5cf6) border-box',
       border: '3px solid transparent',
-      boxShadow: '0 10px 30px -10px rgba(139, 92, 246, 0.3)',
+      dropShadow: '0 10px 30px rgba(139, 92, 246, 0.3)',
     },
   },
 ];

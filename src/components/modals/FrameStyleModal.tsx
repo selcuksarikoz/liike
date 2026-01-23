@@ -95,7 +95,10 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
                     >
                       <div
                         className="w-full h-1/2 rounded bg-white/80"
-                        style={{ boxShadow: preset.css.boxShadow, border: preset.css.border }}
+                        style={{
+                          filter: preset.css.dropShadow ? `drop-shadow(${preset.css.dropShadow})` : undefined,
+                          border: preset.css.border
+                        }}
                       />
                     </div>
                     <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">

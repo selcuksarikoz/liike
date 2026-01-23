@@ -45,8 +45,8 @@ export const PresetCard = ({
     const handleMouseEnter = () => {
       card.animate(
         [
-          { transform: 'scale(1)', boxShadow: '0 0 0 rgba(0, 0, 0, 0)' },
-          { transform: 'scale(1.02)', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)' }
+          { transform: 'scale(1)', filter: 'drop-shadow(0 0 0 rgba(0, 0, 0, 0))' },
+          { transform: 'scale(1.02)', filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4))' }
         ],
         { duration: DURATIONS.normal, easing: EASINGS.easeOut, fill: 'forwards' }
       );
@@ -62,7 +62,7 @@ export const PresetCard = ({
     const handleMouseLeave = () => {
       card.animate(
         [
-          { transform: 'scale(1)', boxShadow: '0 0 0 rgba(0, 0, 0, 0)' }
+          { transform: 'scale(1)', filter: 'drop-shadow(0 0 0 rgba(0, 0, 0, 0))' }
         ],
         { duration: DURATIONS.normal, easing: EASINGS.easeOut, fill: 'forwards' }
       );

@@ -17,53 +17,54 @@ export const SideBySideLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
-}: LayoutBaseProps) => (
-  <div className="flex h-full w-full items-center justify-center">
-    <div
-      ref={containerRef}
-      className="relative flex gap-4 transition-[transform,box-shadow] duration-300 ease-out"
-      style={{
-        ...containerStyle,
-        width: isPreview ? '100%' : '90%',
-        height: aspectValue ? undefined : isPreview ? '100%' : '75%',
-        maxHeight: sizePercent,
-      }}
-    >
-      {[0, 1].map((index) => {
-        const animStyle = getStaggeredAnimationStyle(animationInfo, index, 2);
-        return (
-          <div
-            key={index}
-            className="flex-1 overflow-hidden"
-            style={{
-              aspectRatio: aspectValue ? aspectValue : undefined,
-              borderRadius: `${effectiveCornerRadius}px`,
-              filter: shadowFilter,
-              transform: animStyle.transform,
-              opacity: animStyle.opacity,
-              transition: getLayoutTransition(!!animationInfo),
-              willChange: 'transform, opacity',
-              ...styleCSS,
-            }}
-          >
-            {renderWithMockup(
-              <MediaContainer
-                index={index}
-                media={mediaAssets[index]}
-                cornerRadius={effectiveCornerRadius}
-                isPreview={isPreview}
-                onScreenClick={onScreenClick}
-                styleCSS={styleCSS}
-                playing={playing}
-              />,
-              index
-            )}
-          </div>
-        );
-      })}
+}: LayoutBaseProps) => {
+
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div
+        ref={containerRef}
+        className="relative flex gap-4 transition-transform duration-300 ease-out"
+        style={{
+          ...containerStyle,
+          width: isPreview ? '100%' : '90%',
+          height: aspectValue ? undefined : isPreview ? '100%' : '75%',
+          maxHeight: sizePercent,
+        }}
+      >
+        {[0, 1].map((index) => {
+          const animStyle = getStaggeredAnimationStyle(animationInfo, index, 2);
+          return (
+            <div
+              key={index}
+              className="flex-1"
+              style={{
+                aspectRatio: aspectValue ? aspectValue : undefined,
+                transform: animStyle.transform,
+                opacity: animStyle.opacity,
+                transition: getLayoutTransition(!!animationInfo),
+                willChange: 'transform, opacity',
+              }}
+            >
+              {renderWithMockup(
+                <MediaContainer
+                  index={index}
+                  media={mediaAssets[index]}
+                  cornerRadius={effectiveCornerRadius}
+                  isPreview={isPreview}
+                  onScreenClick={onScreenClick}
+                  styleCSS={styleCSS}
+                  dropShadowFilter={shadowFilter}
+                  playing={playing}
+                />,
+                index
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Stacked layout (2 images)
 export const StackedLayout = ({
@@ -80,53 +81,54 @@ export const StackedLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
-}: LayoutBaseProps) => (
-  <div className="flex h-full w-full items-center justify-center">
-    <div
-      ref={containerRef}
-      className="relative flex flex-col gap-4 transition-[transform,box-shadow] duration-300 ease-out"
-      style={{
-        ...containerStyle,
-        width: aspectValue ? undefined : isPreview ? '100%' : '70%',
-        height: isPreview ? '100%' : '90%',
-        maxWidth: sizePercent,
-      }}
-    >
-      {[0, 1].map((index) => {
-        const animStyle = getStaggeredAnimationStyle(animationInfo, index, 2);
-        return (
-          <div
-            key={index}
-            className="flex-1 overflow-hidden"
-            style={{
-              aspectRatio: aspectValue ? aspectValue : undefined,
-              borderRadius: `${effectiveCornerRadius}px`,
-              filter: shadowFilter,
-              transform: animStyle.transform,
-              opacity: animStyle.opacity,
-              transition: getLayoutTransition(!!animationInfo),
-              willChange: 'transform, opacity',
-              ...styleCSS,
-            }}
-          >
-            {renderWithMockup(
-              <MediaContainer
-                index={index}
-                media={mediaAssets[index]}
-                cornerRadius={effectiveCornerRadius}
-                isPreview={isPreview}
-                onScreenClick={onScreenClick}
-                styleCSS={styleCSS}
-                playing={playing}
-              />,
-              index
-            )}
-          </div>
-        );
-      })}
+}: LayoutBaseProps) => {
+
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div
+        ref={containerRef}
+        className="relative flex flex-col gap-4 transition-transform duration-300 ease-out"
+        style={{
+          ...containerStyle,
+          width: aspectValue ? undefined : isPreview ? '100%' : '70%',
+          height: isPreview ? '100%' : '90%',
+          maxWidth: sizePercent,
+        }}
+      >
+        {[0, 1].map((index) => {
+          const animStyle = getStaggeredAnimationStyle(animationInfo, index, 2);
+          return (
+            <div
+              key={index}
+              className="flex-1"
+              style={{
+                aspectRatio: aspectValue ? aspectValue : undefined,
+                transform: animStyle.transform,
+                opacity: animStyle.opacity,
+                transition: getLayoutTransition(!!animationInfo),
+                willChange: 'transform, opacity',
+              }}
+            >
+              {renderWithMockup(
+                <MediaContainer
+                  index={index}
+                  media={mediaAssets[index]}
+                  cornerRadius={effectiveCornerRadius}
+                  isPreview={isPreview}
+                  onScreenClick={onScreenClick}
+                  styleCSS={styleCSS}
+                  dropShadowFilter={shadowFilter}
+                  playing={playing}
+                />,
+                index
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Diagonal layout (2 images at angles)
 export const DiagonalLayout = ({
@@ -152,7 +154,7 @@ export const DiagonalLayout = ({
     <div className="flex h-full w-full items-center justify-center">
       <div
         ref={containerRef}
-        className="relative transition-[transform,box-shadow] duration-300 ease-out"
+        className="relative transition-transform duration-300 ease-out"
         style={{ ...containerStyle, width: '90%', height: '90%' }}
       >
         {[0, 1].map((index) => {
@@ -161,19 +163,16 @@ export const DiagonalLayout = ({
           return (
             <div
               key={index}
-              className="absolute overflow-hidden"
+              className="absolute"
               style={{
                 width: '55%',
                 aspectRatio: aspectValue || 3 / 4,
                 left: `${config.x}%`,
                 top: `${config.y}%`,
                 zIndex: config.zIndex,
-                borderRadius: `${effectiveCornerRadius}px`,
-                filter: shadowFilter,
                 transform: `rotate(${config.rotate}deg) ${animStyle.transform}`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
-                ...styleCSS,
               }}
             >
               {renderWithMockup(
@@ -184,6 +183,7 @@ export const DiagonalLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
+                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -201,14 +201,12 @@ export const PolaroidLayout = ({
   containerRef,
   containerStyle,
   mediaAssets,
-  effectiveCornerRadius,
   shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
   playing,
   animationInfo,
-  renderWithMockup,
 }: LayoutBaseProps) => {
   const polaroidConfigs = [
     { x: 10, y: 20, rotate: -8 },
@@ -219,7 +217,7 @@ export const PolaroidLayout = ({
     <div className="flex h-full w-full items-center justify-center">
       <div
         ref={containerRef}
-        className="relative transition-[transform,box-shadow] duration-300 ease-out"
+        className="relative transition-transform duration-300 ease-out"
         style={{ ...containerStyle, width: '90%', height: '90%' }}
       >
         {[0, 1].map((index) => {
@@ -235,13 +233,12 @@ export const PolaroidLayout = ({
                 top: `${config.y}%`,
                 zIndex: 20 + index * 10,
                 borderRadius: '4px',
-                filter: shadowFilter,
                 transform: `rotate(${config.rotate}deg) ${animStyle.transform}`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
               }}
             >
-              <div className="overflow-hidden" style={{ aspectRatio: 1, borderRadius: '2px', ...styleCSS }}>
+              <div style={{ aspectRatio: 1 }}>
                 <MediaContainer
                   index={index}
                   media={mediaAssets[index]}
@@ -249,6 +246,7 @@ export const PolaroidLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
+                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />
               </div>

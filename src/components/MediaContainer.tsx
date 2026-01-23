@@ -8,7 +8,8 @@ export type MediaContainerProps = {
   cornerRadius: number;
   isPreview: boolean;
   onScreenClick?: (index: number) => void;
-  styleCSS: React.CSSProperties;
+  styleCSS: React.CSSProperties & { dropShadow?: string };
+  dropShadowFilter?: string; // Combined shadow filter for img/video
   playing?: boolean;
 };
 
@@ -20,6 +21,7 @@ export const MediaContainer = memo(
     isPreview,
     onScreenClick,
     styleCSS,
+    dropShadowFilter,
     playing = true,
   }: MediaContainerProps) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -38,79 +40,83 @@ export const MediaContainer = memo(
       if (!isPreview) onScreenClick?.(index);
     }, [isPreview, onScreenClick, index]);
 
+    // Shadow applied to outer wrapper, clip to inner wrapper
+    const hasShadow = dropShadowFilter && dropShadowFilter !== 'none';
+
     return (
       <div
-        className={`relative flex h-full w-full items-center justify-center overflow-hidden ${isPreview ? '' : 'cursor-pointer group'}`}
+        className={`relative flex h-full w-full items-center justify-center ${isPreview ? '' : 'cursor-pointer group'}`}
         onClick={handleClick}
         style={{
           borderRadius: 'inherit',
+          filter: hasShadow ? dropShadowFilter : undefined,
         }}
       >
-        {media ? (
-          media.type === 'video' ? (
-            <video
-              ref={videoRef}
-              src={media.url}
-              className="w-full h-full object-cover block"
-              style={{
-                borderRadius: 'inherit',
-              }}
-              autoPlay={playing}
-              loop
-              muted
-              playsInline
-            />
+        <div
+          className="relative w-full h-full overflow-hidden"
+          style={{
+            borderRadius: `${cornerRadius}px`,
+          }}
+        >
+          {media ? (
+            media.type === 'video' ? (
+              <video
+                ref={videoRef}
+                src={media.url}
+                className="w-full h-full object-cover block"
+                autoPlay={playing}
+                loop
+                muted
+                playsInline
+              />
+            ) : (
+              <img
+                src={media.url}
+                className="w-full h-full object-cover block"
+                alt="Media"
+                loading="eager"
+                decoding="sync"
+              />
+            )
           ) : (
-            <img
-              src={media.url}
-              className="w-full h-full object-cover block"
+            <div
+              className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-8'} ${!isPreview && 'group-hover:brightness-110'}`}
               style={{
                 borderRadius: 'inherit',
+                background: styleCSS.background || 'rgba(24, 24, 27, 0.8)',
+                border: styleCSS.border || '2px dashed rgba(255, 255, 255, 0.2)',
+                backdropFilter: styleCSS.backdropFilter,
+                transition: 'background 0.3s ease, border 0.3s ease',
               }}
-              alt="Media"
-              loading="eager"
-              decoding="sync"
-            />
-          )
-        ) : (
-          <div
-            className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-8'} ${!isPreview && 'group-hover:brightness-110'}`}
-            style={{
-              borderRadius: 'inherit',
-              background: styleCSS.background || 'rgba(24, 24, 27, 0.8)',
-              border: styleCSS.border || '2px dashed rgba(255, 255, 255, 0.2)',
-              boxShadow: styleCSS.boxShadow,
-              backdropFilter: styleCSS.backdropFilter,
-              transition: 'background 0.3s ease, border 0.3s ease',
-            }}
-          >
-            <div
-              className={`flex flex-col items-center gap-4 text-ui-text ${!isPreview && 'group-hover:text-accent group-hover:scale-110'}`}
-              style={{ transition: 'color 0.3s ease, transform 0.3s ease' }}
             >
-              <ImagePlus className={isPreview ? 'w-5 h-5' : 'w-16 h-16'} />
-              {!isPreview && (
-                <span className="text-sm uppercase tracking-widest text-center font-bold">
-                  Add Image
-                </span>
-              )}
+              <div
+                className={`flex flex-col items-center gap-4 text-ui-text ${!isPreview && 'group-hover:text-accent group-hover:scale-110'}`}
+                style={{ transition: 'color 0.3s ease, transform 0.3s ease' }}
+              >
+                <ImagePlus className={isPreview ? 'w-5 h-5' : 'w-16 h-16'} />
+                {!isPreview && (
+                  <span className="text-sm uppercase tracking-widest text-center font-bold">
+                    Add Image
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-        {/* Hover overlay */}
-        {media && !isPreview && (
-          <div
-            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center pointer-events-none"
-            style={{
-              borderRadius: 'inherit',
-              transition: 'opacity 0.3s ease',
-            }}
-          >
-            <span className="text-[11px] text-white font-medium uppercase tracking-wider">
-              Change
-            </span>
-          </div>
-        )}
+          )}
+          {/* Hover overlay */}
+          {media && !isPreview && (
+            <div
+              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center pointer-events-none"
+              style={{
+                borderRadius: 'inherit',
+                transition: 'opacity 0.3s ease',
+              }}
+            >
+              <span className="text-[11px] text-white font-medium uppercase tracking-wider">
+                Change
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

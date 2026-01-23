@@ -7,8 +7,8 @@ export type LayoutBaseProps = {
   containerStyle: React.CSSProperties;
   mediaAssets: (MediaAsset | null)[];
   effectiveCornerRadius: number;
-  shadowFilter: string;
-  styleCSS: React.CSSProperties;
+  shadowFilter: string; // Combined drop-shadow filter for media elements
+  styleCSS: React.CSSProperties & { dropShadow?: string };
   isPreview: boolean;
   onScreenClick?: (index: number) => void;
   playing: boolean;

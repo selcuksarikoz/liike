@@ -65,7 +65,6 @@ export const SidebarLeft = () => {
                   ref={fileInputRefs[index]}
                   type="file"
                   className="hidden"
-                  multiple
                   accept="image/*,video/mp4,video/quicktime,video/webm"
                   onChange={(e) => handleFileSelect(e, index)}
                 />

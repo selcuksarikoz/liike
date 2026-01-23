@@ -91,20 +91,29 @@ const DeviceRendererComponent = ({
   }, [stylePreset]);
 
   // Memoized computed shadow - drop-shadow filter (works better with 3D transforms)
+  // Combines main shadow with preset dropShadow
   const shadowFilter = useMemo(() => {
-    if (isPreview || shadowType === 'none' || frameMode === 'device') {
-      return 'none';
+    const shadows: string[] = [];
+
+    // Main shadow from controls (unless preview, none, or device mode)
+    if (!isPreview && shadowType !== 'none' && frameMode !== 'device') {
+      const hex = shadowColor.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      const alpha = shadowOpacity / 100;
+      const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      shadows.push(`drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px ${rgba})`);
     }
 
-    const hex = shadowColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const alpha = shadowOpacity / 100;
-    const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    // Preset dropShadow (if any)
+    const presetDropShadow = (styleCSS as { dropShadow?: string }).dropShadow;
+    if (presetDropShadow && !isPreview) {
+      shadows.push(`drop-shadow(${presetDropShadow})`);
+    }
 
-    return `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px ${rgba})`;
-  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowX, shadowY, frameMode]);
+    return shadows.length > 0 ? shadows.join(' ') : 'none';
+  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowX, shadowY, frameMode, styleCSS]);
 
   // Don't apply user aspect ratio when in device mode
   const aspectValue = frameMode === 'device' ? null : getAspectRatioValue(aspectRatio);
@@ -220,12 +229,13 @@ const DeviceRendererComponent = ({
       return <BrickLayout {...layoutProps} />;
 
     // Default fallback (single)
-    default:
+    default: {
+      const { dropShadow: _, ...containerCSS } = styleCSS as typeof styleCSS & { dropShadow?: string };
       return (
         <div className="flex h-full w-full items-center justify-center">
           <div
             ref={containerRef}
-            className="relative overflow-hidden transition-[transform,box-shadow,border-radius] duration-300 ease-out"
+            className="relative overflow-hidden transition-[transform,border-radius] duration-300 ease-out"
             style={{
               ...containerStyle,
               width: aspectValue ? 'auto' : sizePercent,
@@ -234,9 +244,8 @@ const DeviceRendererComponent = ({
               maxWidth: sizePercent,
               maxHeight: sizePercent,
               borderRadius: `${effectiveCornerRadius}px`,
-              filter: shadowFilter,
               backfaceVisibility: 'hidden',
-              ...styleCSS,
+              ...containerCSS,
             }}
           >
             <MediaContainer
@@ -246,11 +255,13 @@ const DeviceRendererComponent = ({
               isPreview={isPreview}
               onScreenClick={onScreenClick}
               styleCSS={styleCSS}
+              dropShadowFilter={shadowFilter}
               playing={playing}
             />
           </div>
         </div>
       );
+    }
   }
 };
 

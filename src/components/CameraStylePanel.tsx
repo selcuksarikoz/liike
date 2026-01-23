@@ -282,16 +282,16 @@ export const CameraStylePanel = () => {
                   <div
                     className="w-4 h-4 rounded-full bg-white/90 transition-transform"
                     style={{
-                      boxShadow:
+                      filter:
                         type.id === 'none'
                           ? 'none'
                           : type.id === 'soft'
-                            ? '0 4px 12px rgba(0,0,0,0.5)'
+                            ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))'
                             : type.id === 'float'
-                              ? '0 10px 25px rgba(0,0,0,0.6)'
+                              ? 'drop-shadow(0 10px 25px rgba(0,0,0,0.6))'
                               : type.id === 'dream'
-                                ? '0 10px 20px rgba(80,80,255,0.4)'
-                                : '0 0 10px rgba(255,255,255,0.8)',
+                                ? 'drop-shadow(0 10px 20px rgba(80,80,255,0.4))'
+                                : 'drop-shadow(0 0 10px rgba(255,255,255,0.8))',
                     }}
                   />
                 </div>

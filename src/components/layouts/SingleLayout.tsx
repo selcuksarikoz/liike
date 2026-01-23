@@ -23,6 +23,7 @@ export const SingleLayout = ({
       isPreview={isPreview}
       onScreenClick={onScreenClick}
       styleCSS={styleCSS}
+      dropShadowFilter={shadowFilter}
       playing={playing}
     />
   );
@@ -31,7 +32,7 @@ export const SingleLayout = ({
     <div className="flex h-full w-full items-center justify-center">
       <div
         ref={containerRef}
-        className="relative transition-[transform,border-radius,box-shadow] duration-300 ease-out"
+        className="relative transition-[transform,border-radius] duration-300 ease-out"
         style={{
           ...containerStyle,
           width: aspectValue ? 'auto' : sizePercent,
@@ -39,10 +40,7 @@ export const SingleLayout = ({
           aspectRatio: aspectValue ? aspectValue : undefined,
           maxWidth: sizePercent,
           maxHeight: sizePercent,
-          borderRadius: `${effectiveCornerRadius}px`,
-          filter: shadowFilter,
           backfaceVisibility: 'hidden',
-          ...styleCSS,
         }}
       >
         {renderWithMockup(mediaContent)}
