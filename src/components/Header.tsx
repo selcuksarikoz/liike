@@ -254,7 +254,7 @@ export const Header = ({ onRender }: HeaderProps) => {
     <>
       {/* Full Screen Render Overlay */}
       {renderStatus.isRendering && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/100 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-md p-8 flex flex-col items-center gap-8">
             {/* Progress Circle or Bar */}
             <div className="relative flex items-center justify-center">

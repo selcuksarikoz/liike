@@ -151,7 +151,7 @@ const initialRenderStatus: RenderStatus = {
 };
 
 export const useRenderStore = create<RenderStore>((set) => ({
-  durationMs: 5000,
+  durationMs: 0,
   fps: 30,
   outputName: 'liike_render',
   rotationX: 0,

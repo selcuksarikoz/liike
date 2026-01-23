@@ -29,6 +29,18 @@ import { useRenderStore } from '../store/renderStore';
 const MS_PER_SECOND = 1000;
 const PIXELS_PER_SECOND = 200;
 
+// Animation preview keyframes for hover effects
+const ANIMATION_KEYFRAMES: Record<string, string> = {
+  float: 'animate-float',
+  bounce: 'animate-bounce',
+  pulse: 'animate-pulse',
+  shake: 'animate-shake',
+  rotate: 'animate-spin',
+  'zoom-in': 'animate-zoom-pulse',
+  glitch: 'animate-glitch',
+  swing: 'animate-swing',
+};
+
 const getPresetIcon = (iconName: string, className?: string) => {
   const props = { className };
   switch (iconName) {
@@ -62,8 +74,6 @@ const getPresetIcon = (iconName: string, className?: string) => {
       return <Clapperboard {...props} />;
   }
 };
-
-// ... imports
 
 type DragState = {
   type: 'move' | 'resize-start' | 'resize-end' | 'scrub';
@@ -168,23 +178,52 @@ const TimelineClipComponent = ({
 const AnimationPresetItem = ({
   preset,
   onDragStart,
+  onDoubleClick,
 }: {
   preset: AnimationPreset;
   onDragStart: (e: React.DragEvent, preset: AnimationPreset) => void;
+  onDoubleClick: (preset: AnimationPreset) => void;
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const getAnimationClass = () => {
+    if (!isHovered) return '';
+    const anim = preset.animations[0];
+    return ANIMATION_KEYFRAMES[anim] || '';
+  };
+
   return (
     <div
       draggable
       onDragStart={(e) => onDragStart(e, preset)}
-      className="flex flex-col items-center gap-1 p-2 rounded-lg bg-ui-panel hover:bg-ui-highlight cursor-grab active:cursor-grabbing transition-colors group"
+      onDoubleClick={() => onDoubleClick(preset)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-ui-panel/80 hover:bg-ui-highlight border border-transparent hover:border-ui-border/50 cursor-grab active:cursor-grabbing transition-all duration-200 group relative overflow-hidden"
     >
+      {/* Glow effect on hover */}
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
-        style={{ backgroundColor: preset.color }}
+        className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-xl"
+        style={{ background: `radial-gradient(circle at center, ${preset.color}, transparent 70%)` }}
+      />
+
+      <div
+        className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-hover:shadow-lg ${getAnimationClass()}`}
+        style={{
+          backgroundColor: preset.color,
+          boxShadow: isHovered ? `0 4px 20px ${preset.color}50` : 'none',
+        }}
       >
-        {getPresetIcon(preset.icon, 'w-4 h-4 text-white')}
+        {getPresetIcon(preset.icon, 'w-4 h-4 text-white drop-shadow-sm')}
       </div>
-      <span className="text-[9px] text-ui-text font-medium">{preset.name}</span>
+      <span className="text-[9px] text-ui-text font-medium group-hover:text-white transition-colors truncate max-w-full">
+        {preset.name}
+      </span>
+
+      {/* Duration badge */}
+      <div className="absolute top-0.5 right-0.5 px-1 py-0.5 rounded text-[7px] font-mono text-ui-muted opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+        {(preset.duration / 1000).toFixed(1)}s
+      </div>
     </div>
   );
 };
@@ -211,7 +250,51 @@ export const Timeline = () => {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [showPresets, setShowPresets] = useState(true);
 
-  // ... Keyboard shortcuts
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          setIsPlaying(!isPlaying);
+          break;
+        case 'Backspace':
+        case 'Delete':
+          if (selectedClipId) {
+            e.preventDefault();
+            removeClip(selectedClipId);
+          }
+          break;
+        case 'Escape':
+          selectClip(null);
+          break;
+        case 'Home':
+          e.preventDefault();
+          setPlayhead(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          setPlayhead(durationMs);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          setPlayhead(Math.max(0, playheadMs - (e.shiftKey ? 1000 : 100)));
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          setPlayhead(Math.min(durationMs, playheadMs + (e.shiftKey ? 1000 : 100)));
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying, selectedClipId, playheadMs, durationMs, setIsPlaying, removeClip, selectClip, setPlayhead]);
 
   const totalWidth = (durationMs / MS_PER_SECOND) * PIXELS_PER_SECOND * zoom;
   const timeMarkers = Array.from(
@@ -310,16 +393,29 @@ export const Timeline = () => {
     selectClip(clip.id);
   };
 
-  // ... imports
-
-  // ... existing code ...
-
   const handlePresetDragStart = (e: React.DragEvent, preset: AnimationPreset) => {
     e.dataTransfer.setData(
       'application/json',
       JSON.stringify({ type: 'animation-preset', preset })
     );
     e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  // Double-click to add preset at playhead position
+  const handlePresetDoubleClick = (preset: AnimationPreset) => {
+    const animationTrack = tracks.find((t) => t.type === 'animation');
+    if (animationTrack) {
+      addClip(animationTrack.id, {
+        trackId: animationTrack.id,
+        type: 'animation',
+        name: preset.name,
+        startMs: playheadMs,
+        durationMs: preset.duration,
+        color: preset.color,
+        icon: preset.icon,
+        data: { animationPreset: preset },
+      });
+    }
   };
 
   const handleTrackDrop = (e: React.DragEvent, trackId: string) => {
@@ -492,6 +588,7 @@ export const Timeline = () => {
                           key={preset.id}
                           preset={preset}
                           onDragStart={handlePresetDragStart}
+                          onDoubleClick={handlePresetDoubleClick}
                         />
                       ))}
                     </div>
