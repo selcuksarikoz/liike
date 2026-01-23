@@ -26,14 +26,56 @@ export const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
   }
 };
 
-// Pause/seek HTML5 Video elements
-export const pauseAndSeekVideos = (node: HTMLElement, timeMs: number) => {
+// Pause/seek HTML5 Video elements and wait for seek to complete
+export const pauseAndSeekVideos = async (node: HTMLElement, timeMs: number): Promise<void> => {
   const videos = node.querySelectorAll('video');
   const seconds = timeMs / 1000;
-  for (const video of videos) {
-    video.pause();
-    video.currentTime = seconds;
-  }
+
+  const seekPromises = Array.from(videos).map((video) => {
+    return new Promise<void>((resolve) => {
+      video.pause();
+
+      // If already at target time and has data, resolve immediately
+      if (Math.abs(video.currentTime - seconds) < 0.02 && video.readyState >= 2) {
+        resolve();
+        return;
+      }
+
+      // Wait for video to have enough data before seeking
+      const doSeek = () => {
+        const onSeeked = () => {
+          video.removeEventListener('seeked', onSeeked);
+          // Wait for frame to actually render
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => resolve());
+          });
+        };
+
+        // Timeout fallback
+        const timeout = setTimeout(() => {
+          video.removeEventListener('seeked', onSeeked);
+          resolve();
+        }, 1000);
+
+        video.addEventListener('seeked', () => clearTimeout(timeout), { once: true });
+        video.addEventListener('seeked', onSeeked, { once: true });
+        video.currentTime = seconds;
+      };
+
+      // Ensure video has enough data to seek
+      if (video.readyState >= 2) {
+        doSeek();
+      } else {
+        video.addEventListener('canplay', () => doSeek(), { once: true });
+        // Fallback if canplay doesn't fire
+        setTimeout(() => {
+          if (video.readyState < 2) doSeek();
+        }, 500);
+      }
+    });
+  });
+
+  await Promise.all(seekPromises);
 };
 
 // Wait for DOM update (minimal wait for speed)
@@ -261,6 +303,42 @@ export const preloadResources = async (node: HTMLElement) => {
     }
   }
   await Promise.all(decodePromises);
+
+  // Preload videos - ensure they have enough data for seeking
+  const allVideos = node.querySelectorAll('video');
+  const videoPromises: Promise<void>[] = [];
+  for (const video of allVideos) {
+    videoPromises.push(
+      new Promise<void>((resolve) => {
+        // Already has enough data
+        if (video.readyState >= 3) {
+          resolve();
+          return;
+        }
+
+        const onCanPlay = () => {
+          video.removeEventListener('canplaythrough', onCanPlay);
+          resolve();
+        };
+
+        video.addEventListener('canplaythrough', onCanPlay, { once: true });
+
+        // Timeout fallback
+        setTimeout(() => {
+          video.removeEventListener('canplaythrough', onCanPlay);
+          resolve();
+        }, 3000);
+
+        // Trigger load if needed
+        if (video.preload !== 'auto') {
+          video.preload = 'auto';
+        }
+        video.load();
+      })
+    );
+  }
+  await Promise.all(videoPromises);
+  console.log('[StreamRender] Videos preloaded:', allVideos.length);
 
   console.log('[StreamRender] Resources preloaded.');
 };
@@ -652,6 +730,111 @@ export const renderTextOverlay = (
   ctx.restore();
 };
 
+// Helper: Find effective border-radius from element or its parents
+const getEffectiveBorderRadius = (element: HTMLElement): number => {
+  let current: HTMLElement | null = element;
+  while (current) {
+    const style = window.getComputedStyle(current);
+    const radius = parseFloat(style.borderRadius) || 0;
+    if (radius > 0) return radius;
+    // Also check for overflow:hidden with radius on parent
+    if (style.overflow === 'hidden' || style.overflow === 'clip') {
+      const parentRadius = parseFloat(style.borderRadius) || 0;
+      if (parentRadius > 0) return parentRadius;
+    }
+    current = current.parentElement;
+  }
+  return 0;
+};
+
+// Helper: Capture video frames directly to canvas (bypasses SVG foreignObject limitation)
+const captureVideoFrames = (
+  node: HTMLElement,
+  ctx: CanvasRenderingContext2D,
+  nodeRect: DOMRect,
+  scale: number,
+  offsetX: number,
+  offsetY: number
+) => {
+  const videos = node.querySelectorAll('video');
+
+  for (const video of videos) {
+    // Skip if video not ready or has no dimensions
+    if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+      console.warn('[captureFrame] Video not ready:', video.readyState);
+      continue;
+    }
+
+    const videoRect = video.getBoundingClientRect();
+
+    // Calculate position relative to node, scaled to output
+    const relX = (videoRect.left - nodeRect.left) * scale + offsetX;
+    const relY = (videoRect.top - nodeRect.top) * scale + offsetY;
+    const relW = videoRect.width * scale;
+    const relH = videoRect.height * scale;
+
+    // Get video's computed styles for object-fit handling
+    const videoStyle = window.getComputedStyle(video);
+    const objectFit = videoStyle.objectFit || 'fill';
+    // Check video and parent containers for border-radius
+    const borderRadius = getEffectiveBorderRadius(video);
+
+    ctx.save();
+
+    // Apply border radius clipping if needed
+    if (borderRadius > 0) {
+      ctx.beginPath();
+      const scaledRadius = borderRadius * scale;
+      if (ctx.roundRect) {
+        ctx.roundRect(relX, relY, relW, relH, scaledRadius);
+      } else {
+        ctx.rect(relX, relY, relW, relH);
+      }
+      ctx.clip();
+    }
+
+    // Handle object-fit
+    if (objectFit === 'cover') {
+      const videoAspect = video.videoWidth / video.videoHeight;
+      const containerAspect = relW / relH;
+
+      let srcX = 0, srcY = 0, srcW = video.videoWidth, srcH = video.videoHeight;
+
+      if (videoAspect > containerAspect) {
+        // Video is wider - crop sides
+        srcW = video.videoHeight * containerAspect;
+        srcX = (video.videoWidth - srcW) / 2;
+      } else {
+        // Video is taller - crop top/bottom
+        srcH = video.videoWidth / containerAspect;
+        srcY = (video.videoHeight - srcH) / 2;
+      }
+
+      ctx.drawImage(video, srcX, srcY, srcW, srcH, relX, relY, relW, relH);
+    } else if (objectFit === 'contain') {
+      const videoAspect = video.videoWidth / video.videoHeight;
+      const containerAspect = relW / relH;
+
+      let destX = relX, destY = relY, destW = relW, destH = relH;
+
+      if (videoAspect > containerAspect) {
+        destH = relW / videoAspect;
+        destY = relY + (relH - destH) / 2;
+      } else {
+        destW = relH * videoAspect;
+        destX = relX + (relW - destW) / 2;
+      }
+
+      ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, destX, destY, destW, destH);
+    } else {
+      // fill or other - stretch to fit
+      ctx.drawImage(video, relX, relY, relW, relH);
+    }
+
+    ctx.restore();
+  }
+};
+
 // Helper: Capture a single frame from DOM to Canvas
 export const captureFrame = async (
   node: HTMLElement,
@@ -664,9 +847,9 @@ export const captureFrame = async (
   const canvas = document.createElement('canvas');
   canvas.width = outputWidth;
   canvas.height = outputHeight;
-  const ctx = canvas.getContext('2d', { 
+  const ctx = canvas.getContext('2d', {
     willReadFrequently: true,
-    alpha: true 
+    alpha: true
   })!;
 
   // High quality scaling
@@ -676,16 +859,18 @@ export const captureFrame = async (
   // Get the source node dimensions (may be smaller than output due to preview scaling)
   const nodeRect = node.getBoundingClientRect();
 
+  // Calculate scale and offset for centering
+  const scaleX = outputWidth / nodeRect.width;
+  const scaleY = outputHeight / nodeRect.height;
+  const scale = Math.min(scaleX, scaleY);
+  const offsetX = (outputWidth - nodeRect.width * scale) / 2;
+  const offsetY = (outputHeight - nodeRect.height * scale) / 2;
+
   // Get computed styles for background
   const computedStyle = window.getComputedStyle(node);
 
-  // Use foreignObject SVG approach - renders at full output resolution
-  const svgUrl = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
-  const img = await loadImage(svgUrl);
-
   // Apply clipping for rounded corners (scale radius to output size)
-  const scaleRatio = outputWidth / nodeRect.width;
-  const radius = (parseFloat(computedStyle.borderRadius) || 0) * scaleRatio;
+  const radius = (parseFloat(computedStyle.borderRadius) || 0) * scale;
 
   ctx.save();
   if (radius > 0) {
@@ -702,13 +887,30 @@ export const captureFrame = async (
   ctx.fillStyle = computedStyle.backgroundColor || '#000000';
   ctx.fillRect(0, 0, outputWidth, outputHeight);
 
+  // Use foreignObject SVG approach for non-video content
+  // Videos are handled separately below because SVG foreignObject can't render them
+  const svgUrl = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
+  const img = await loadImage(svgUrl);
+
   // Draw SVG at full output size (already scaled internally)
   ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+
   ctx.restore();
 
-  // Text overlay is now captured directly from DOM (CSS animations preserved)
-  // Canvas rendering disabled - was causing blur/opacity animation issues
-  // renderTextOverlay(ctx, outputWidth, outputHeight, scale, durationMs, playheadMs);
+  // Draw video frames DIRECTLY on top of SVG render
+  // This bypasses SVG foreignObject limitation for video elements
+  ctx.save();
+  if (radius > 0) {
+      ctx.beginPath();
+      if (ctx.roundRect) {
+          ctx.roundRect(0, 0, outputWidth, outputHeight, radius);
+      } else {
+          ctx.rect(0, 0, outputWidth, outputHeight);
+      }
+      ctx.clip();
+  }
+  captureVideoFrames(node, ctx, nodeRect, scale, offsetX, offsetY);
+  ctx.restore();
 
   // Get raw RGBA pixel data
   const imageData = ctx.getImageData(0, 0, outputWidth, outputHeight);

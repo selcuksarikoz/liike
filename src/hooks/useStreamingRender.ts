@@ -49,7 +49,7 @@ export type StreamingRenderState = {
  * Helper functions have been moved to ../utils/renderUtils.ts
  */
 export const useStreamingRender = () => {
-  const { setRenderStatus, resetRenderStatus, canvasWidth, canvasHeight, renderQuality } = useRenderStore();
+  const { setRenderStatus, resetRenderStatus, canvasWidth, canvasHeight, renderQuality, mediaAssets } = useRenderStore();
   const [state, setState] = useState<StreamingRenderState>({
     isRendering: false,
     progress: 0,
@@ -95,9 +95,23 @@ export const useStreamingRender = () => {
         return;
       }
 
-      console.log('[StreamRender] Config:', { durationMs, fps });
-      
-      const totalFrames = Math.max(1, Math.ceil((durationMs / 1000) * fps));
+      // Calculate effective duration - use longest video if durationMs is 0 or less than video
+      let effectiveDuration = durationMs;
+      const maxVideoDuration = mediaAssets.reduce((max, asset) => {
+        if (asset?.type === 'video' && asset.duration) {
+          return Math.max(max, asset.duration);
+        }
+        return max;
+      }, 0);
+
+      if (maxVideoDuration > 0 && (effectiveDuration === 0 || maxVideoDuration > effectiveDuration)) {
+        effectiveDuration = maxVideoDuration;
+        console.log('[StreamRender] Using video duration:', effectiveDuration);
+      }
+
+      console.log('[StreamRender] Config:', { durationMs: effectiveDuration, fps, maxVideoDuration });
+
+      const totalFrames = Math.max(1, Math.ceil((effectiveDuration / 1000) * fps));
       const qualityMultiplier = renderQuality === '4k' ? 2 : 1;
       const outputWidth = (canvasWidth || 1080) * qualityMultiplier;
       const outputHeight = (canvasHeight || 1080) * qualityMultiplier;
@@ -140,7 +154,7 @@ export const useStreamingRender = () => {
            const { playheadMs } = useTimelineStore.getState();
            seekTimeline(playheadMs);
            pauseAndSeekAnimations(node, playheadMs);
-           pauseAndSeekVideos(node, playheadMs);
+           await pauseAndSeekVideos(node, playheadMs);
            await waitForRender(50); // Convert DOM to canvas needs a settled DOM
 
            // Preload fonts for text overlay rendering
@@ -194,7 +208,7 @@ export const useStreamingRender = () => {
            ctx.restore();
 
            // Render text overlay on canvas (uses Canvas 2D API for proper font rendering)
-           renderTextOverlay(ctx, outputWidth, outputHeight, scale, durationMs, playheadMs);
+           renderTextOverlay(ctx, outputWidth, outputHeight, scale, effectiveDuration, playheadMs);
 
            // Convert to blob and write to disk
            const blob = await new Promise<Blob | null>(resolve => 
@@ -221,8 +235,8 @@ export const useStreamingRender = () => {
         return;
       }
 
-      if (durationMs < 100) {
-        const error = 'Video export requires a duration.';
+      if (effectiveDuration < 100) {
+        const error = 'Video export requires a duration. Add a video or set animation duration.';
         console.error('[StreamRender]', error);
         setState((prev) => ({ ...prev, error, phase: 'idle' }));
         setRenderStatus({ error });
@@ -272,7 +286,7 @@ export const useStreamingRender = () => {
         // Seek to start
         seekTimeline(0);
         pauseAndSeekAnimations(node, 0);
-        pauseAndSeekVideos(node, 0);
+        await pauseAndSeekVideos(node, 0);
 
         // Preload resources (images, videos) and fonts for text overlay
         await preloadResources(node);
@@ -294,18 +308,20 @@ export const useStreamingRender = () => {
           // Seek timeline
           seekTimeline(timeMs);
           pauseAndSeekAnimations(node, timeMs);
-          pauseAndSeekVideos(node, timeMs);
+          await pauseAndSeekVideos(node, timeMs);
           
           if (abortController.signal.aborted) return;
 
           // Wait for React to re-render and browser to compute styles
-          // First frame needs more time to ensure animation state is correct
-          await waitForRender(frameIndex === 0 ? 32 : 8);
+          // Videos need more time to decode frames after seeking
+          const hasVideos = mediaAssets.some(a => a?.type === 'video');
+          const waitTime = frameIndex === 0 ? 50 : (hasVideos ? 32 : 8);
+          await waitForRender(waitTime);
 
           if (abortController.signal.aborted) return;
 
           // Capture frame to raw RGBA
-          const rgbaData = await captureFrame(node, outputWidth, outputHeight, durationMs, timeMs);
+          const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);
           
           if (abortController.signal.aborted) return;
           

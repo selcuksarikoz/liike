@@ -29,6 +29,7 @@ export type BackgroundType = 'gradient' | 'solid' | 'image';
 export type MediaAsset = {
   url: string;
   type: 'image' | 'video';
+  duration?: number; // Video duration in milliseconds
 };
 
 export type TextPosition =

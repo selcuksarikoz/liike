@@ -300,7 +300,7 @@ export const Header = ({ onRender }: HeaderProps) => {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="flex w-8 h-8 items-center justify-center rounded-md overflow-hidden bg-accent text-black font-bold">
-              <img src="logo.png" alt="" className="w-full h-full" />
+              <img src="logo.png" alt="" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-sm font-bold tracking-tight uppercase text-white flex items-center gap-2">
               Liike{' '}
