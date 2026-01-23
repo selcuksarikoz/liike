@@ -16,9 +16,10 @@ export const TrioRowLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex gap-3 transition-transform duration-300 ease-out"
@@ -78,9 +79,10 @@ export const TrioColumnLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex flex-col gap-3 transition-transform duration-300 ease-out"
@@ -139,9 +141,10 @@ export const FanLayout = ({
   animationInfo,
   renderWithMockup,
   sizePercent,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex gap-2 transition-transform duration-300 ease-out"
@@ -197,9 +200,10 @@ export const MasonryLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 gap-2 transition-transform duration-300 ease-out"
@@ -284,9 +288,10 @@ export const MosaicLayout = ({
   animationInfo,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 grid-rows-2 gap-3 transition-transform duration-300 ease-out"
@@ -344,11 +349,12 @@ export const FilmStripLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  hasMockup,
 }: LayoutBaseProps & { cornerRadius: number }) => {
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex flex-col gap-4 transition-transform duration-300 ease-out"
@@ -418,9 +424,10 @@ export const SpotlightLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex gap-3 transition-transform duration-300 ease-out"
@@ -493,9 +500,10 @@ export const AsymmetricLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative grid gap-2 transition-transform duration-300 ease-out"

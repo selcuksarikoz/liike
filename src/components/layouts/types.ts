@@ -51,4 +51,5 @@ export type LayoutBaseProps = {
   sizePercent: string;
   renderWithMockup: (content: ReactNode, key?: number | string) => ReactNode;
   cornerRadius?: number;
+  hasMockup?: boolean;
 };

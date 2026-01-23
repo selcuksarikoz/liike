@@ -16,9 +16,10 @@ export const GridLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden p-2">
+    <div className={`flex h-full w-full items-center justify-center p-2 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 gap-2 transition-transform duration-300 ease-out"
@@ -78,6 +79,7 @@ export const OverlapLayout = ({
   aspectValue,
   renderWithMockup,
   sizePercent,
+  hasMockup,
 }: LayoutBaseProps) => {
   const offsets = [
     { x: 0, y: 0, rotate: -8, zIndex: 40 },
@@ -87,7 +89,7 @@ export const OverlapLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out"
@@ -152,6 +154,7 @@ export const CreativeLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   const positions = [
     { left: '0%', top: '0%', width: '60%', height: '60%', zIndex: 10 },
@@ -161,7 +164,7 @@ export const CreativeLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative w-full h-full transition-transform duration-300 ease-out"
@@ -220,6 +223,7 @@ export const CrossLayout = ({
   animationInfo,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   const crossPositions = [
     { gridArea: '1 / 2' },
@@ -229,7 +233,7 @@ export const CrossLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative grid grid-cols-3 grid-rows-3 gap-2 transition-transform duration-300 ease-out overflow-hidden"
@@ -287,9 +291,10 @@ export const MagazineLayout = ({
   animationInfo,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative grid grid-cols-3 grid-rows-2 gap-2 transition-transform duration-300 ease-out overflow-hidden"
@@ -346,9 +351,10 @@ export const ShowcaseLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex flex-col gap-3 transition-transform duration-300 ease-out overflow-hidden"
@@ -423,6 +429,7 @@ export const ScatteredLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   const scatteredPositions = [
     { left: '5%', top: '5%', width: '45%', rotation: -5, zIndex: 10 },
@@ -432,7 +439,7 @@ export const ScatteredLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative w-full h-full transition-transform duration-300 ease-out"
@@ -491,9 +498,10 @@ export const CascadeLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out"
@@ -555,9 +563,10 @@ export const BrickLayout = ({
   animationInfo,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex flex-col gap-2 transition-transform duration-300 ease-out overflow-hidden"

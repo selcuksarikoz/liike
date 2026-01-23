@@ -16,9 +16,10 @@ export const SideBySideLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex gap-4 transition-transform duration-300 ease-out"
@@ -78,9 +79,10 @@ export const StackedLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative flex flex-col gap-4 transition-transform duration-300 ease-out"
@@ -139,6 +141,7 @@ export const DiagonalLayout = ({
   animationInfo,
   aspectValue,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   const diagonalConfigs = [
     { x: 5, y: 15, rotate: -12, zIndex: 20 },
@@ -146,7 +149,7 @@ export const DiagonalLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out overflow-hidden"
@@ -200,6 +203,7 @@ export const PolaroidLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  hasMockup,
 }: LayoutBaseProps) => {
   const polaroidConfigs = [
     { x: 10, y: 20, rotate: -8 },
@@ -207,7 +211,7 @@ export const PolaroidLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out overflow-hidden"

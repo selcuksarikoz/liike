@@ -183,6 +183,7 @@ const DeviceRendererComponent = ({
     sizePercent,
     renderWithMockup,
     cornerRadius,
+    hasMockup: frameMode === 'device',
   };
 
   // Wrapper to apply shadow filter at container level

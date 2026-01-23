@@ -13,6 +13,7 @@ export const SingleLayout = ({
   aspectValue,
   sizePercent,
   renderWithMockup,
+  hasMockup,
 }: LayoutBaseProps) => {
   const mediaContent = (
     <MediaContainer
@@ -58,7 +59,7 @@ export const SingleLayout = ({
   };
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
       <div
         ref={containerRef}
         className="relative transition-[transform,border-radius] duration-300 ease-out"
