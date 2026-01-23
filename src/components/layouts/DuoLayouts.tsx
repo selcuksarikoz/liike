@@ -19,14 +19,15 @@ export const SideBySideLayout = ({
   renderWithMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
         className="relative flex gap-4 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
           width: isPreview ? '100%' : '90%',
-          height: aspectValue ? undefined : isPreview ? '100%' : '75%',
+          height: isPreview ? '100%' : '90%',
+          maxWidth: sizePercent,
           maxHeight: sizePercent,
         }}
       >
@@ -35,7 +36,7 @@ export const SideBySideLayout = ({
           return (
             <div
               key={index}
-              className="flex-1"
+              className="flex-1 min-w-0 min-h-0 overflow-hidden"
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
                 transform: animStyle.transform,
@@ -82,15 +83,16 @@ export const StackedLayout = ({
   renderWithMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
         ref={containerRef}
         className="relative flex flex-col gap-4 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: aspectValue ? undefined : isPreview ? '100%' : '70%',
+          width: isPreview ? '100%' : '90%',
           height: isPreview ? '100%' : '90%',
           maxWidth: sizePercent,
+          maxHeight: sizePercent,
         }}
       >
         {[0, 1].map((index) => {
@@ -98,7 +100,7 @@ export const StackedLayout = ({
           return (
             <div
               key={index}
-              className="flex-1"
+              className="flex-1 min-w-0 min-h-0 overflow-hidden"
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
                 transform: animStyle.transform,

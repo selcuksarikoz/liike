@@ -21,14 +21,14 @@ export const GridLayout = ({
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden p-2">
       <div
         ref={containerRef}
-        className="relative grid grid-cols-2 gap-3 transition-transform duration-300 ease-out"
+        className="relative grid grid-cols-2 gap-2 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: sizePercent,
-          height: sizePercent,
+          width: isPreview ? '100%' : sizePercent,
+          height: isPreview ? '100%' : sizePercent,
           maxWidth: sizePercent,
           maxHeight: sizePercent,
         }}
@@ -38,7 +38,7 @@ export const GridLayout = ({
           return (
             <div
               key={index}
-              className=""
+              className="min-w-0 min-h-0 overflow-hidden"
               style={{
                 aspectRatio: aspectValue ? aspectValue : 1,
                 transform: animStyle.transform,
@@ -82,6 +82,7 @@ export const OverlapLayout = ({
   animationInfo,
   aspectValue,
   renderWithMockup,
+  sizePercent,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
   const offsets = [
@@ -100,6 +101,8 @@ export const OverlapLayout = ({
           ...containerStyle,
           width: isPreview ? '100%' : '70%',
           height: isPreview ? '100%' : '70%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
         }}
       >
         {[0, 1, 2, 3].map((index) => {
@@ -155,6 +158,7 @@ export const CreativeLayout = ({
   playing,
   animationInfo,
   aspectValue,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
@@ -170,7 +174,11 @@ export const CreativeLayout = ({
       <div
         ref={containerRef}
         className="relative w-full h-full transition-transform duration-300 ease-out"
-        style={containerStyle}
+        style={{
+          ...containerStyle,
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         {[0, 1, 2, 3].map((index) => {
           const pos = positions[index];
@@ -221,6 +229,7 @@ export const CrossLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
@@ -232,11 +241,17 @@ export const CrossLayout = ({
   ];
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
-        className="relative grid grid-cols-3 grid-rows-3 gap-2 transition-transform duration-300 ease-out"
-        style={{ ...containerStyle, width: '90%', height: '90%' }}
+        className="relative grid grid-cols-3 grid-rows-3 gap-2 transition-transform duration-300 ease-out overflow-hidden"
+        style={{
+          ...containerStyle,
+          width: '90%',
+          height: '90%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         {[0, 1, 2, 3].map((index) => {
           const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
@@ -284,16 +299,23 @@ export const MagazineLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
-        className="relative grid grid-cols-3 grid-rows-2 gap-2 transition-transform duration-300 ease-out"
-        style={{ ...containerStyle, width: '95%', height: '85%' }}
+        className="relative grid grid-cols-3 grid-rows-2 gap-2 transition-transform duration-300 ease-out overflow-hidden"
+        style={{
+          ...containerStyle,
+          width: '95%',
+          height: '85%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         {[0, 1, 2, 3].map((index) => {
           const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
@@ -341,15 +363,22 @@ export const ShowcaseLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
-        className="relative flex flex-col gap-3 transition-transform duration-300 ease-out"
-        style={{ ...containerStyle, width: '90%', height: '90%' }}
+        className="relative flex flex-col gap-3 transition-transform duration-300 ease-out overflow-hidden"
+        style={{
+          ...containerStyle,
+          width: '90%',
+          height: '90%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         <div
           className="flex-2"
@@ -376,7 +405,7 @@ export const ShowcaseLayout = ({
             return (
               <div
                 key={index}
-                className="flex-1"
+                className="flex-1 min-w-0 min-h-0 overflow-hidden"
                 style={{
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -415,6 +444,7 @@ export const ScatteredLayout = ({
   playing,
   animationInfo,
   aspectValue,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
@@ -430,7 +460,11 @@ export const ScatteredLayout = ({
       <div
         ref={containerRef}
         className="relative w-full h-full transition-transform duration-300 ease-out"
-        style={containerStyle}
+        style={{
+          ...containerStyle,
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         {[0, 1, 2, 3].map((index) => {
           const { rotation, ...pos } = scatteredPositions[index];
@@ -481,6 +515,7 @@ export const CascadeLayout = ({
   playing,
   animationInfo,
   aspectValue,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
@@ -490,7 +525,13 @@ export const CascadeLayout = ({
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out"
-        style={{ ...containerStyle, width: '85%', height: '85%' }}
+        style={{
+          ...containerStyle,
+          width: '85%',
+          height: '85%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         {[0, 1, 2, 3].map((index) => {
           const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
@@ -542,16 +583,23 @@ export const BrickLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-4">
+    <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
         ref={containerRef}
-        className="relative flex flex-col gap-2 transition-transform duration-300 ease-out"
-        style={{ ...containerStyle, width: '90%', height: '85%' }}
+        className="relative flex flex-col gap-2 transition-transform duration-300 ease-out overflow-hidden"
+        style={{
+          ...containerStyle,
+          width: '90%',
+          height: '85%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         <div className="flex-1 flex gap-2">
           {[0, 1].map((index) => {
@@ -559,7 +607,7 @@ export const BrickLayout = ({
             return (
               <div
                 key={index}
-                className="flex-1"
+                className="flex-1 min-w-0 min-h-0 overflow-hidden"
                 style={{
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -589,7 +637,7 @@ export const BrickLayout = ({
             return (
               <div
                 key={index}
-                className="flex-1"
+                className="flex-1 min-w-0 min-h-0 overflow-hidden"
                 style={{
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,

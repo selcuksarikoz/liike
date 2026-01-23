@@ -113,7 +113,17 @@ const DeviceRendererComponent = ({
     }
 
     return shadows.length > 0 ? shadows.join(' ') : 'none';
-  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowX, shadowY, frameMode, styleCSS]);
+  }, [
+    isPreview,
+    shadowType,
+    shadowColor,
+    shadowOpacity,
+    shadowBlur,
+    shadowX,
+    shadowY,
+    frameMode,
+    styleCSS,
+  ]);
 
   // Don't apply user aspect ratio when in device mode
   const aspectValue = frameMode === 'device' ? null : getAspectRatioValue(aspectRatio);
@@ -230,23 +240,45 @@ const DeviceRendererComponent = ({
 
     // Default fallback (single)
     default: {
-      const { dropShadow: _, ...containerCSS } = styleCSS as typeof styleCSS & { dropShadow?: string };
+      const { dropShadow: _, ...containerCSS } = styleCSS as typeof styleCSS & {
+        dropShadow?: string;
+      };
+
+      // Calculate container style with contain behavior
+      const getDefaultContainerStyle = () => {
+        const baseStyle = {
+          ...containerStyle,
+          borderRadius: `${effectiveCornerRadius}px`,
+          backfaceVisibility: 'hidden' as const,
+          ...containerCSS,
+        };
+
+        if (!aspectValue) {
+          return {
+            ...baseStyle,
+            width: sizePercent,
+            height: sizePercent,
+            maxWidth: sizePercent,
+            maxHeight: sizePercent,
+          };
+        }
+
+        return {
+          ...baseStyle,
+          width: 'auto',
+          height: 'auto',
+          aspectRatio: aspectValue,
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        };
+      };
+
       return (
-        <div className="flex h-full w-full items-center justify-center">
+        <div className="flex h-full w-full items-center justify-center overflow-hidden">
           <div
             ref={containerRef}
             className="relative overflow-hidden transition-[transform,border-radius] duration-300 ease-out"
-            style={{
-              ...containerStyle,
-              width: aspectValue ? 'auto' : sizePercent,
-              height: aspectValue ? sizePercent : sizePercent,
-              aspectRatio: aspectValue ? aspectValue : undefined,
-              maxWidth: sizePercent,
-              maxHeight: sizePercent,
-              borderRadius: `${effectiveCornerRadius}px`,
-              backfaceVisibility: 'hidden',
-              ...containerCSS,
-            }}
+            style={getDefaultContainerStyle()}
           >
             <MediaContainer
               index={0}

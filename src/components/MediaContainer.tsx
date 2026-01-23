@@ -48,8 +48,7 @@ export const MediaContainer = memo(
         className={`relative flex h-full w-full items-center justify-center ${isPreview ? '' : 'cursor-pointer group'}`}
         onClick={handleClick}
         style={{
-          borderRadius: 'inherit',
-          filter: hasShadow ? dropShadowFilter : undefined,
+          borderRadius: `${cornerRadius}px`,
         }}
       >
         <div
@@ -64,6 +63,10 @@ export const MediaContainer = memo(
                 ref={videoRef}
                 src={media.url}
                 className="w-full h-full object-cover block"
+                style={{
+                  borderRadius: `${cornerRadius}px`,
+                  filter: hasShadow ? dropShadowFilter : undefined,
+                }}
                 autoPlay={playing}
                 loop
                 muted
@@ -73,6 +76,10 @@ export const MediaContainer = memo(
               <img
                 src={media.url}
                 className="w-full h-full object-cover block"
+                style={{
+                  borderRadius: `${cornerRadius}px`,
+                  filter: hasShadow ? dropShadowFilter : undefined,
+                }}
                 alt="Media"
                 loading="eager"
                 decoding="sync"

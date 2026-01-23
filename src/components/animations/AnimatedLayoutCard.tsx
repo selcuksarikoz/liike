@@ -343,7 +343,7 @@ export const AnimatedLayoutCard = ({
       {/* Device Preview */}
       <div
         ref={deviceRef}
-        className="absolute inset-0 flex items-center justify-center p-4 scale-[0.85]"
+        className="absolute inset-0 flex items-center justify-center p-4 scale-[0.85] overflow-hidden"
         style={{
           perspective: '1000px',
           willChange: 'transform, opacity',

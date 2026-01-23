@@ -15,6 +15,7 @@ export const TrioRowLayout = ({
   playing,
   animationInfo,
   aspectValue,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
@@ -27,8 +28,9 @@ export const TrioRowLayout = ({
         style={{
           ...containerStyle,
           width: isPreview ? '100%' : '95%',
-          height: aspectValue ? undefined : isPreview ? '100%' : '60%',
-          maxHeight: isPreview ? '100%' : '75%',
+          height: isPreview ? '100%' : '90%',
+          maxWidth: isPreview ? '100%' : sizePercent,
+          maxHeight: isPreview ? '100%' : sizePercent,
         }}
       >
         {[0, 1, 2].map((index) => {
@@ -36,7 +38,7 @@ export const TrioRowLayout = ({
           return (
             <div
               key={index}
-              className="flex-1"
+              className="flex-1 min-w-0 min-h-0 overflow-hidden"
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
                 transform: animStyle.transform,
@@ -79,6 +81,7 @@ export const TrioColumnLayout = ({
   playing,
   animationInfo,
   aspectValue,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
@@ -90,9 +93,10 @@ export const TrioColumnLayout = ({
         className="relative flex flex-col gap-3 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: aspectValue ? undefined : isPreview ? '100%' : '55%',
+          width: isPreview ? '100%' : '95%',
           height: isPreview ? '100%' : '95%',
-          maxWidth: isPreview ? '100%' : '70%',
+          maxWidth: isPreview ? '100%' : sizePercent,
+          maxHeight: isPreview ? '100%' : sizePercent,
         }}
       >
         {[0, 1, 2].map((index) => {
@@ -100,7 +104,7 @@ export const TrioColumnLayout = ({
           return (
             <div
               key={index}
-              className="flex-1"
+              className="flex-1 min-w-0 min-h-0 overflow-hidden"
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
                 transform: animStyle.transform,
@@ -143,6 +147,7 @@ export const FanLayout = ({
   playing,
   animationInfo,
   renderWithMockup,
+  sizePercent,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
 
@@ -151,14 +156,20 @@ export const FanLayout = ({
       <div
         ref={containerRef}
         className="relative flex gap-2 transition-transform duration-300 ease-out"
-        style={{ ...containerStyle, width: '95%', height: '75%' }}
+        style={{
+          ...containerStyle,
+          width: '95%',
+          height: '75%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         {[0, 1, 2].map((index) => {
           const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
           return (
             <div
               key={index}
-              className="flex-1"
+              className="flex-1 min-w-0 min-h-0 overflow-hidden"
               style={{
                 transform: animStyle.transform,
                 opacity: animStyle.opacity,
@@ -198,6 +209,7 @@ export const MasonryLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
 
@@ -210,6 +222,8 @@ export const MasonryLayout = ({
           ...containerStyle,
           width: isPreview ? '100%' : '85%',
           height: isPreview ? '100%' : '85%',
+          maxWidth: isPreview ? '100%' : sizePercent,
+          maxHeight: isPreview ? '100%' : sizePercent,
           gridTemplateRows: '1.5fr 1fr',
         }}
       >
@@ -287,6 +301,7 @@ export const MosaicLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
@@ -300,6 +315,8 @@ export const MosaicLayout = ({
           ...containerStyle,
           width: isPreview ? '100%' : '90%',
           height: isPreview ? '100%' : '80%',
+          maxWidth: isPreview ? '100%' : sizePercent,
+          maxHeight: isPreview ? '100%' : sizePercent,
         }}
       >
         {[0, 1, 2].map((index) => {
@@ -349,6 +366,7 @@ export const FilmStripLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
 }: LayoutBaseProps & { cornerRadius: number }) => {
   const containerCSS = getContainerCSS(styleCSS);
 
@@ -361,6 +379,8 @@ export const FilmStripLayout = ({
           ...containerStyle,
           width: isPreview ? '100%' : '60%',
           height: isPreview ? '100%' : '90%',
+          maxWidth: isPreview ? '100%' : sizePercent,
+          maxHeight: isPreview ? '100%' : sizePercent,
         }}
       >
         {[0, 1, 2].map((index) => {
@@ -422,6 +442,7 @@ export const SpotlightLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
 
@@ -430,7 +451,13 @@ export const SpotlightLayout = ({
       <div
         ref={containerRef}
         className="relative flex gap-3 transition-transform duration-300 ease-out"
-        style={{ ...containerStyle, width: '95%', height: '85%' }}
+        style={{
+          ...containerStyle,
+          width: '95%',
+          height: '85%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
+        }}
       >
         <div
           className="flex-[2]"
@@ -495,6 +522,7 @@ export const AsymmetricLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
 }: LayoutBaseProps) => {
   const containerCSS = getContainerCSS(styleCSS);
 
@@ -507,6 +535,8 @@ export const AsymmetricLayout = ({
           ...containerStyle,
           width: '90%',
           height: '85%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
           gridTemplateColumns: '2fr 1fr',
           gridTemplateRows: '1fr 1fr',
         }}
