@@ -61,9 +61,13 @@ export type TextOverlay = {
   animation: string; // text animation type
   layout: string; // text-device layout type
   deviceOffset: number; // negative = overflow bottom
-  devicePosition: DevicePosition; // where the device sits
-  deviceAnimateIn: boolean; // whether device animates in
-  deviceAnimation: string; // device entry animation type (slide-up, slide-right, etc.)
+  // Device positioning & animation (set by layout presets)
+  devicePosition: DevicePosition;
+  deviceScale: number; // 0-1 scale factor
+  deviceOffsetX: number; // percentage offset X
+  deviceOffsetY: number; // percentage offset Y
+  deviceAnimateIn: boolean;
+  deviceAnimation: string;
 };
 
 type RenderStore = RenderSettings & {
@@ -202,8 +206,11 @@ export const useRenderStore = create<RenderStore>((set) => ({
     layout: 'text-top-device-bottom',
     deviceOffset: -20,
     devicePosition: 'center',
+    deviceScale: 1,
+    deviceOffsetX: 0,
+    deviceOffsetY: 0,
     deviceAnimateIn: false,
-    deviceAnimation: 'slide-up',
+    deviceAnimation: 'none',
   },
 
   // Setters

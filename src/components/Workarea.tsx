@@ -343,39 +343,12 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   const baseTransform =
                     imageLayout === 'single' ? animationStyle.transform : 'none';
 
-                  // Calculate device position transform
-                  const devicePos = textOverlay.devicePosition || 'center';
-                  let posTransform = '';
-
-                  // Position-based transforms (always applied based on devicePosition)
-                  if (devicePos !== 'center') {
-                    switch (devicePos) {
-                      case 'top':
-                        posTransform = 'translateY(-20%) scale(0.75)';
-                        break;
-                      case 'bottom':
-                        posTransform = 'translateY(20%) scale(0.75)';
-                        break;
-                      case 'left':
-                        posTransform = 'translateX(-25%) scale(0.8)';
-                        break;
-                      case 'right':
-                        posTransform = 'translateX(25%) scale(0.8)';
-                        break;
-                      case 'top-left':
-                        posTransform = 'translate(-20%, -15%) scale(0.7)';
-                        break;
-                      case 'top-right':
-                        posTransform = 'translate(20%, -15%) scale(0.7)';
-                        break;
-                      case 'bottom-left':
-                        posTransform = 'translate(-20%, 15%) scale(0.7)';
-                        break;
-                      case 'bottom-right':
-                        posTransform = 'translate(20%, 15%) scale(0.7)';
-                        break;
-                    }
-                  }
+                  // Get device transform from store (set by layout presets)
+                  const { deviceOffsetX, deviceOffsetY, deviceScale } = textOverlay;
+                  const posTransform =
+                    deviceOffsetX !== 0 || deviceOffsetY !== 0 || deviceScale !== 1
+                      ? `translate(${deviceOffsetX}%, ${deviceOffsetY}%) scale(${deviceScale})`
+                      : '';
 
                   // Add device entry animation transform
                   const deviceAnimTransform = deviceAnimationStyle.transform;

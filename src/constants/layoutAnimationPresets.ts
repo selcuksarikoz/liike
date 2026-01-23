@@ -6,7 +6,16 @@ export type LayoutAnimation = {
   stagger?: number;
 };
 
-export type DevicePosition = 'center' | 'top' | 'bottom' | 'left' | 'right';
+export type DevicePosition = 'center' | 'top' | 'bottom' | 'left' | 'right' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+export type DeviceConfig = {
+  position: DevicePosition;
+  scale: number;
+  offsetX: number; // percentage
+  offsetY: number; // percentage
+  animation: string; // entry animation type
+  animateIn: boolean;
+};
 
 export type LayoutPreset = {
   id: string;
@@ -19,8 +28,18 @@ export type LayoutPreset = {
   color: string;
   animations: LayoutAnimation[];
   durationMs: number;
-  // Optional device positioning - defaults to 'center' if not specified
-  devicePosition?: DevicePosition;
+  // Device positioning & animation config
+  device?: Partial<DeviceConfig>;
+};
+
+// Default device config
+export const DEFAULT_DEVICE_CONFIG: DeviceConfig = {
+  position: 'center',
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+  animation: 'none',
+  animateIn: false,
 };
 
 export const LAYOUT_PRESETS: LayoutPreset[] = [

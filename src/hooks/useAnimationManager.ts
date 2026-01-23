@@ -1,29 +1,21 @@
 import { useCallback } from 'react';
 import { useRenderStore, type ImageLayout } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import type { LayoutPreset, DevicePosition } from '../constants/layoutAnimationPresets';
+import { DEFAULT_DEVICE_CONFIG, type LayoutPreset, type DevicePosition, type DeviceConfig } from '../constants/layoutAnimationPresets';
 import type { TextDevicePreset } from '../constants/textAnimations';
 import { loadGoogleFont } from './useFontLoader';
 
-const getDevicePosition = (layout: TextDevicePreset['layout']): DevicePosition => {
-  switch (layout) {
-    case 'text-top-device-bottom':
-      return 'bottom';
-    case 'text-bottom-device-top':
-      return 'top';
-    case 'text-left-device-right':
-      return 'right';
-    case 'text-right-device-left':
-      return 'left';
-    default:
-      return 'center';
-  }
+// Device position presets for text layouts
+const TEXT_LAYOUT_DEVICE_CONFIGS: Record<string, Partial<DeviceConfig>> = {
+  'text-top-device-bottom': { position: 'bottom', scale: 0.75, offsetX: 0, offsetY: 20, animation: 'rise', animateIn: true },
+  'text-bottom-device-top': { position: 'top', scale: 0.75, offsetX: 0, offsetY: -20, animation: 'drop', animateIn: true },
+  'text-left-device-right': { position: 'right', scale: 0.8, offsetX: 25, offsetY: 0, animation: 'slide-right', animateIn: true },
+  'text-right-device-left': { position: 'left', scale: 0.8, offsetX: -25, offsetY: 0, animation: 'slide-left', animateIn: true },
+  'text-center-device-behind': { position: 'center', scale: 0.9, offsetX: 0, offsetY: 0, animation: 'zoom-in', animateIn: true },
 };
 
-const getDeviceAnimation = (
-  textAnimation: string,
-  devicePosition: DevicePosition
-): string => {
+// Get device animation based on text animation type
+const getDeviceAnimation = (textAnimation: string, baseAnimation: string): string => {
   switch (textAnimation) {
     case 'blur':
     case 'zoom-blur':
@@ -39,14 +31,8 @@ const getDeviceAnimation = (
       return 'rise';
     case 'typewriter':
       return 'fade';
-    case 'scale':
-      return 'zoom-in';
-    case 'slide-up':
-      return devicePosition === 'bottom' ? 'peek-bottom' : 'rise';
-    case 'slide-down':
-      return 'drop';
     default:
-      return 'rise';
+      return baseAnimation;
   }
 };
 
@@ -60,9 +46,12 @@ export const useAnimationManager = () => {
     clearTrack('track-animation');
     setTextOverlay({
       enabled: false,
-      devicePosition: 'center',
-      deviceAnimateIn: false,
-      deviceAnimation: 'none',
+      devicePosition: DEFAULT_DEVICE_CONFIG.position,
+      deviceScale: DEFAULT_DEVICE_CONFIG.scale,
+      deviceOffsetX: DEFAULT_DEVICE_CONFIG.offsetX,
+      deviceOffsetY: DEFAULT_DEVICE_CONFIG.offsetY,
+      deviceAnimateIn: DEFAULT_DEVICE_CONFIG.animateIn,
+      deviceAnimation: DEFAULT_DEVICE_CONFIG.animation,
     });
   }, [clearTrack, setPlayhead, setIsPlaying, setTextOverlay]);
 
@@ -73,12 +62,18 @@ export const useAnimationManager = () => {
       setPlayhead(0);
       clearTrack('track-animation');
 
-      // Apply device position from preset (defaults to 'center')
+      // Merge preset device config with defaults
+      const deviceConfig = { ...DEFAULT_DEVICE_CONFIG, ...preset.device };
+
+      // Apply device config from preset
       setTextOverlay({
         enabled: false,
-        devicePosition: preset.devicePosition || 'center',
-        deviceAnimateIn: false,
-        deviceAnimation: 'none',
+        devicePosition: deviceConfig.position,
+        deviceScale: deviceConfig.scale,
+        deviceOffsetX: deviceConfig.offsetX,
+        deviceOffsetY: deviceConfig.offsetY,
+        deviceAnimateIn: deviceConfig.animateIn,
+        deviceAnimation: deviceConfig.animation,
       });
 
       // Apply layout preset
@@ -127,11 +122,14 @@ export const useAnimationManager = () => {
       // Load font
       loadGoogleFont('Manrope');
 
-      // Calculate device position and animation
-      const devicePosition = getDevicePosition(preset.layout);
-      const deviceAnimation = getDeviceAnimation(preset.textAnimation, devicePosition);
+      // Get device config from text layout
+      const layoutConfig = TEXT_LAYOUT_DEVICE_CONFIGS[preset.layout] || {};
+      const deviceConfig = { ...DEFAULT_DEVICE_CONFIG, ...layoutConfig };
 
-      // Set text overlay
+      // Override animation based on text animation type
+      const deviceAnimation = getDeviceAnimation(preset.textAnimation, deviceConfig.animation);
+
+      // Set text overlay with device config
       setTextOverlay({
         enabled: true,
         text: `${preset.headline}\n${preset.tagline}`,
@@ -145,7 +143,10 @@ export const useAnimationManager = () => {
         taglineFontSize: preset.taglineFontSize,
         color: preset.color,
         deviceOffset: preset.deviceOffset ?? -20,
-        devicePosition,
+        devicePosition: deviceConfig.position,
+        deviceScale: deviceConfig.scale,
+        deviceOffsetX: deviceConfig.offsetX,
+        deviceOffsetY: deviceConfig.offsetY,
         deviceAnimateIn: true,
         deviceAnimation,
       });
