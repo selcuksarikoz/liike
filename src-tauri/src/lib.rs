@@ -405,7 +405,8 @@ fn get_ffmpeg_path() -> Result<PathBuf, String> {
 fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, use_hw: bool) -> Vec<String> {
     let scale_w = if width % 2 == 0 { width } else { width + 1 };
     let scale_h = if height % 2 == 0 { height } else { height + 1 };
-    let scale_filter = format!("scale={}:{}:flags=bilinear", scale_w, scale_h);
+    // Use lanczos for highest quality scaling
+    let scale_filter = format!("scale={}:{}:flags=lanczos", scale_w, scale_h);
 
     let is_macos = std::env::consts::OS == "macos";
     let is_windows = std::env::consts::OS == "windows";
@@ -465,9 +466,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-q:v".to_string(),
-                    "70".to_string(), // High quality (balanced size)
-                    "-realtime".to_string(),
-                    "1".to_string(),
+                    "90".to_string(), // Maximum quality (0-100)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
@@ -485,13 +484,13 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "p4".to_string(), // Balanced preset
+                    "p7".to_string(), // Highest quality preset
                     "-tune".to_string(),
                     "hq".to_string(),
                     "-rc".to_string(),
                     "vbr".to_string(),
                     "-cq".to_string(),
-                    "24".to_string(), // High quality (balanced size)
+                    "18".to_string(), // Near-lossless quality
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
@@ -501,7 +500,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-colorspace".to_string(), "bt709".to_string(),
                 ]);
             } else {
-                // Software encoding fallback
+                // Software encoding fallback - maximum quality
                 args.extend(vec![
                     "-vf".to_string(),
                     scale_filter,
@@ -509,12 +508,10 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "libx265".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
-                    "-pix_fmt".to_string(),
-                    "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "veryfast".to_string(), // Faster
+                    "medium".to_string(), // Better quality
                     "-crf".to_string(),
-                    "24".to_string(), // High quality (balanced size)
+                    "18".to_string(), // Near-lossless (lower = better, 18 is visually lossless)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
