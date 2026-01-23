@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { SidebarHeader } from './ui/SidebarPrimitives';
+import { useState } from 'react';
 
 const CREATIVE_PRESETS = [
   {
@@ -91,11 +92,16 @@ const CREATIVE_PRESETS = [
 export const CreativeAngles = () => {
   const { setRotationX, setRotationY, setRotationZ, setDeviceScale } = useRenderStore();
 
+  const [selectedCreativeAngle, setSelectedCreativeAngle] = useState<
+    (typeof CREATIVE_PRESETS)[0] | null
+  >(null);
+
   const handlePresetClick = (preset: (typeof CREATIVE_PRESETS)[0]) => {
     setRotationX(preset.rotationX);
     setRotationY(preset.rotationY);
     setRotationZ(preset.rotationZ);
     setDeviceScale(preset.scale);
+    setSelectedCreativeAngle(preset);
   };
 
   return (
@@ -103,12 +109,17 @@ export const CreativeAngles = () => {
       <SidebarHeader icon={<Sparkles className="w-4 h-4" />}>Creative Angles</SidebarHeader>
       <div className="grid grid-cols-3 gap-2">
         {CREATIVE_PRESETS.map((preset) => {
+          const isActive = preset === selectedCreativeAngle;
           const IconComponent = preset.icon;
           return (
             <button
               key={preset.label}
               onClick={() => handlePresetClick(preset)}
-              className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border border-ui-border bg-ui-panel/30 hover:bg-accent/10 hover:border-accent/50 transition-all hover:scale-105 active:scale-95 group"
+              className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
+                isActive
+                  ? 'bg-accent/20 border-accent text-accent'
+                  : 'border-ui-border hover:border-ui-muted bg-ui-panel/30 text-ui-muted hover:text-white'
+              }`}
             >
               <span className="text-ui-muted group-hover:text-accent transition-colors">
                 <IconComponent className="w-3.5 h-3.5" />

@@ -10,7 +10,16 @@ import { FilterPreview } from './FilterPreview';
 import { AspectRatioModal } from './modals/AspectRatioModal';
 import { FrameSelectorModal } from './modals/FrameSelectorModal';
 import { DropdownTrigger } from './ui/Dropdown';
-import { ActionCard, ControlGroup, SidebarContainer, SidebarContent, SidebarHeader, SidebarSection, TabButton, TabContainer } from './ui/SidebarPrimitives';
+import {
+  ActionCard,
+  ControlGroup,
+  SidebarContainer,
+  SidebarContent,
+  SidebarHeader,
+  SidebarSection,
+  TabButton,
+  TabContainer,
+} from './ui/SidebarPrimitives';
 import { SliderControl } from './ui/SliderControl';
 
 export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative' | 'favorites' | 'text';
@@ -54,12 +63,12 @@ export const SidebarRight = () => {
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
   const [isAspectRatioModalOpen, setIsAspectRatioModalOpen] = useState(false);
 
-  const { 
-    backgroundType, 
-    backgroundGradient, 
-    backgroundColor, 
-    backgroundImage, 
-    setImageLayout, 
+  const {
+    backgroundType,
+    backgroundGradient,
+    backgroundColor,
+    backgroundImage,
+    setImageLayout,
     imageLayout,
     canvasWidth,
     canvasHeight,
@@ -83,7 +92,7 @@ export const SidebarRight = () => {
 
   // Handle filter change - update canvas layout (filter will auto-derive)
   const handleFilterChange = (filter: LayoutFilter) => {
-    // If the selected filter category matches the current layout, 
+    // If the selected filter category matches the current layout,
     // don't reset the specific layout variant (e.g. keep 'stacked' if 'duo' is clicked)
     if (getFilterFromLayout(imageLayout) === filter) {
       setLayoutFilter(filter);
@@ -131,7 +140,11 @@ export const SidebarRight = () => {
         return { backgroundColor };
       case 'image':
         return backgroundImage
-          ? { backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          ? {
+              backgroundImage: `url(${backgroundImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
           : {};
       case 'gradient':
       default:
@@ -177,13 +190,13 @@ export const SidebarRight = () => {
       {/* Layout Filter (only show when animations tab is active) */}
       {activeTab === 'animations' && (
         <SidebarSection borderBottom padded>
-          <div className="relative flex bg-ui-panel/50 rounded-lg p-1">
+          <div className="relative flex flex-wrap bg-ui-panel/50 rounded-lg p-1">
             {/* Sliding indicator */}
             <div
               className="absolute top-1 bottom-1 bg-accent rounded-md transition-all duration-300 ease-out"
               style={{
                 width: `calc(${100 / FILTER_OPTIONS.length}% - 4px)`,
-                left: `calc(${FILTER_OPTIONS.findIndex(f => f.id === layoutFilter) * (100 / FILTER_OPTIONS.length)}% + 2px)`,
+                left: `calc(${FILTER_OPTIONS.findIndex((f) => f.id === layoutFilter) * (100 / FILTER_OPTIONS.length)}% + 2px)`,
               }}
             />
             {FILTER_OPTIONS.map((option) => (
@@ -191,9 +204,7 @@ export const SidebarRight = () => {
                 key={option.id}
                 onClick={() => handleFilterChange(option.id)}
                 className={`relative z-10 flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-md transition-colors duration-200 ${
-                  layoutFilter === option.id
-                    ? 'text-black'
-                    : 'text-ui-muted hover:text-ui-text'
+                  layoutFilter === option.id ? 'text-black' : 'text-ui-muted hover:text-ui-text'
                 }`}
               >
                 <FilterPreview filter={option.id} isActive={layoutFilter === option.id} />
@@ -206,73 +217,75 @@ export const SidebarRight = () => {
 
       <SidebarContent>
         {activeTab === 'animations' && <AnimationsPanel filter={layoutFilter} />}
-        
+
         {activeTab === 'canvas' && (
           <div className="flex flex-col">
-             {/* Frame Selection */}
-             <SidebarSection padded>
-               <SidebarHeader>Canvas Size</SidebarHeader>
-               <DropdownTrigger
-                 icon="crop"
-                 label={getCurrentFrameLabel()}
-                 value={`${canvasWidth} × ${canvasHeight}`}
-                 onClick={() => setIsFrameModalOpen(true)}
-               />
-             </SidebarSection>
+            {/* Frame Selection */}
+            <SidebarSection padded>
+              <SidebarHeader>Canvas Size</SidebarHeader>
+              <DropdownTrigger
+                icon="crop"
+                label={getCurrentFrameLabel()}
+                value={`${canvasWidth} × ${canvasHeight}`}
+                onClick={() => setIsFrameModalOpen(true)}
+              />
+            </SidebarSection>
 
-             <div className="h-px bg-ui-border mx-4" />
+            <div className="h-px bg-ui-border mx-4" />
 
-             {/* Canvas Style */}
-             <SidebarSection padded>
-               <SidebarHeader>Canvas Style</SidebarHeader>
-               <ControlGroup>
-                 <SliderControl
-                   label="Corner Radius"
-                   icon={<CircleDot className="w-3.5 h-3.5" />}
-                   value={canvasCornerRadius}
-                   min={0}
-                   max={100}
-                   unit="px"
-                   onChange={setCanvasCornerRadius}
-                 />
-                 <SliderControl
-                   label="Border Width"
-                   icon={<Square className="w-3.5 h-3.5" />}
-                   value={canvasBorderWidth}
-                   min={0}
-                   max={20}
-                   unit="px"
-                   onChange={setCanvasBorderWidth}
-                 />
-                 {canvasBorderWidth > 0 && (
-                   <div className="flex items-center justify-between pt-1">
-                      <label className="text-[10px] text-ui-muted">Border Color</label>
-                      <div className="flex items-center gap-2">
-                         <span className="text-[10px] text-ui-text font-mono uppercase">{canvasBorderColor}</span>
-                         <input 
-                           type="color"
-                           value={canvasBorderColor}
-                           onChange={(e) => setCanvasBorderColor(e.target.value)}
-                           className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent"
-                         />
-                      </div>
-                   </div>
-                 )}
-               </ControlGroup>
-             </SidebarSection>
+            {/* Canvas Style */}
+            <SidebarSection padded>
+              <SidebarHeader>Canvas Style</SidebarHeader>
+              <ControlGroup>
+                <SliderControl
+                  label="Corner Radius"
+                  icon={<CircleDot className="w-3.5 h-3.5" />}
+                  value={canvasCornerRadius}
+                  min={0}
+                  max={100}
+                  unit="px"
+                  onChange={setCanvasCornerRadius}
+                />
+                <SliderControl
+                  label="Border Width"
+                  icon={<Square className="w-3.5 h-3.5" />}
+                  value={canvasBorderWidth}
+                  min={0}
+                  max={20}
+                  unit="px"
+                  onChange={setCanvasBorderWidth}
+                />
+                {canvasBorderWidth > 0 && (
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="text-[10px] text-ui-muted">Border Color</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-ui-text font-mono uppercase">
+                        {canvasBorderColor}
+                      </span>
+                      <input
+                        type="color"
+                        value={canvasBorderColor}
+                        onChange={(e) => setCanvasBorderColor(e.target.value)}
+                        className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent"
+                      />
+                    </div>
+                  </div>
+                )}
+              </ControlGroup>
+            </SidebarSection>
 
-             <div className="h-px bg-ui-border mx-4" />
+            <div className="h-px bg-ui-border mx-4" />
 
-             {/* Aspect Ratio */}
-             <SidebarSection padded>
-               <SidebarHeader>Media Aspect Ratio</SidebarHeader>
-               <DropdownTrigger
-                 icon="aspect_ratio"
-                 label={imageAspectRatio === 'free' ? 'Free' : imageAspectRatio}
-                 value={imageAspectRatio === 'free' ? 'No constraint' : `${imageAspectRatio} ratio`}
-                 onClick={() => setIsAspectRatioModalOpen(true)}
-               />
-             </SidebarSection>
+            {/* Aspect Ratio */}
+            <SidebarSection padded>
+              <SidebarHeader>Media Aspect Ratio</SidebarHeader>
+              <DropdownTrigger
+                icon="aspect_ratio"
+                label={imageAspectRatio === 'free' ? 'Free' : imageAspectRatio}
+                value={imageAspectRatio === 'free' ? 'No constraint' : `${imageAspectRatio} ratio`}
+                onClick={() => setIsAspectRatioModalOpen(true)}
+              />
+            </SidebarSection>
           </div>
         )}
       </SidebarContent>
@@ -282,10 +295,7 @@ export const SidebarRight = () => {
         isOpen={isBackgroundModalOpen}
         onClose={() => setIsBackgroundModalOpen(false)}
       />
-      <FrameSelectorModal 
-        isOpen={isFrameModalOpen} 
-        onClose={() => setIsFrameModalOpen(false)} 
-      />
+      <FrameSelectorModal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} />
       <AspectRatioModal
         isOpen={isAspectRatioModalOpen}
         onClose={() => setIsAspectRatioModalOpen(false)}
