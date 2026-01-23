@@ -125,9 +125,10 @@ const updateRenderDuration = (tracks: TimelineTrack[]) => {
     });
   });
 
-  // Minimum duration of 5s or the max clip time
-  const newDuration = Math.max(5000, maxEndTime);
-  useRenderStore.getState().setDurationMs(newDuration);
+  // Use clip duration if present, otherwise keep current duration
+  if (maxEndTime > 0) {
+    useRenderStore.getState().setDurationMs(maxEndTime);
+  }
 };
 
 export const useTimelineStore = create<TimelineStore>((set, get) => ({

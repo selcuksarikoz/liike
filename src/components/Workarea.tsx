@@ -103,16 +103,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     );
   }, [animationInfo]);
 
-  // Apply animation style to device
-  useEffect(() => {
-    if (animatedDeviceRef.current) {
-      animatedDeviceRef.current.style.transform = animationStyle.transform;
-      if (animationStyle.opacity !== undefined) {
-        animatedDeviceRef.current.style.opacity = String(animationStyle.opacity);
-      }
-    }
-  }, [animationStyle]);
-
   // Apply layout preset from active clip if it has one
   useEffect(() => {
     if (!isPlaying) return;

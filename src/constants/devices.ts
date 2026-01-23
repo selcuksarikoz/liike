@@ -28,13 +28,13 @@ const PRESETS = {
     landscape: { top: '5.5%', left: '5.5%', width: '89%', height: '89%', radius: '16px' },
   },
   macbook: {
-    // Adjusted screen position for better fit - content is more centered
-    default: { top: '6%', left: '12.5%', width: '75%', height: '80%', radius: '8px' },
-    pro16: { top: '5.5%', left: '12%', width: '76%', height: '82%', radius: '10px' },
-    pro14: { top: '6%', left: '12%', width: '76%', height: '81%', radius: '10px' },
+    // Laptop screens have flat/square corners
+    default: { top: '6%', left: '12.5%', width: '75%', height: '80%', radius: '0px' },
+    pro16: { top: '5.5%', left: '12%', width: '76%', height: '82%', radius: '0px' },
+    pro14: { top: '6%', left: '12%', width: '76%', height: '81%', radius: '0px' },
   },
   imac: {
-    default: { top: '4%', left: '4%', width: '92%', height: '62%', radius: '14px' } // 24" often has chin
+    default: { top: '4%', left: '4%', width: '92%', height: '62%', radius: '0px' } // Desktop screens are square
   },
   watch: {
     default: { top: '22%', left: '22%', width: '56%', height: '56%', radius: '50%' }

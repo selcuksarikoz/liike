@@ -1,12 +1,12 @@
 import { useRef, useMemo, memo, useCallback, useEffect } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { STYLE_PRESETS } from '../constants/styles';
-import type { MediaAsset } from '../store/renderStore';
+import type { MediaAsset, AspectRatio } from '../store/renderStore';
 import { combineAnimations, CSS_TRANSITIONS } from '../constants/animations';
 import { DEVICES } from '../constants/devices';
 import { GenericDeviceMockup } from './DeviceMockups/GenericDeviceMockup';
 import { getAspectRatioValue } from '../constants/ui';
-import type { AspectRatio } from '../store/renderStore';
+import type { ImageLayout } from '../constants/layouts';
 
 type AnimationInfo = {
   animations: { type: string; intensity?: number }[];
@@ -33,19 +33,7 @@ type ImageRendererProps = {
   shadowBlur?: number;
   shadowX?: number;
   shadowY?: number;
-  layout?:
-    | 'single'
-    | 'side-by-side'
-    | 'stacked'
-    | 'trio-row'
-    | 'trio-column'
-    | 'grid'
-    | 'overlap'
-    | 'fan'
-    | 'creative'
-    | 'masonry'
-    | 'mosaic'
-    | 'film-strip';
+  layout?: ImageLayout;
   animationInfo?: AnimationInfo;
   playing?: boolean;
   frameMode?: 'basic' | 'device';
@@ -271,6 +259,9 @@ const DeviceRendererComponent = ({
   // Don't apply user aspect ratio when in device mode - device screen dictates aspect
   const aspectValue = frameMode === 'device' ? null : getAspectRatioValue(aspectRatio);
 
+  // No corner radius when in device mode - device mockup handles its own shape
+  const effectiveCornerRadius = frameMode === 'device' ? 0 : cornerRadius;
+
   // Helper to wrap content in device mockup if enabled
   const renderWithMockup = (content: React.ReactNode, key?: number | string) => {
     if (frameMode === 'device' && deviceType) {
@@ -319,7 +310,7 @@ const DeviceRendererComponent = ({
       <MediaContainer
         index={0}
         media={mediaAssets[0]}
-        cornerRadius={cornerRadius}
+        cornerRadius={effectiveCornerRadius}
         isPreview={isPreview}
         onScreenClick={onScreenClick}
         styleCSS={styleCSS}
@@ -339,7 +330,7 @@ const DeviceRendererComponent = ({
             aspectRatio: aspectValue ? aspectValue : undefined,
             maxWidth: sizePercent,
             maxHeight: sizePercent,
-            borderRadius: `${cornerRadius}px`,
+            borderRadius: `${effectiveCornerRadius}px`,
             filter: shadowFilter,
             backfaceVisibility: 'hidden',
             ...styleCSS,
@@ -373,7 +364,7 @@ const DeviceRendererComponent = ({
                 className="flex-1 overflow-hidden"
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -386,7 +377,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -424,7 +415,7 @@ const DeviceRendererComponent = ({
                 className="flex-1 overflow-hidden"
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -437,7 +428,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -475,7 +466,7 @@ const DeviceRendererComponent = ({
                 className="flex-1 overflow-hidden"
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -488,7 +479,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -526,7 +517,7 @@ const DeviceRendererComponent = ({
                 className="flex-1 overflow-hidden"
                 style={{
                   aspectRatio: aspectValue ? aspectValue : undefined,
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -539,7 +530,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -578,7 +569,7 @@ const DeviceRendererComponent = ({
                 className="overflow-hidden"
                 style={{
                   aspectRatio: aspectValue ? aspectValue : 1,
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -591,7 +582,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -639,7 +630,7 @@ const DeviceRendererComponent = ({
                   left: `${offset.x}%`,
                   top: `${offset.y}%`,
                   zIndex: offset.zIndex,
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: `rotate(${offset.rotate}deg) ${animStyle.transform}`,
                   opacity: animStyle.opacity,
@@ -652,7 +643,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -694,7 +685,7 @@ const DeviceRendererComponent = ({
                 style={{
                   ...pos,
                   aspectRatio: aspectValue ? aspectValue : undefined, // Keep free aspect ratio if set on container or square
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -707,7 +698,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -739,7 +730,7 @@ const DeviceRendererComponent = ({
         >
           <div
             className="relative row-span-2 overflow-hidden rounded-[inherit]"
-            style={{ borderRadius: `${cornerRadius}px`, filter: shadowFilter, ...styleCSS }}
+            style={{ borderRadius: `${effectiveCornerRadius}px`, filter: shadowFilter, ...styleCSS }}
           >
             <div
               className="w-full h-full"
@@ -753,7 +744,7 @@ const DeviceRendererComponent = ({
               <MediaContainer
                 index={0}
                 media={mediaAssets[0]}
-                cornerRadius={cornerRadius}
+                cornerRadius={effectiveCornerRadius}
                 isPreview={isPreview}
                 onScreenClick={onScreenClick}
                 styleCSS={styleCSS}
@@ -763,7 +754,7 @@ const DeviceRendererComponent = ({
           </div>
           <div
             className="relative overflow-hidden rounded-[inherit]"
-            style={{ borderRadius: `${cornerRadius}px`, filter: shadowFilter, ...styleCSS }}
+            style={{ borderRadius: `${effectiveCornerRadius}px`, filter: shadowFilter, ...styleCSS }}
           >
             <div
               className="w-full h-full"
@@ -777,7 +768,7 @@ const DeviceRendererComponent = ({
               <MediaContainer
                 index={1}
                 media={mediaAssets[1]}
-                cornerRadius={cornerRadius}
+                cornerRadius={effectiveCornerRadius}
                 isPreview={isPreview}
                 onScreenClick={onScreenClick}
                 styleCSS={styleCSS}
@@ -787,7 +778,7 @@ const DeviceRendererComponent = ({
           </div>
           <div
             className="relative overflow-hidden rounded-[inherit]"
-            style={{ borderRadius: `${cornerRadius}px`, filter: shadowFilter, ...styleCSS }}
+            style={{ borderRadius: `${effectiveCornerRadius}px`, filter: shadowFilter, ...styleCSS }}
           >
             <div
               className="w-full h-full"
@@ -801,7 +792,7 @@ const DeviceRendererComponent = ({
               <MediaContainer
                 index={2}
                 media={mediaAssets[2]}
-                cornerRadius={cornerRadius}
+                cornerRadius={effectiveCornerRadius}
                 isPreview={isPreview}
                 onScreenClick={onScreenClick}
                 styleCSS={styleCSS}
@@ -835,7 +826,7 @@ const DeviceRendererComponent = ({
                 key={index}
                 className={`relative overflow-hidden ${isHero ? 'col-span-2 row-span-1' : 'col-span-1 row-span-1'}`}
                 style={{
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
@@ -848,7 +839,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -884,7 +875,7 @@ const DeviceRendererComponent = ({
                 key={index}
                 className="flex-1 overflow-hidden relative"
                 style={{
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
                   transform: `skewY(-5deg) ${animStyle.transform === 'none' ? '' : animStyle.transform}`,
                   opacity: animStyle.opacity,
@@ -925,46 +916,27 @@ const DeviceRendererComponent = ({
     );
   }
 
-  // Fan layout (radial spread)
+  // Triptych layout (3 equal panels)
   if (layout === 'fan') {
-    const fanAngles = [-25, 0, 25];
-    const fanOffsets = [
-      { x: -15, y: 10 },
-      { x: 0, y: 0 },
-      { x: 15, y: 10 },
-    ];
     return (
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="flex h-full w-full items-center justify-center p-4">
         <div
           ref={containerRef}
-          className="relative transition-[transform,box-shadow] duration-300 ease-out"
-          style={{
-            ...containerStyle,
-            width: isPreview ? '100%' : '80%',
-            height: isPreview ? '100%' : '80%',
-          }}
+          className="relative flex gap-2 transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '95%', height: '75%' }}
         >
           {[0, 1, 2].map((index) => {
-            const angle = fanAngles[index];
-            const offset = fanOffsets[index];
             const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
             return (
               <div
                 key={index}
-                className="absolute overflow-hidden"
+                className="flex-1 overflow-hidden"
                 style={{
-                  width: '45%',
-                  aspectRatio: aspectValue ? aspectValue : 3 / 4,
-                  left: '50%',
-                  top: '50%',
-                  transformOrigin: 'bottom center',
-                  zIndex: index === 1 ? 30 : 20 - index,
-                  borderRadius: `${cornerRadius}px`,
+                  borderRadius: `${effectiveCornerRadius}px`,
                   filter: shadowFilter,
-                  transform: `translate(calc(-50% + ${offset.x}%), calc(-70% + ${offset.y}%)) rotate(${angle}deg) ${animStyle.transform}`,
+                  transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
-                  willChange: 'transform, opacity',
                   ...styleCSS,
                 }}
               >
@@ -972,7 +944,7 @@ const DeviceRendererComponent = ({
                   <MediaContainer
                     index={index}
                     media={mediaAssets[index]}
-                    cornerRadius={cornerRadius}
+                    cornerRadius={effectiveCornerRadius}
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
@@ -980,6 +952,583 @@ const DeviceRendererComponent = ({
                   />,
                   index
                 )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Diagonal layout (2 images at angles)
+  if (layout === 'diagonal') {
+    const diagonalConfigs = [
+      { x: 5, y: 15, rotate: -12, zIndex: 20 },
+      { x: 35, y: 25, rotate: 8, zIndex: 30 },
+    ];
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div
+          ref={containerRef}
+          className="relative transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '90%', height: '90%' }}
+        >
+          {[0, 1].map((index) => {
+            const config = diagonalConfigs[index];
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 2);
+            return (
+              <div
+                key={index}
+                className="absolute overflow-hidden"
+                style={{
+                  width: '55%',
+                  aspectRatio: aspectValue || 3 / 4,
+                  left: `${config.x}%`,
+                  top: `${config.y}%`,
+                  zIndex: config.zIndex,
+                  borderRadius: `${effectiveCornerRadius}px`,
+                  filter: shadowFilter,
+                  transform: `rotate(${config.rotate}deg) ${animStyle.transform}`,
+                  opacity: animStyle.opacity,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  ...styleCSS,
+                }}
+              >
+                {renderWithMockup(
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={effectiveCornerRadius}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />,
+                  index
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Polaroid layout (2 images like polaroid photos)
+  if (layout === 'polaroid') {
+    const polaroidConfigs = [
+      { x: 10, y: 20, rotate: -8 },
+      { x: 40, y: 15, rotate: 6 },
+    ];
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div
+          ref={containerRef}
+          className="relative transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '90%', height: '90%' }}
+        >
+          {[0, 1].map((index) => {
+            const config = polaroidConfigs[index];
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 2);
+            return (
+              <div
+                key={index}
+                className="absolute bg-white p-2 pb-8"
+                style={{
+                  width: '45%',
+                  left: `${config.x}%`,
+                  top: `${config.y}%`,
+                  zIndex: 20 + index * 10,
+                  borderRadius: '4px',
+                  filter: shadowFilter,
+                  transform: `rotate(${config.rotate}deg) ${animStyle.transform}`,
+                  opacity: animStyle.opacity,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                }}
+              >
+                <div className="overflow-hidden" style={{ aspectRatio: 1, borderRadius: '2px', ...styleCSS }}>
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={2}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Spotlight layout (1 large + 2 small)
+  if (layout === 'spotlight') {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div
+          ref={containerRef}
+          className="relative flex gap-3 transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '95%', height: '85%' }}
+        >
+          <div
+            className="flex-[2] overflow-hidden"
+            style={{
+              borderRadius: `${effectiveCornerRadius}px`,
+              filter: shadowFilter,
+              transform: getStaggeredAnimationStyle(animationInfo, 0, 3).transform,
+              opacity: getStaggeredAnimationStyle(animationInfo, 0, 3).opacity,
+              transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+              ...styleCSS,
+            }}
+          >
+            <MediaContainer
+              index={0}
+              media={mediaAssets[0]}
+              cornerRadius={effectiveCornerRadius}
+              isPreview={isPreview}
+              onScreenClick={onScreenClick}
+              styleCSS={styleCSS}
+              playing={playing}
+            />
+          </div>
+          <div className="flex-1 flex flex-col gap-3">
+            {[1, 2].map((index) => {
+              const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
+              return (
+                <div
+                  key={index}
+                  className="flex-1 overflow-hidden"
+                  style={{
+                    borderRadius: `${effectiveCornerRadius}px`,
+                    filter: shadowFilter,
+                    transform: animStyle.transform,
+                    opacity: animStyle.opacity,
+                    transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                    ...styleCSS,
+                  }}
+                >
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={effectiveCornerRadius}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Cross layout (4 images in cross pattern)
+  if (layout === 'cross') {
+    const crossPositions = [
+      { gridArea: '1 / 2' },
+      { gridArea: '2 / 1' },
+      { gridArea: '2 / 3' },
+      { gridArea: '3 / 2' },
+    ];
+    return (
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div
+          ref={containerRef}
+          className="relative grid grid-cols-3 grid-rows-3 gap-2 transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '90%', height: '90%' }}
+        >
+          {[0, 1, 2, 3].map((index) => {
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+            return (
+              <div
+                key={index}
+                className="overflow-hidden"
+                style={{
+                  gridArea: crossPositions[index].gridArea,
+                  borderRadius: `${effectiveCornerRadius}px`,
+                  filter: shadowFilter,
+                  transform: animStyle.transform,
+                  opacity: animStyle.opacity,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  ...styleCSS,
+                }}
+              >
+                {renderWithMockup(
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={effectiveCornerRadius}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />,
+                  index
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Magazine layout (editorial style)
+  if (layout === 'magazine') {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div
+          ref={containerRef}
+          className="relative grid grid-cols-3 grid-rows-2 gap-2 transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '95%', height: '85%' }}
+        >
+          {[0, 1, 2, 3].map((index) => {
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+            const isHero = index === 0;
+            return (
+              <div
+                key={index}
+                className={`overflow-hidden ${isHero ? 'col-span-2 row-span-2' : ''}`}
+                style={{
+                  borderRadius: `${effectiveCornerRadius}px`,
+                  filter: shadowFilter,
+                  transform: animStyle.transform,
+                  opacity: animStyle.opacity,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  ...styleCSS,
+                }}
+              >
+                {renderWithMockup(
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={effectiveCornerRadius}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />,
+                  index
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Showcase layout (1 hero + 3 thumbnails)
+  if (layout === 'showcase') {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div
+          ref={containerRef}
+          className="relative flex flex-col gap-3 transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '90%', height: '90%' }}
+        >
+          <div
+            className="flex-[2] overflow-hidden"
+            style={{
+              borderRadius: `${effectiveCornerRadius}px`,
+              filter: shadowFilter,
+              transform: getStaggeredAnimationStyle(animationInfo, 0, 4).transform,
+              opacity: getStaggeredAnimationStyle(animationInfo, 0, 4).opacity,
+              transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+              ...styleCSS,
+            }}
+          >
+            <MediaContainer
+              index={0}
+              media={mediaAssets[0]}
+              cornerRadius={effectiveCornerRadius}
+              isPreview={isPreview}
+              onScreenClick={onScreenClick}
+              styleCSS={styleCSS}
+              playing={playing}
+            />
+          </div>
+          <div className="flex-1 flex gap-3">
+            {[1, 2, 3].map((index) => {
+              const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+              return (
+                <div
+                  key={index}
+                  className="flex-1 overflow-hidden"
+                  style={{
+                    borderRadius: `${effectiveCornerRadius}px`,
+                    filter: shadowFilter,
+                    transform: animStyle.transform,
+                    opacity: animStyle.opacity,
+                    transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                    ...styleCSS,
+                  }}
+                >
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={effectiveCornerRadius}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Scattered layout (random-looking placement)
+  if (layout === 'scattered') {
+    const scatteredPositions = [
+      { left: '5%', top: '5%', width: '45%', rotation: -5, zIndex: 10 },
+      { right: '5%', top: '15%', width: '40%', rotation: 8, zIndex: 20 },
+      { left: '15%', bottom: '10%', width: '42%', rotation: -3, zIndex: 30 },
+      { right: '10%', bottom: '5%', width: '38%', rotation: 6, zIndex: 40 },
+    ];
+    return (
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div
+          ref={containerRef}
+          className="relative w-full h-full transition-[transform,box-shadow] duration-300 ease-out"
+          style={containerStyle}
+        >
+          {[0, 1, 2, 3].map((index) => {
+            const { rotation, ...pos } = scatteredPositions[index];
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+            return (
+              <div
+                key={index}
+                className="absolute overflow-hidden"
+                style={{
+                  ...pos,
+                  aspectRatio: aspectValue || 4 / 3,
+                  borderRadius: `${effectiveCornerRadius}px`,
+                  filter: shadowFilter,
+                  transform: `rotate(${rotation}deg) ${animStyle.transform}`,
+                  opacity: animStyle.opacity,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  ...styleCSS,
+                }}
+              >
+                {renderWithMockup(
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={effectiveCornerRadius}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />,
+                  index
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Cascade layout (staircase effect)
+  if (layout === 'cascade') {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div
+          ref={containerRef}
+          className="relative transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '85%', height: '85%' }}
+        >
+          {[0, 1, 2, 3].map((index) => {
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+            return (
+              <div
+                key={index}
+                className="absolute overflow-hidden"
+                style={{
+                  width: '50%',
+                  aspectRatio: aspectValue || 3 / 4,
+                  left: `${index * 15}%`,
+                  top: `${index * 12}%`,
+                  zIndex: 40 - index * 10,
+                  borderRadius: `${effectiveCornerRadius}px`,
+                  filter: shadowFilter,
+                  transform: animStyle.transform,
+                  opacity: animStyle.opacity,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  ...styleCSS,
+                }}
+              >
+                {renderWithMockup(
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={effectiveCornerRadius}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />,
+                  index
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Brick layout (offset grid like bricks)
+  if (layout === 'brick') {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div
+          ref={containerRef}
+          className="relative flex flex-col gap-2 transition-[transform,box-shadow] duration-300 ease-out"
+          style={{ ...containerStyle, width: '90%', height: '85%' }}
+        >
+          <div className="flex-1 flex gap-2">
+            {[0, 1].map((index) => {
+              const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+              return (
+                <div
+                  key={index}
+                  className="flex-1 overflow-hidden"
+                  style={{
+                    borderRadius: `${effectiveCornerRadius}px`,
+                    filter: shadowFilter,
+                    transform: animStyle.transform,
+                    opacity: animStyle.opacity,
+                    transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                    ...styleCSS,
+                  }}
+                >
+                  {renderWithMockup(
+                    <MediaContainer
+                      index={index}
+                      media={mediaAssets[index]}
+                      cornerRadius={effectiveCornerRadius}
+                      isPreview={isPreview}
+                      onScreenClick={onScreenClick}
+                      styleCSS={styleCSS}
+                      playing={playing}
+                    />,
+                    index
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex-1 flex gap-2 -mx-[15%]">
+            {[2, 3].map((index) => {
+              const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+              return (
+                <div
+                  key={index}
+                  className="flex-1 overflow-hidden"
+                  style={{
+                    borderRadius: `${effectiveCornerRadius}px`,
+                    filter: shadowFilter,
+                    transform: animStyle.transform,
+                    opacity: animStyle.opacity,
+                    transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                    ...styleCSS,
+                  }}
+                >
+                  {renderWithMockup(
+                    <MediaContainer
+                      index={index}
+                      media={mediaAssets[index]}
+                      cornerRadius={effectiveCornerRadius}
+                      isPreview={isPreview}
+                      onScreenClick={onScreenClick}
+                      styleCSS={styleCSS}
+                      playing={playing}
+                    />,
+                    index
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Asymmetric layout (uneven grid)
+  if (layout === 'asymmetric') {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div
+          ref={containerRef}
+          className="relative grid gap-2 transition-[transform,box-shadow] duration-300 ease-out"
+          style={{
+            ...containerStyle,
+            width: '90%',
+            height: '85%',
+            gridTemplateColumns: '2fr 1fr',
+            gridTemplateRows: '1fr 1fr',
+          }}
+        >
+          <div
+            className="row-span-2 overflow-hidden"
+            style={{
+              borderRadius: `${effectiveCornerRadius}px`,
+              filter: shadowFilter,
+              transform: getStaggeredAnimationStyle(animationInfo, 0, 4).transform,
+              opacity: getStaggeredAnimationStyle(animationInfo, 0, 4).opacity,
+              transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+              ...styleCSS,
+            }}
+          >
+            <MediaContainer
+              index={0}
+              media={mediaAssets[0]}
+              cornerRadius={effectiveCornerRadius}
+              isPreview={isPreview}
+              onScreenClick={onScreenClick}
+              styleCSS={styleCSS}
+              playing={playing}
+            />
+          </div>
+          {[1, 2].map((index) => {
+            const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+            return (
+              <div
+                key={index}
+                className="overflow-hidden"
+                style={{
+                  borderRadius: `${effectiveCornerRadius}px`,
+                  filter: shadowFilter,
+                  transform: animStyle.transform,
+                  opacity: animStyle.opacity,
+                  transition: animationInfo ? 'none' : CSS_TRANSITIONS.stagger,
+                  ...styleCSS,
+                }}
+              >
+                <MediaContainer
+                  index={index}
+                  media={mediaAssets[index]}
+                  cornerRadius={effectiveCornerRadius}
+                  isPreview={isPreview}
+                  onScreenClick={onScreenClick}
+                  styleCSS={styleCSS}
+                  playing={playing}
+                />
               </div>
             );
           })}
@@ -1001,7 +1550,7 @@ const DeviceRendererComponent = ({
           aspectRatio: aspectValue ? aspectValue : undefined,
           maxWidth: sizePercent,
           maxHeight: sizePercent,
-          borderRadius: `${cornerRadius}px`,
+          borderRadius: `${effectiveCornerRadius}px`,
           filter: shadowFilter,
           backfaceVisibility: 'hidden',
           ...styleCSS,
@@ -1010,7 +1559,7 @@ const DeviceRendererComponent = ({
         <MediaContainer
           index={0}
           media={mediaAssets[0]}
-          cornerRadius={cornerRadius}
+          cornerRadius={effectiveCornerRadius}
           isPreview={isPreview}
           onScreenClick={onScreenClick}
           styleCSS={styleCSS}

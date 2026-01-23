@@ -1,33 +1,58 @@
 import {
   Square,
   Columns2,
+  Columns3,
   Rows2,
-  LayoutGrid,
-  LayoutTemplate,
-  Grid3x3,
-  Film,
   Layers,
-  CircleDot,
+  GalleryHorizontal,
+  GalleryVertical,
+  LayoutGrid,
+  Grid3x3,
+  LayoutTemplate,
+  LayoutDashboard,
   RotateCcw,
+  Sparkles,
+  Film,
+  Focus,
+  Slash,
+  Image,
+  Plus,
+  Newspaper,
+  Star,
+  Shuffle,
+  Boxes,
+  Layers2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useRenderStore } from '../store/renderStore';
-import type { ImageLayout } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { SidebarHeader, GridButton } from './ui/SidebarPrimitives';
+import { SidebarHeader } from './ui/SidebarPrimitives';
+import { LAYOUT_CONFIGS, type ImageLayout } from '../constants/layouts';
 
-const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = [
-  { value: 'single', label: 'Single', icon: <Square className="w-4 h-4" /> },
-  { value: 'side-by-side', label: 'Side', icon: <Columns2 className="w-4 h-4" /> },
-  { value: 'stacked', label: 'Stack', icon: <Rows2 className="w-4 h-4" /> },
-  { value: 'grid', label: 'Grid', icon: <LayoutGrid className="w-4 h-4" /> },
-  { value: 'masonry', label: 'Masonry', icon: <LayoutTemplate className="w-4 h-4" /> },
-  { value: 'mosaic', label: 'Mosaic', icon: <Grid3x3 className="w-4 h-4" /> },
-  { value: 'film-strip', label: 'Film', icon: <Film className="w-4 h-4" /> },
-  { value: 'overlap', label: 'Overlap', icon: <Layers className="w-4 h-4" /> },
-  { value: 'fan', label: 'Fan', icon: <CircleDot className="w-4 h-4" /> },
-  { value: 'creative', label: 'Mix', icon: <LayoutGrid className="w-4 h-4 rotate-45" /> },
-];
+const LAYOUT_ICONS: Record<ImageLayout, ReactNode> = {
+  single: <Square className="w-3.5 h-3.5" />,
+  'side-by-side': <Columns2 className="w-3.5 h-3.5" />,
+  stacked: <Rows2 className="w-3.5 h-3.5" />,
+  diagonal: <Slash className="w-3.5 h-3.5" />,
+  polaroid: <Image className="w-3.5 h-3.5" />,
+  'trio-row': <GalleryHorizontal className="w-3.5 h-3.5" />,
+  'trio-column': <GalleryVertical className="w-3.5 h-3.5" />,
+  fan: <Columns3 className="w-3.5 h-3.5" />,
+  masonry: <LayoutTemplate className="w-3.5 h-3.5" />,
+  mosaic: <Grid3x3 className="w-3.5 h-3.5" />,
+  'film-strip': <Film className="w-3.5 h-3.5" />,
+  spotlight: <Focus className="w-3.5 h-3.5" />,
+  grid: <LayoutGrid className="w-3.5 h-3.5" />,
+  overlap: <Layers className="w-3.5 h-3.5" />,
+  creative: <Shuffle className="w-3.5 h-3.5" />,
+  cross: <Plus className="w-3.5 h-3.5" />,
+  magazine: <Newspaper className="w-3.5 h-3.5" />,
+  showcase: <Star className="w-3.5 h-3.5" />,
+  scattered: <Sparkles className="w-3.5 h-3.5" />,
+  cascade: <Layers2 className="w-3.5 h-3.5" />,
+  brick: <Boxes className="w-3.5 h-3.5" />,
+  asymmetric: <LayoutDashboard className="w-3.5 h-3.5" />,
+};
 
 export const LayoutPicker = () => {
   const { imageLayout, setImageLayout } = useRenderStore();
@@ -36,7 +61,6 @@ export const LayoutPicker = () => {
 
   const handleLayoutChange = (layout: ImageLayout) => {
     setImageLayout(layout);
-    // Reset timeline when changing layout
     setIsPlaying(false);
     setPlayhead(0);
     clearTrack('track-animation');
@@ -64,16 +88,23 @@ export const LayoutPicker = () => {
       >
         Layout
       </SidebarHeader>
-      <div className="grid grid-cols-3 gap-2">
-        {LAYOUTS.map(({ value, label, icon }) => (
-          <GridButton
+
+      <div className="grid grid-cols-4 gap-1.5">
+        {LAYOUT_CONFIGS.map(({ value, label, imageCount }) => (
+          <button
             key={value}
-            active={imageLayout === value}
             onClick={() => handleLayoutChange(value)}
-            icon={icon}
-            label={label}
-            title={label}
-          />
+            className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg border transition-all relative ${
+              imageLayout === value
+                ? 'bg-accent/15 border-accent text-accent'
+                : 'bg-ui-panel/30 border-ui-border/50 text-ui-muted hover:border-ui-muted hover:text-white'
+            }`}
+            title={`${label} (${imageCount})`}
+          >
+            {LAYOUT_ICONS[value]}
+            <span className="text-[7px] font-medium leading-tight text-center">{label}</span>
+            <span className="absolute top-0.5 right-0.5 text-[6px] opacity-50">{imageCount}</span>
+          </button>
         ))}
       </div>
     </div>

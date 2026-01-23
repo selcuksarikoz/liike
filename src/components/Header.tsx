@@ -3,6 +3,7 @@ import { downloadDir } from '@tauri-apps/api/path';
 import { BaseDirectory, writeFile } from '@tauri-apps/plugin-fs';
 import { Command } from '@tauri-apps/plugin-shell';
 import { fetch } from '@tauri-apps/plugin-http';
+import { type as osType } from '@tauri-apps/plugin-os';
 import { ChevronDown, Download, Film, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRenderStore } from '../store/renderStore';
@@ -117,14 +118,14 @@ export const Header = ({ onRender }: HeaderProps) => {
           // output current and remote versions for debugging
           console.log(`Current: ${ver}, Remote: ${data.version}`);
 
-          const osType = await type();
+          const currentOS = osType();
           let downloadUrl = '';
 
-          if (osType === 'macos') {
+          if (currentOS === 'macos') {
             downloadUrl = data.macos_download_url || data.download_url || '';
-          } else if (osType === 'windows') {
+          } else if (currentOS === 'windows') {
             downloadUrl = data.windows_download_url || data.download_url || '';
-          } else if (osType === 'linux') {
+          } else if (currentOS === 'linux') {
             downloadUrl = data.linux_download_url || data.download_url || '';
           } else {
             downloadUrl = data.download_url || '';

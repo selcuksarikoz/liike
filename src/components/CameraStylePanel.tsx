@@ -187,23 +187,12 @@ export const CameraStylePanel = () => {
             label="Rotate Z"
             icon={<RotateCw className="w-3.5 h-3.5" />}
             value={rotationZ}
-            min={-45}
-            max={45}
+            min={0}
+            max={360}
             unit="°"
             onChange={setRotationZ}
           />
-        </ControlGroup>
-      </div>
 
-      {/* Transform */}
-      <div className="style-section group">
-        <SidebarHeader
-          icon={<Move3d className="w-4 h-4" />}
-          action={<ResetButton section="transform" />}
-        >
-          Transform
-        </SidebarHeader>
-        <ControlGroup>
           <SliderControl
             label="Scale"
             icon={<Maximize2 className="w-3.5 h-3.5" />}

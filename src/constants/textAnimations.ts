@@ -25,9 +25,9 @@ export const ANIMATION_SPEED_MULTIPLIERS: Record<AnimationSpeed, number> = {
 
 // CSS transition durations based on speed
 export const ANIMATION_SPEED_DURATIONS: Record<AnimationSpeed, number> = {
-  slow: 3000,
-  normal: 2000,
-  fast: 1000,
+  slow: 2000,
+  normal: 1000,
+  fast: 400,
 };
 
 export type TextPosition =

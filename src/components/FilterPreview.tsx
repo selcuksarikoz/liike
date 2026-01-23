@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ANIMATION_PRESETS, STAGGER_DEFAULTS } from '../constants/animations';
-import type { LayoutFilter } from './SidebarRight';
+import type { LayoutFilter } from './AnimationsPanel';
 
 export const FilterPreview = ({ filter, isActive }: { filter: LayoutFilter; isActive: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);

@@ -1,92 +1,130 @@
 import {
-  ArrowUpDown,
-  ArrowLeftRight,
-  RotateCw,
-  Maximize2,
-  CloudFog,
-  Box,
-  Move3d,
   Sparkles,
-  Square,
-  Smartphone,
+  Star,
+  Zap,
+  Target,
+  Eye,
+  Gem,
+  Crown,
+  Flame,
+  Sun,
+  Moon,
   RotateCcw,
+  Square,
 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
-import { SidebarHeader, GridButton } from './ui/SidebarPrimitives';
+import { SidebarHeader } from './ui/SidebarPrimitives';
 import { useState } from 'react';
 
+// Apple-style "aha moment" creative angles
 const CREATIVE_PRESETS = [
   {
-    label: 'Isometric',
-    icon: Box,
-    rotationX: 30,
-    rotationY: -45,
-    rotationZ: 0,
-    scale: 0.85,
-  },
-  {
-    label: 'Floating',
-    icon: CloudFog,
-    rotationX: 15,
-    rotationY: 0,
-    rotationZ: -5,
-    scale: 0.9,
-  },
-  {
-    label: 'Dynamic',
-    icon: Move3d,
-    rotationX: 20,
-    rotationY: -30,
-    rotationZ: 10,
-    scale: 0.9,
-  },
-  {
-    label: 'Flat Lay',
+    label: 'Flat',
     icon: Square,
     rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
     scale: 1,
+    description: 'Clean & minimal',
   },
   {
-    label: 'Cinematic',
-    icon: Maximize2,
-    rotationX: 5,
-    rotationY: 0,
-    rotationZ: 0,
-    scale: 1.1,
-  },
-  {
-    label: 'Phone',
-    icon: Smartphone,
-    rotationX: 10,
-    rotationY: -10,
-    rotationZ: 2,
-    scale: 0.95,
-  },
-  {
-    label: 'Perspective',
-    icon: ArrowLeftRight,
-    rotationX: 0,
-    rotationY: 25,
-    rotationZ: 0,
-    scale: 0.95,
-  },
-  {
-    label: 'Hero Shot',
-    icon: ArrowUpDown,
-    rotationX: -15,
+    label: 'Keynote',
+    icon: Star,
+    rotationX: 8,
     rotationY: 0,
     rotationZ: 0,
     scale: 1.05,
+    description: 'Apple presentation style',
   },
   {
-    label: 'Tilted',
-    icon: RotateCw,
-    rotationX: 5,
-    rotationY: 5,
-    rotationZ: -8,
+    label: 'Reveal',
+    icon: Sparkles,
+    rotationX: 12,
+    rotationY: -8,
+    rotationZ: 0,
     scale: 0.95,
+    description: 'Dramatic product reveal',
+  },
+  {
+    label: 'Spotlight',
+    icon: Sun,
+    rotationX: 5,
+    rotationY: 0,
+    rotationZ: -2,
+    scale: 1.1,
+    description: 'Center stage focus',
+  },
+  {
+    label: 'Hero',
+    icon: Zap,
+    rotationX: -10,
+    rotationY: 0,
+    rotationZ: 0,
+    scale: 1.15,
+    description: 'Bold hero shot',
+  },
+  {
+    label: 'Showcase',
+    icon: Gem,
+    rotationX: 15,
+    rotationY: -15,
+    rotationZ: 3,
+    scale: 0.9,
+    description: '3D product showcase',
+  },
+  {
+    label: 'Premium',
+    icon: Crown,
+    rotationX: 8,
+    rotationY: 12,
+    rotationZ: -2,
+    scale: 0.95,
+    description: 'Luxury angle',
+  },
+  {
+    label: 'Dynamic',
+    icon: Flame,
+    rotationX: 18,
+    rotationY: -25,
+    rotationZ: 5,
+    scale: 0.85,
+    description: 'Action-packed',
+  },
+  {
+    label: 'Elegant',
+    icon: Moon,
+    rotationX: 5,
+    rotationY: 8,
+    rotationZ: -4,
+    scale: 1,
+    description: 'Subtle & refined',
+  },
+  {
+    label: 'Impact',
+    icon: Target,
+    rotationX: -5,
+    rotationY: -5,
+    rotationZ: 2,
+    scale: 1.2,
+    description: 'Maximum impact',
+  },
+  {
+    label: 'Cinematic',
+    icon: Eye,
+    rotationX: 3,
+    rotationY: 0,
+    rotationZ: 0,
+    scale: 1.08,
+    description: 'Widescreen drama',
+  },
+  {
+    label: 'Float',
+    icon: Sparkles,
+    rotationX: 10,
+    rotationY: 5,
+    rotationZ: -3,
+    scale: 0.92,
+    description: 'Hovering effect',
   },
 ];
 
@@ -136,18 +174,24 @@ export const CreativeAngles = () => {
       >
         Creative Angles
       </SidebarHeader>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-1.5">
         {CREATIVE_PRESETS.map((preset) => {
           const Icon = preset.icon;
+          const isActive = preset === selectedCreativeAngle;
           return (
-            <GridButton
+            <button
               key={preset.label}
-              active={preset === selectedCreativeAngle}
               onClick={() => handlePresetClick(preset)}
-              icon={<Icon className="w-4 h-4" />}
-              label={preset.label}
-              title={preset.label}
-            />
+              className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg border transition-all ${
+                isActive
+                  ? 'bg-accent/15 border-accent text-accent'
+                  : 'bg-ui-panel/30 border-ui-border/50 text-ui-muted hover:border-ui-muted hover:text-white'
+              }`}
+              title={preset.description}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="text-[8px] font-medium">{preset.label}</span>
+            </button>
           );
         })}
       </div>

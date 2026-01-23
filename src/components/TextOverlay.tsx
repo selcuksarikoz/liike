@@ -14,23 +14,29 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
   // Get speed multiplier
   const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed];
 
+  // Initial delay before text animation starts (ms)
+  const startDelay = 300 / speedMultiplier;
+
   // Calculate animation progress for headline (0 to 1)
   const headlineProgress = useMemo(() => {
     if (!isPlaying && playheadMs === 0) return 1;
+    // Wait for startDelay before beginning animation
+    const delayedPlayhead = Math.max(0, playheadMs - startDelay);
+    if (delayedPlayhead === 0) return 0;
     // Headline animates in first 30% of duration, adjusted by speed
     const animDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
-    return Math.min(1, playheadMs / animDuration);
-  }, [playheadMs, durationMs, isPlaying, speedMultiplier]);
+    return Math.min(1, delayedPlayhead / animDuration);
+  }, [playheadMs, durationMs, isPlaying, speedMultiplier, startDelay]);
 
-  // Calculate animation progress for tagline (staggered, starts at 15%)
+  // Calculate animation progress for tagline (staggered, starts after headline)
   const taglineProgress = useMemo(() => {
     if (!isPlaying && playheadMs === 0) return 1;
-    // Tagline starts after 15% of duration, animates for 30%, adjusted by speed
-    const staggerDelay = ((durationMs || 3000) * 0.15) / speedMultiplier;
+    // Tagline starts after startDelay + 15% of duration
+    const staggerDelay = startDelay + ((durationMs || 3000) * 0.15) / speedMultiplier;
     const animDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
     const delayedPlayhead = Math.max(0, playheadMs - staggerDelay);
     return Math.min(1, delayedPlayhead / animDuration);
-  }, [playheadMs, durationMs, isPlaying, speedMultiplier]);
+  }, [playheadMs, durationMs, isPlaying, speedMultiplier, startDelay]);
 
   if (!textOverlay.enabled) return null;
 
