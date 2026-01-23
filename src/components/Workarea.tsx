@@ -325,18 +325,23 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                     imageLayout === 'single' ? animationStyle.transform : 'none';
                   if (!textOverlay.enabled || !textOverlay.layout) return baseTransform;
 
-                  let offsetTransform = '';
                   const layout = textOverlay.layout;
+                  const offset = textOverlay.deviceOffset || -20;
 
-                  if (layout === 'text-top-device-bottom')
-                    offsetTransform = 'translateY(15%) scale(0.85)';
-                  else if (layout === 'text-bottom-device-top')
-                    offsetTransform = 'translateY(-15%) scale(0.85)';
-                  else if (layout === 'text-left-device-right')
+                  let offsetTransform = '';
+                  // Device at bottom with overflow (negative offset = overflow bottom)
+                  if (layout === 'text-top-device-bottom') {
+                    // Push device down so it overflows the canvas
+                    offsetTransform = `translateY(calc(20% - ${offset}px)) scale(0.75)`;
+                  } else if (layout === 'text-bottom-device-top') {
+                    offsetTransform = `translateY(calc(-20% + ${offset}px)) scale(0.75)`;
+                  } else if (layout === 'text-left-device-right') {
                     offsetTransform = 'translateX(25%) scale(0.8)';
-                  else if (layout === 'text-right-device-left')
+                  } else if (layout === 'text-right-device-left') {
                     offsetTransform = 'translateX(-25%) scale(0.8)';
-                  else if (layout === 'text-split-device-center') offsetTransform = 'scale(0.8)';
+                  } else if (layout === 'text-split-device-center') {
+                    offsetTransform = 'scale(0.8)';
+                  }
 
                   return baseTransform === 'none'
                     ? offsetTransform

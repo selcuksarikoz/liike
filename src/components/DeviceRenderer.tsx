@@ -6,7 +6,7 @@ import { combineAnimations, CSS_TRANSITIONS } from '../constants/animations';
 import { DEVICES } from '../constants/devices';
 import { GenericDeviceMockup } from './DeviceMockups/GenericDeviceMockup';
 import { getAspectRatioValue } from '../constants/ui';
-import type { AspectRatio } from '../constants/ui';
+import type { AspectRatio } from '../store/renderStore';
 
 type AnimationInfo = {
   animations: { type: string; intensity?: number }[];
@@ -268,7 +268,8 @@ const DeviceRendererComponent = ({
     return `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px ${rgba})`;
   }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowX, shadowY, frameMode]);
 
-  const aspectValue = getAspectRatioValue(aspectRatio);
+  // Don't apply user aspect ratio when in device mode - device screen dictates aspect
+  const aspectValue = frameMode === 'device' ? null : getAspectRatioValue(aspectRatio);
 
   // Helper to wrap content in device mockup if enabled
   const renderWithMockup = (content: React.ReactNode, key?: number | string) => {
@@ -308,6 +309,9 @@ const DeviceRendererComponent = ({
     transformStyle: 'preserve-3d' as const,
   };
 
+  // Preview uses full container, main canvas uses 85%
+  const sizePercent = isPreview ? '100%' : '85%';
+
   // Single image layout
   if (layout === 'single') {
     // Media content to be rendered
@@ -330,11 +334,11 @@ const DeviceRendererComponent = ({
           className="relative overflow-hidden transition-[transform,border-radius,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: aspectValue ? 'auto' : '85%',
-            height: aspectValue ? '85%' : '85%',
+            width: aspectValue ? 'auto' : sizePercent,
+            height: aspectValue ? sizePercent : sizePercent,
             aspectRatio: aspectValue ? aspectValue : undefined,
-            maxWidth: '85%',
-            maxHeight: '85%',
+            maxWidth: sizePercent,
+            maxHeight: sizePercent,
             borderRadius: `${cornerRadius}px`,
             filter: shadowFilter,
             backfaceVisibility: 'hidden',
@@ -356,9 +360,9 @@ const DeviceRendererComponent = ({
           className="relative flex gap-4 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: '90%',
-            height: aspectValue ? undefined : '75%',
-            maxHeight: '85%',
+            width: isPreview ? '100%' : '90%',
+            height: aspectValue ? undefined : (isPreview ? '100%' : '75%'),
+            maxHeight: sizePercent,
           }}
         >
           {[0, 1].map((index) => {
@@ -407,9 +411,9 @@ const DeviceRendererComponent = ({
           className="relative flex flex-col gap-4 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: aspectValue ? undefined : '70%',
-            height: '90%',
-            maxWidth: '85%',
+            width: aspectValue ? undefined : (isPreview ? '100%' : '70%'),
+            height: isPreview ? '100%' : '90%',
+            maxWidth: sizePercent,
           }}
         >
           {[0, 1].map((index) => {
@@ -458,9 +462,9 @@ const DeviceRendererComponent = ({
           className="relative flex gap-3 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: '95%',
-            height: aspectValue ? undefined : '60%',
-            maxHeight: '75%',
+            width: isPreview ? '100%' : '95%',
+            height: aspectValue ? undefined : (isPreview ? '100%' : '60%'),
+            maxHeight: isPreview ? '100%' : '75%',
           }}
         >
           {[0, 1, 2].map((index) => {
@@ -509,9 +513,9 @@ const DeviceRendererComponent = ({
           className="relative flex flex-col gap-3 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: aspectValue ? undefined : '55%',
-            height: '95%',
-            maxWidth: '70%',
+            width: aspectValue ? undefined : (isPreview ? '100%' : '55%'),
+            height: isPreview ? '100%' : '95%',
+            maxWidth: isPreview ? '100%' : '70%',
           }}
         >
           {[0, 1, 2].map((index) => {
@@ -560,10 +564,10 @@ const DeviceRendererComponent = ({
           className="relative grid grid-cols-2 gap-3 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: '85%',
-            height: '85%',
-            maxWidth: '85%',
-            maxHeight: '85%',
+            width: sizePercent,
+            height: sizePercent,
+            maxWidth: sizePercent,
+            maxHeight: sizePercent,
           }}
         >
           {[0, 1, 2, 3].map((index) => {
@@ -618,8 +622,8 @@ const DeviceRendererComponent = ({
           className="relative transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: '70%',
-            height: '70%',
+            width: isPreview ? '100%' : '70%',
+            height: isPreview ? '100%' : '70%',
           }}
         >
           {[0, 1, 2, 3].map((index) => {
@@ -725,11 +729,11 @@ const DeviceRendererComponent = ({
       <div className="flex h-full w-full items-center justify-center p-4">
         <div
           ref={containerRef}
-          className="relative grid grid-cols-2 gap-3 transition-[transform,box-shadow] duration-300 ease-out"
+          className="relative grid grid-cols-2 gap-2 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: '85%',
-            height: '85%',
+            width: isPreview ? '100%' : '85%',
+            height: isPreview ? '100%' : '85%',
             gridTemplateRows: '1.5fr 1fr',
           }}
         >
@@ -819,8 +823,8 @@ const DeviceRendererComponent = ({
           className="relative grid grid-cols-2 grid-rows-2 gap-3 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: '90%',
-            height: '80%',
+            width: isPreview ? '100%' : '90%',
+            height: isPreview ? '100%' : '80%',
           }}
         >
           {[0, 1, 2].map((index) => {
@@ -869,8 +873,8 @@ const DeviceRendererComponent = ({
           className="relative flex flex-col gap-4 transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: '60%',
-            height: '90%',
+            width: isPreview ? '100%' : '60%',
+            height: isPreview ? '100%' : '90%',
           }}
         >
           {[0, 1, 2].map((index) => {
@@ -936,8 +940,8 @@ const DeviceRendererComponent = ({
           className="relative transition-[transform,box-shadow] duration-300 ease-out"
           style={{
             ...containerStyle,
-            width: '80%',
-            height: '80%',
+            width: isPreview ? '100%' : '80%',
+            height: isPreview ? '100%' : '80%',
           }}
         >
           {[0, 1, 2].map((index) => {
@@ -992,11 +996,11 @@ const DeviceRendererComponent = ({
         className="relative overflow-hidden transition-[transform,box-shadow,border-radius] duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: aspectValue ? 'auto' : '85%',
-          height: aspectValue ? '85%' : '85%',
+          width: aspectValue ? 'auto' : sizePercent,
+          height: aspectValue ? sizePercent : sizePercent,
           aspectRatio: aspectValue ? aspectValue : undefined,
-          maxWidth: '85%',
-          maxHeight: '85%',
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
           borderRadius: `${cornerRadius}px`,
           filter: shadowFilter,
           backfaceVisibility: 'hidden',

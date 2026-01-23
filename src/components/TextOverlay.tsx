@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { generateTextKeyframes } from '../constants/textAnimations';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 
@@ -12,22 +13,31 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
 
   // Calculate animation progress (0 to 1)
   const progress = useMemo(() => {
-    if (!isPlaying && playheadMs === 0) return 1; // Show full text when not playing
-    return Math.min(1, playheadMs / (durationMs || 3000));
+    if (!isPlaying && playheadMs === 0) return 1;
+    // Animate in first 40% of duration
+    const animDuration = (durationMs || 3000) * 0.4;
+    return Math.min(1, playheadMs / animDuration);
   }, [playheadMs, durationMs, isPlaying]);
-
-  // Dynamic font size scaling for long text
-  const adjustedFontSize = useMemo(() => {
-    const { text = '', fontSize = 48 } = textOverlay || {};
-    let size = isPreview ? Math.max(12, fontSize * 0.25) : fontSize;
-    if (text.length > 50) size *= 0.8;
-    if (text.length > 100) size *= 0.6;
-    return size;
-  }, [textOverlay.fontSize, textOverlay.text, isPreview]);
 
   if (!textOverlay.enabled) return null;
 
-  const { text, fontFamily, fontSize, fontWeight, color, animation, layout } = textOverlay;
+  const {
+    headline,
+    tagline,
+    fontFamily,
+    fontSize,
+    taglineFontSize,
+    fontWeight,
+    color,
+    animation,
+    layout,
+  } = textOverlay;
+
+  // Scale for preview mode
+  const scale = isPreview ? 0.25 : 1;
+  const headlineSize = Math.max(12, fontSize * scale);
+  const taglineSize = Math.max(10, taglineFontSize * scale);
+  const padding = isPreview ? 8 : 40;
 
   // Position styles based on layout
   const getPositionStyle = (): React.CSSProperties => {
@@ -36,146 +46,63 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
       left: 0,
       right: 0,
       display: 'flex',
+      flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: isPreview ? '8px' : '32px',
+      padding,
       zIndex: 50,
       pointerEvents: 'none',
+      gap: isPreview ? 4 : 12,
     };
 
     switch (layout) {
       case 'text-top-device-bottom':
-        return { ...baseStyle, top: 0, height: '25%' };
+        return { ...baseStyle, top: 0, height: '35%' };
       case 'text-bottom-device-top':
-        return { ...baseStyle, bottom: 0, height: '25%' };
-      case 'text-left-device-right':
-        return {
-          ...baseStyle,
-          left: 0,
-          top: 0,
-          bottom: 0,
-          right: 'auto',
-          width: '40%',
-          height: '100%',
-          flexDirection: 'column',
-          textAlign: 'center',
-        };
-      case 'text-right-device-left':
-        return {
-          ...baseStyle,
-          right: 0,
-          top: 0,
-          bottom: 0,
-          left: 'auto',
-          width: '40%',
-          height: '100%',
-          flexDirection: 'column',
-          textAlign: 'center',
-        };
-      case 'text-overlay':
+        return { ...baseStyle, bottom: 0, height: '35%' };
       case 'text-center-device-behind':
-        return {
-          ...baseStyle,
-          top: 0,
-          bottom: 0,
-          height: '100%',
-        };
-      case 'text-split-device-center':
-        return { ...baseStyle, top: 0, height: '20%' };
+      case 'text-overlay':
+        return { ...baseStyle, top: 0, bottom: 0, height: '100%' };
       default:
-        return { ...baseStyle, top: 0, height: '25%' };
+        return { ...baseStyle, top: 0, height: '35%' };
     }
   };
 
-  // Simple text styles without complex animations for now
-  const textStyle: React.CSSProperties = {
+  // Get animation styles for headline
+  const animationType = (animation || 'fade') as 'fade' | 'slide-up' | 'slide-down' | 'scale' | 'blur';
+  const animStyles = generateTextKeyframes(animationType, progress);
+
+  // Headline style (animated)
+  const headlineStyle: React.CSSProperties = {
     fontFamily,
-    fontSize: adjustedFontSize,
+    fontSize: headlineSize,
     fontWeight,
     color,
     textAlign: 'center',
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
     lineHeight: 1.1,
-    textShadow: '0 2px 20px rgba(0,0,0,0.5)',
-    maxWidth: '95%',
-    maxHeight: '100%',
-    overflow: 'hidden',
-    transition: 'all 0.3s ease-out',
+    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+    opacity: animStyles.opacity,
+    transform: animStyles.transform,
+    filter: animStyles.filter,
+    willChange: 'opacity, transform, filter',
   };
 
-  // Apply animation based on progress
-  const getAnimatedStyle = (): React.CSSProperties => {
-    if (animation === 'none' || !animation) {
-      return textStyle;
-    }
-
-    // Simple opacity/transform animation for the whole text block
-    const animProgress = Math.min(1, progress * 2); // Animate in first half of duration
-
-    switch (animation) {
-      case 'scale-pop':
-        const scale = 0.5 + animProgress * 0.5;
-        return {
-          ...textStyle,
-          opacity: animProgress,
-          transform: `scale(${scale})`,
-        };
-      case 'blur-in':
-        return {
-          ...textStyle,
-          opacity: animProgress,
-          filter: `blur(${(1 - animProgress) * 10}px)`,
-        };
-      case 'word-fade-in':
-      case 'typewriter':
-        return {
-          ...textStyle,
-          opacity: animProgress,
-          transform: `translateY(${(1 - animProgress) * 20}px)`,
-        };
-      case 'word-slide-up':
-        return {
-          ...textStyle,
-          opacity: animProgress,
-          transform: `translateY(${(1 - animProgress) * 40}px)`,
-        };
-      case 'letter-cascade':
-        return {
-          ...textStyle,
-          opacity: animProgress,
-          transform: `translateY(${(1 - animProgress) * -30}px)`,
-        };
-      case 'bounce-letters':
-        const bounce = animProgress < 0.7 ? animProgress / 0.7 : 1;
-        return {
-          ...textStyle,
-          opacity: animProgress,
-          transform: `scale(${0.8 + bounce * 0.2})`,
-        };
-      case 'glow-reveal':
-        return {
-          ...textStyle,
-          opacity: animProgress,
-          textShadow: `0 0 ${20 + (1 - animProgress) * 30}px ${color}, 0 2px 20px rgba(0,0,0,0.5)`,
-        };
-      case 'split-reveal':
-        return {
-          ...textStyle,
-          opacity: animProgress,
-          letterSpacing: `${(1 - animProgress) * 20}px`,
-        };
-      default:
-        return {
-          ...textStyle,
-          opacity: animProgress,
-        };
-    }
+  // Tagline style (static, always visible)
+  const taglineStyle: React.CSSProperties = {
+    fontFamily,
+    fontSize: taglineSize,
+    fontWeight: 400,
+    color,
+    textAlign: 'center',
+    lineHeight: 1.3,
+    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+    opacity: 0.85,
   };
 
   return (
     <div style={getPositionStyle()}>
-      <span style={getAnimatedStyle()}>{text}</span>
+      {headline && <div style={headlineStyle}>{headline}</div>}
+      {tagline && <div style={taglineStyle}>{tagline}</div>}
     </div>
   );
 };

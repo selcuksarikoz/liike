@@ -1,6 +1,6 @@
 import { Type, Palette, AlignCenter, Sparkles, X } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
-import type { TextOverlay } from '../store/renderStore';
+import { loadGoogleFont } from '../hooks/useFontLoader';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
 import { SliderControl } from './ui/SliderControl';
 import { TEXT_ANIMATIONS } from '../constants/textAnimations';
@@ -43,13 +43,28 @@ export const TextEditor = () => {
             <X className="w-4 h-4" />
           </button>
         </div>
-        <textarea
-          value={textOverlay.text}
-          onChange={(e) => setTextOverlay({ text: e.target.value })}
-          placeholder="Enter your text..."
-          className="w-full px-3 py-2 rounded-lg bg-ui-panel/50 border border-ui-border focus:border-accent focus:outline-none text-white text-sm resize-none"
-          rows={3}
-        />
+        <div className="space-y-2">
+          <div>
+            <label className="text-[10px] text-ui-muted mb-1 block">Headline (animated)</label>
+            <input
+              type="text"
+              value={textOverlay.headline}
+              onChange={(e) => setTextOverlay({ headline: e.target.value })}
+              placeholder="Main headline..."
+              className="w-full px-3 py-2 rounded-lg bg-ui-panel/50 border border-ui-border focus:border-accent focus:outline-none text-white text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] text-ui-muted mb-1 block">Tagline (static)</label>
+            <input
+              type="text"
+              value={textOverlay.tagline}
+              onChange={(e) => setTextOverlay({ tagline: e.target.value })}
+              placeholder="Subtitle or tagline..."
+              className="w-full px-3 py-2 rounded-lg bg-ui-panel/50 border border-ui-border focus:border-accent focus:outline-none text-white text-sm"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Font & Style */}
@@ -61,14 +76,41 @@ export const TextEditor = () => {
             <span className="text-[10px] text-ui-muted">Font</span>
             <select
               value={textOverlay.fontFamily}
-              onChange={(e) => setTextOverlay({ fontFamily: e.target.value })}
-              className="px-2 py-1 rounded bg-ui-panel/50 border border-ui-border text-white text-xs focus:outline-none focus:border-accent"
+              onChange={(e) => {
+                const font = e.target.value;
+                loadGoogleFont(font);
+                setTextOverlay({ fontFamily: font });
+              }}
+              className="px-2 py-1 rounded bg-ui-panel/50 border border-ui-border text-white text-xs focus:outline-none focus:border-accent max-w-[140px]"
             >
-              {FONT_OPTIONS.map((font) => (
-                <option key={font.value} value={font.value}>
-                  {font.label}
-                </option>
-              ))}
+              <optgroup label="Sans-Serif">
+                {FONT_OPTIONS.filter((f) => f.category === 'sans').map((font) => (
+                  <option key={font.value} value={font.value}>
+                    {font.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Serif">
+                {FONT_OPTIONS.filter((f) => f.category === 'serif').map((font) => (
+                  <option key={font.value} value={font.value}>
+                    {font.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Display">
+                {FONT_OPTIONS.filter((f) => f.category === 'display').map((font) => (
+                  <option key={font.value} value={font.value}>
+                    {font.label}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Monospace">
+                {FONT_OPTIONS.filter((f) => f.category === 'mono').map((font) => (
+                  <option key={font.value} value={font.value}>
+                    {font.label}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 
@@ -88,15 +130,26 @@ export const TextEditor = () => {
             </div>
           </div>
 
-          {/* Font Size */}
+          {/* Headline Font Size */}
           <SliderControl
-            label="Size"
+            label="Headline Size"
             icon={<Type className="w-3.5 h-3.5" />}
             value={textOverlay.fontSize}
-            min={12}
+            min={24}
             max={120}
             unit="px"
             onChange={(v) => setTextOverlay({ fontSize: v })}
+          />
+
+          {/* Tagline Font Size */}
+          <SliderControl
+            label="Tagline Size"
+            icon={<Type className="w-3.5 h-3.5" />}
+            value={textOverlay.taglineFontSize}
+            min={12}
+            max={48}
+            unit="px"
+            onChange={(v) => setTextOverlay({ taglineFontSize: v })}
           />
 
           {/* Font Weight */}
@@ -139,8 +192,8 @@ export const TextEditor = () => {
       {/* Animation */}
       <div>
         <SidebarHeader icon={<Sparkles className="w-4 h-4" />}>Animation</SidebarHeader>
-        <div className="grid grid-cols-3 gap-2">
-          {TEXT_ANIMATIONS.slice(0, 9).map((anim) => {
+        <div className="grid grid-cols-4 gap-2">
+          {TEXT_ANIMATIONS.map((anim) => {
             const isActive = textOverlay.animation === anim.id;
             return (
               <button
@@ -149,7 +202,6 @@ export const TextEditor = () => {
                 className={`flex flex-col items-center gap-1 py-2 rounded-lg border transition-all ${
                   isActive ? 'bg-accent/20 border-accent' : 'border-ui-border hover:border-ui-muted'
                 }`}
-                title={anim.description}
               >
                 <span className="text-base">{anim.icon}</span>
                 <span

@@ -14,11 +14,8 @@ type Props = {
 
 export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
   const [activeTab, setActiveTab] = useState<FrameTab>('styles');
-  const {
-    stylePreset, setStylePreset,
-    frameMode, setFrameMode,
-    deviceType, setDeviceType,
-  } = useRenderStore();
+  const { stylePreset, setStylePreset, frameMode, setFrameMode, deviceType, setDeviceType } =
+    useRenderStore();
 
   const handleTabChange = (tab: FrameTab) => {
     setActiveTab(tab);
@@ -32,7 +29,7 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
 
   // Sync active tab with current store state on open or change
   // Effectively when modal opens, if frameMode is device, correct tab should be active.
-  // But we can just rely on `activeTab` state for UI navigation, 
+  // But we can just rely on `activeTab` state for UI navigation,
   // and set store state immediately on click.
 
   const tabs = [
@@ -46,7 +43,7 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Frame Style & Devices" position="center">
-      <div className="flex flex-col h-[500px]">
+      <div className="flex flex-col h-[600px]">
         {/* Tabs */}
         <div className="flex border-b border-ui-border overflow-x-auto no-scrollbar">
           {tabs.map((tab) => {
@@ -68,42 +65,45 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
           })}
         </div>
 
-          {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
-          
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4">
           {/* Styles Tab */}
           {activeTab === 'styles' && (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-2">
               {STYLE_PRESETS.map((preset) => {
                 const isActive = stylePreset === preset.id && frameMode === 'basic';
                 return (
                   <button
                     key={preset.id}
                     onClick={() => {
-                        setStylePreset(preset.id as any);
-                        setFrameMode('basic');
+                      setStylePreset(preset.id as any);
+                      setFrameMode('basic');
                     }}
-                    className={`group relative aspect-square rounded-xl border overflow-hidden transition-all text-left ${
-                      isActive 
-                         ? 'border-accent ring-2 ring-accent/30 scale-105 shadow-xl' 
-                         : 'border-ui-border hover:border-accent/50 hover:scale-105'
+                    className={`group relative aspect-square rounded-lg border overflow-hidden transition-all text-left ${
+                      isActive
+                        ? 'border-accent ring-1 ring-accent/30'
+                        : 'border-ui-border hover:border-accent/50'
                     }`}
                   >
                     <div
-                      className="absolute inset-0 flex items-center justify-center p-3"
+                      className="absolute inset-0 flex items-center justify-center p-2"
                       style={{
-                        background: preset.css.background || 'linear-gradient(135deg, var(--color-ui-panel) 0%, var(--color-ui-bg) 100%)',
+                        background:
+                          preset.css.background ||
+                          'linear-gradient(135deg, var(--color-ui-panel) 0%, var(--color-ui-bg) 100%)',
                       }}
                     >
                       <div
-                        className="w-full h-2/3 rounded-lg bg-white/80 transition-transform group-hover:scale-110"
+                        className="w-full h-1/2 rounded bg-white/80"
                         style={{ boxShadow: preset.css.boxShadow, border: preset.css.border }}
                       />
                     </div>
-                    <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                        <span className={`text-[10px] font-medium block truncate ${isActive ? 'text-accent' : 'text-white'}`}>
+                    <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+                      <span
+                        className={`text-[9px] font-medium block truncate ${isActive ? 'text-accent' : 'text-white'}`}
+                      >
                         {preset.label}
-                        </span>
+                      </span>
                     </div>
                   </button>
                 );
@@ -113,52 +113,54 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
 
           {/* Device Tabs */}
           {activeTab !== 'styles' && (
-             <div className="grid grid-cols-3 gap-3">
-                {DEVICES.filter(d => {
-                   if (activeTab === 'iphone') return d.type === 'phone';
-                   if (activeTab === 'macbook') return d.type === 'laptop';
-                   if (activeTab === 'ipad') return d.type === 'tablet';
-                   if (activeTab === 'imac') return d.type === 'desktop';
-                   if (activeTab === 'watch') return d.type === 'watch';
-                   return false;
-                }).map((device) => {
-                   const isActive = deviceType === device.id && frameMode === 'device';
-                   return (
-                      <button
-                         key={device.id}
-                         onClick={() => {
-                            setFrameMode('device');
-                            setDeviceType(device.id); // Set specific device ID
-                         }}
-                         className={`group relative aspect-[3/4] rounded-xl border overflow-hidden transition-all bg-ui-panel/30 ${
-                           isActive 
-                              ? 'border-accent ring-2 ring-accent/30 scale-105 shadow-xl' 
-                              : 'border-ui-border hover:border-accent/50 hover:scale-105'
-                         }`}
+            <div className="grid grid-cols-4 gap-2">
+              {DEVICES.filter((d) => {
+                if (activeTab === 'iphone') return d.type === 'phone';
+                if (activeTab === 'macbook') return d.type === 'laptop';
+                if (activeTab === 'ipad') return d.type === 'tablet';
+                if (activeTab === 'imac') return d.type === 'desktop';
+                if (activeTab === 'watch') return d.type === 'watch';
+                return false;
+              }).map((device) => {
+                const isActive = deviceType === device.id && frameMode === 'device';
+                return (
+                  <button
+                    key={device.id}
+                    onClick={() => {
+                      setFrameMode('device');
+                      setDeviceType(device.id);
+                    }}
+                    className={`group relative aspect-[3/4] rounded-lg border overflow-hidden transition-all bg-ui-panel/30 ${
+                      isActive
+                        ? 'border-accent ring-1 ring-accent/30'
+                        : 'border-ui-border hover:border-accent/50'
+                    }`}
+                  >
+                    <div className="absolute inset-0 p-2 flex items-center justify-center">
+                      <img
+                        src={device.image}
+                        alt={device.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                      <span
+                        className={`text-[9px] font-medium leading-tight block text-center ${isActive ? 'text-accent' : 'text-white'}`}
                       >
-                         <div className="absolute inset-0 p-4 flex items-center justify-center">
-                            <img 
-                               src={device.image} 
-                               alt={device.name}
-                               className="w-full h-full object-contain filter drop-shadow-lg transition-transform group-hover:scale-110"
-                            />
-                         </div>
-                         <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
-                            <span className={`text-[10px] font-medium leading-tight block text-center ${isActive ? 'text-accent' : 'text-white'}`}>
-                               {device.name}
-                            </span>
-                         </div>
-                      </button>
-                   );
-                })}
-             </div>
+                        {device.name}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-ui-border flex justify-between items-center bg-ui-panel/30">
           <div className="text-[10px] text-ui-muted">
-             {frameMode === 'basic' ? `Style: ${stylePreset}` : `Device: ${deviceType}`}
+            {frameMode === 'basic' ? `Style: ${stylePreset}` : `Device: ${deviceType}`}
           </div>
           <button
             onClick={onClose}

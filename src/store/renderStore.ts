@@ -31,14 +31,18 @@ export type MediaAsset = {
 
 export type TextOverlay = {
   enabled: boolean;
-  text: string;
+  text: string; // combined text for backwards compat
+  headline: string;
+  tagline: string;
   fontFamily: string;
-  fontSize: number; // in px
+  fontSize: number; // headline size in px
+  taglineFontSize: number;
   fontWeight: number;
   color: string;
   position: 'top' | 'center' | 'bottom';
   animation: string; // text animation type
   layout: string; // text-device layout type
+  deviceOffset: number; // negative = overflow bottom
 };
 
 type RenderStore = RenderSettings & {
@@ -160,14 +164,18 @@ export const useRenderStore = create<RenderStore>((set) => ({
   // Text Overlay defaults
   textOverlay: {
     enabled: false,
-    text: 'Your Text Here',
-    fontFamily: 'Inter, system-ui, sans-serif',
-    fontSize: 48,
+    text: '',
+    headline: 'Your Headline',
+    tagline: 'Your tagline here',
+    fontFamily: 'Inter',
+    fontSize: 64,
+    taglineFontSize: 24,
     fontWeight: 700,
     color: '#ffffff',
     position: 'top',
-    animation: 'none',
+    animation: 'blur',
     layout: 'text-top-device-bottom',
+    deviceOffset: -20,
   },
 
   // Setters
