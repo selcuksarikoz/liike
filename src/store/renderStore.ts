@@ -250,7 +250,18 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setBackgroundImage: (backgroundImage) => set({ backgroundImage, backgroundType: 'image' }),
   setMediaAssets: (mediaAssets) => set({ mediaAssets }),
   setCanvasSize: (width, height) => set({ canvasWidth: width, canvasHeight: height }),
-  setDurationMs: (durationMs) => set({ durationMs }),
+  setDurationMs: (durationMs) => set((state) => {
+    // If there's a video, never let duration go below video duration
+    const maxVideoDuration = state.mediaAssets.reduce((max, asset) => {
+      if (asset?.type === 'video' && asset.duration) {
+        return Math.max(max, asset.duration);
+      }
+      return max;
+    }, 0);
+    // Use whichever is longer: requested duration or video duration
+    const effectiveDuration = Math.max(durationMs, maxVideoDuration);
+    return { durationMs: effectiveDuration };
+  }),
   setFps: (fps) => set({ fps }),
   setRenderQuality: (renderQuality) => set({ renderQuality }),
   setOutputName: (outputName) => set({ outputName }),
@@ -268,7 +279,24 @@ export const useRenderStore = create<RenderStore>((set) => ({
     return set({ mediaPosition: position, mediaOffsetX: offsets.offsetX, mediaOffsetY: offsets.offsetY });
   },
   setAnimationSpeed: (animationSpeed) => set({ animationSpeed }),
-  applyPreset: (preset) => set((state) => ({ ...state, ...preset })),
+  applyPreset: (preset) => set((state) => {
+    // If preset has durationMs, respect video duration
+    let effectiveDuration = preset.durationMs;
+    if (effectiveDuration !== undefined) {
+      const maxVideoDuration = state.mediaAssets.reduce((max, asset) => {
+        if (asset?.type === 'video' && asset.duration) {
+          return Math.max(max, asset.duration);
+        }
+        return max;
+      }, 0);
+      effectiveDuration = Math.max(effectiveDuration, maxVideoDuration);
+    }
+    return {
+      ...state,
+      ...preset,
+      ...(effectiveDuration !== undefined ? { durationMs: effectiveDuration } : {})
+    };
+  }),
   setRenderStatus: (status) => set((state) => ({ renderStatus: { ...state.renderStatus, ...status } })),
   resetRenderStatus: () => set({ renderStatus: initialRenderStatus }),
 

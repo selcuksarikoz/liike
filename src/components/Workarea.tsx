@@ -164,21 +164,27 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     if (file) {
       const url = URL.createObjectURL(file);
       const isVideo = file.type.startsWith('video/');
-      const newAssets = [...mediaAssets];
-      newAssets[activeMediaIndex] = { url, type: isVideo ? 'video' : 'image' };
-      setMediaAssets(newAssets);
 
-      // If video, update duration to match video length
       if (isVideo) {
+        // For video, wait for metadata to get duration before setting asset
         const tempVideo = document.createElement('video');
         tempVideo.preload = 'metadata';
         tempVideo.onloadedmetadata = () => {
-          const duration = tempVideo.duration * 1000;
+          const duration = Math.round(tempVideo.duration * 1000);
           if (duration > 0 && isFinite(duration)) {
-            setDurationMs(Math.round(duration));
+            // Set asset WITH duration so it's available for updateRenderDuration
+            const newAssets = [...mediaAssets];
+            newAssets[activeMediaIndex] = { url, type: 'video', duration };
+            setMediaAssets(newAssets);
+            setDurationMs(duration);
           }
         };
         tempVideo.src = url;
+      } else {
+        // For images, set immediately
+        const newAssets = [...mediaAssets];
+        newAssets[activeMediaIndex] = { url, type: 'image' };
+        setMediaAssets(newAssets);
       }
     }
   };

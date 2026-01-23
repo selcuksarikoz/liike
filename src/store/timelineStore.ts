@@ -117,6 +117,7 @@ const defaultTracks: TimelineTrack[] = [
 const DEFAULT_DURATION_MS = 5000;
 
 // Helper to update render duration based on max clip end time
+// Note: setDurationMs in renderStore already respects video duration
 const updateRenderDuration = (tracks: TimelineTrack[]) => {
   let maxEndTime = 0;
   tracks.forEach((track) => {
@@ -128,9 +129,21 @@ const updateRenderDuration = (tracks: TimelineTrack[]) => {
     });
   });
 
-  // Use clip duration if clips exist, otherwise reset to default
-  const newDuration = maxEndTime > 0 ? maxEndTime : DEFAULT_DURATION_MS;
-  useRenderStore.getState().setDurationMs(newDuration);
+  // Get video duration from mediaAssets
+  const { mediaAssets } = useRenderStore.getState();
+  const maxVideoDuration = mediaAssets.reduce((max, asset) => {
+    if (asset?.type === 'video' && asset.duration) {
+      return Math.max(max, asset.duration);
+    }
+    return max;
+  }, 0);
+
+  // Use clip duration, video duration, or default - whichever is longest
+  const clipDuration = maxEndTime > 0 ? maxEndTime : DEFAULT_DURATION_MS;
+  const newDuration = Math.max(clipDuration, maxVideoDuration);
+
+  // Directly set to avoid any potential issues with setDurationMs
+  useRenderStore.setState({ durationMs: newDuration });
 };
 
 export const useTimelineStore = create<TimelineStore>((set, get) => ({
