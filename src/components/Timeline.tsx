@@ -104,7 +104,7 @@ const TimelineClipComponent = ({
 
   return (
     <div
-      className={`absolute top-1 bottom-1 rounded-lg cursor-pointer group ${
+      className={`absolute top-1 bottom-1 rounded-lg cursor-pointer group translate-x-1.5 ${
         isSelected ? 'ring-2 ring-accent ring-offset-1 ring-offset-ui-panel z-20' : 'z-10'
       }`}
       style={{
@@ -124,12 +124,14 @@ const TimelineClipComponent = ({
     >
       {/* Resize handle left */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/20 rounded-l-lg"
+        className="absolute left-0 -translate-x-1/2 top-0 bottom-0 w-3 cursor-ew-resize group/resize-left rounded-l-lg"
         onMouseDown={(e) => {
           e.stopPropagation();
           onDragStart(e, 'resize-start');
         }}
-      />
+      >
+        <div className="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-zinc-800/90 transition-colors" />
+      </div>
 
       {/* Delete button - visible when selected */}
       {isSelected && (
@@ -146,12 +148,14 @@ const TimelineClipComponent = ({
 
       {/* Resize handle right */}
       <div
-        className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-white/20 rounded-r-lg"
+        className="absolute right-0 translate-x-1/2 top-0 bottom-0 w-3 cursor-ew-resize group/resize-right rounded-r-lg"
         onMouseDown={(e) => {
           e.stopPropagation();
           onDragStart(e, 'resize-end');
         }}
-      />
+      >
+        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-zinc-800/90 transition-colors" />
+      </div>
 
       {/* Duration tooltip on hover */}
       <div className="absolute top-0.5 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[8px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
@@ -204,7 +208,9 @@ const AnimationPresetItem = ({
       {/* Glow effect on hover */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-xl"
-        style={{ background: `radial-gradient(circle at center, ${preset.color}, transparent 70%)` }}
+        style={{
+          background: `radial-gradient(circle at center, ${preset.color}, transparent 70%)`,
+        }}
       />
 
       <div
@@ -294,7 +300,16 @@ export const Timeline = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlaying, selectedClipId, playheadMs, durationMs, setIsPlaying, removeClip, selectClip, setPlayhead]);
+  }, [
+    isPlaying,
+    selectedClipId,
+    playheadMs,
+    durationMs,
+    setIsPlaying,
+    removeClip,
+    selectClip,
+    setPlayhead,
+  ]);
 
   const totalWidth = (durationMs / MS_PER_SECOND) * PIXELS_PER_SECOND * zoom;
   const timeMarkers = Array.from(

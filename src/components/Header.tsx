@@ -277,16 +277,6 @@ export const Header = ({ onRender }: HeaderProps) => {
               </p>
             </div>
 
-            {/* Cancel Button - Since cancel function is in parent, we might need to dispatch an event or use store 
-                  However, Header receives onRender. Does it receive cancel? No.
-                  We need to trigger cancellation via store if we can't access the hook handle.
-                  
-                  Earlier I decided to add cancelRender to store or similar.
-                  Actually, if 'renderStatus.isRendering' is true, the loop is running.
-                  If I add 'abortRequest' to store, the loop can check it.
-                  
-                  Let's modify useRenderStore to add 'abortRender' action, and useRenderLoop to watch it.
-              */}
             <button
               onClick={() => {
                 // Dispatch abort event that useRenderLoop listens to, OR

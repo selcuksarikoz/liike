@@ -113,6 +113,9 @@ const defaultTracks: TimelineTrack[] = [
   },
 ];
 
+// Default minimum duration (5 seconds)
+const DEFAULT_DURATION_MS = 5000;
+
 // Helper to update render duration based on max clip end time
 const updateRenderDuration = (tracks: TimelineTrack[]) => {
   let maxEndTime = 0;
@@ -125,10 +128,9 @@ const updateRenderDuration = (tracks: TimelineTrack[]) => {
     });
   });
 
-  // Use clip duration if present, otherwise keep current duration
-  if (maxEndTime > 0) {
-    useRenderStore.getState().setDurationMs(maxEndTime);
-  }
+  // Use clip duration if clips exist, otherwise reset to default
+  const newDuration = maxEndTime > 0 ? maxEndTime : DEFAULT_DURATION_MS;
+  useRenderStore.getState().setDurationMs(newDuration);
 };
 
 export const useTimelineStore = create<TimelineStore>((set, get) => ({
