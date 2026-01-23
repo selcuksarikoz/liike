@@ -156,6 +156,12 @@ export const CameraStylePanel = () => {
         />
       </div>
 
+      {/* Creative Angles */}
+      <CreativeAngles />
+
+      {/* Layout Picker */}
+      <LayoutPicker />
+
       {/* 3D Rotation */}
       <div className="style-section group">
         <SidebarHeader
@@ -339,12 +345,6 @@ export const CameraStylePanel = () => {
           </ControlGroup>
         )}
       </div>
-
-      {/* Creative Angles */}
-      <CreativeAngles />
-
-      {/* Layout Picker */}
-      <LayoutPicker />
     </div>
   );
 };
