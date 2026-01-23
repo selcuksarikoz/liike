@@ -1,4 +1,4 @@
-import { CircleDot, Square } from 'lucide-react';
+import { CircleDot, Dice4, Palette, Square, TabletSmartphone } from 'lucide-react';
 import { getFrameLabel } from '../../constants/styles';
 import { DropdownTrigger } from '../ui/Dropdown';
 import { ControlGroup, SidebarHeader, SidebarSection } from '../ui/SidebarPrimitives';
@@ -33,7 +33,7 @@ export const CanvasTab = ({
 }: CanvasTabProps) => (
   <div className="flex flex-col">
     <SidebarSection padded>
-      <SidebarHeader>Canvas Size</SidebarHeader>
+      <SidebarHeader icon={<Dice4 className="w-4 h-4" />}>Canvas Size</SidebarHeader>
       <DropdownTrigger
         icon="crop"
         label={getFrameLabel(canvasWidth, canvasHeight)}
@@ -45,7 +45,7 @@ export const CanvasTab = ({
     <div className="h-px bg-ui-border mx-4" />
 
     <SidebarSection padded>
-      <SidebarHeader>Canvas Style</SidebarHeader>
+      <SidebarHeader icon={<Palette className="w-4 h-4" />}>Canvas Style</SidebarHeader>
       <ControlGroup>
         <SliderControl
           label="Corner Radius"
@@ -69,7 +69,9 @@ export const CanvasTab = ({
           <div className="flex items-center justify-between pt-1">
             <label className="text-[10px] text-ui-muted">Border Color</label>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-ui-text font-mono uppercase">{canvasBorderColor}</span>
+              <span className="text-[10px] text-ui-text font-mono uppercase">
+                {canvasBorderColor}
+              </span>
               <input
                 type="color"
                 value={canvasBorderColor}
@@ -85,7 +87,9 @@ export const CanvasTab = ({
     <div className="h-px bg-ui-border mx-4" />
 
     <SidebarSection padded>
-      <SidebarHeader>Media Aspect Ratio</SidebarHeader>
+      <SidebarHeader icon={<TabletSmartphone className="w-4 h-4" />}>
+        Media Aspect Ratio
+      </SidebarHeader>
       <DropdownTrigger
         icon="aspect_ratio"
         label={imageAspectRatio === 'free' ? 'Free' : imageAspectRatio}

@@ -169,7 +169,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   mediaAssets: [],
   canvasWidth: 1080,
   canvasHeight: 1080,
-  canvasCornerRadius: 20,
+  canvasCornerRadius: 0,
   canvasBorderWidth: 0,
   canvasBorderColor: '#ffffff',
   deviceScale: 1,
