@@ -4,16 +4,14 @@ import {
   ArrowLeftRight,
   RotateCw,
   Maximize2,
-  Palette,
-  CloudFog,
-  Contrast,
   RotateCcw,
   Box,
-  Move3d,
   Square,
+  Move,
+  Palette,
 } from 'lucide-react';
+import { ShadowGlowPanel } from './ShadowGlowPanel';
 import { useRenderStore } from '../store/renderStore';
-import { SHADOW_TYPES } from '../constants/styles';
 import { DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
 import { FrameStyleModal } from './modals/FrameStyleModal';
 
@@ -23,7 +21,6 @@ import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
 import { PositionPicker } from './ui/PositionPicker';
 import { LayoutPicker } from './LayoutPicker';
 import { CreativeAngles } from './CreativeAngles';
-import { Move } from 'lucide-react';
 
 export const CameraStylePanel = () => {
   const {
@@ -38,18 +35,6 @@ export const CameraStylePanel = () => {
     deviceScale,
     setDeviceScale,
     stylePreset,
-    shadowType,
-    setShadowType,
-    shadowOpacity,
-    setShadowOpacity,
-    shadowBlur,
-    setShadowBlur,
-    shadowColor,
-    setShadowColor,
-    setShadowSpread,
-    setShadowX,
-    setShadowY,
-
     frameMode,
     deviceType,
     textOverlay,
@@ -113,10 +98,6 @@ export const CameraStylePanel = () => {
       case 'transform':
         setDeviceScale(1);
         setCornerRadius(12);
-        break;
-      case 'shadow':
-        setShadowType('soft');
-        setShadowOpacity(40);
         break;
     }
   };
@@ -224,129 +205,7 @@ export const CameraStylePanel = () => {
       </div>
 
       {/* Shadow & Glow */}
-      <div className="style-section group">
-        <SidebarHeader
-          icon={<CloudFog className="w-4 h-4" />}
-          action={<ResetButton section="shadow" />}
-        >
-          Shadow & Glow
-        </SidebarHeader>
-
-        {/* Shadow Presets */}
-        <div className="grid grid-cols-5 gap-2 mb-4">
-          {SHADOW_TYPES.map((type) => {
-            const isActive = shadowType === type.id;
-            return (
-              <button
-                key={type.id}
-                onClick={() => {
-                  setShadowType(type.id);
-                  // Apply preset values
-                  if (type.id === 'none') {
-                    setShadowOpacity(0);
-                  } else if (type.id === 'soft') {
-                    setShadowColor('#000000');
-                    setShadowOpacity(40);
-                    setShadowBlur(30);
-                    setShadowSpread(0);
-                    setShadowX(0);
-                    setShadowY(20);
-                  } else if (type.id === 'float') {
-                    setShadowColor('#000000');
-                    setShadowOpacity(50);
-                    setShadowBlur(50);
-                    setShadowSpread(-5);
-                    setShadowX(0);
-                    setShadowY(30);
-                  } else if (type.id === 'dream') {
-                    setShadowColor('#4f46e5');
-                    setShadowOpacity(30);
-                    setShadowBlur(60);
-                    setShadowSpread(0);
-                    setShadowX(0);
-                    setShadowY(25);
-                  } else if (type.id === 'glow') {
-                    setShadowColor('#ffffff');
-                    setShadowOpacity(50);
-                    setShadowBlur(40);
-                    setShadowSpread(5);
-                    setShadowX(0);
-                    setShadowY(0);
-                  }
-                }}
-                className={`relative flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
-                  isActive
-                    ? 'bg-accent/10 border-accent'
-                    : 'border-ui-border hover:border-ui-muted bg-ui-panel/30'
-                }`}
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <div
-                    className="w-4 h-4 rounded-full bg-white/90 transition-transform"
-                    style={{
-                      filter:
-                        type.id === 'none'
-                          ? 'none'
-                          : type.id === 'soft'
-                            ? 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))'
-                            : type.id === 'float'
-                              ? 'drop-shadow(0 10px 25px rgba(0,0,0,0.6))'
-                              : type.id === 'dream'
-                                ? 'drop-shadow(0 10px 20px rgba(80,80,255,0.4))'
-                                : 'drop-shadow(0 0 10px rgba(255,255,255,0.8))',
-                    }}
-                  />
-                </div>
-                <span
-                  className={`text-[7px] font-medium transition-colors ${isActive ? 'text-accent' : 'text-ui-muted'}`}
-                >
-                  {type.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Manual Controls */}
-        {shadowType !== 'none' && (
-          <ControlGroup>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <Palette className="w-3.5 h-3.5 text-ui-muted" />
-                <span className="text-[10px] text-ui-muted">Color</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={shadowColor}
-                  onChange={(e) => setShadowColor(e.target.value)}
-                  className="w-5 h-5 rounded cursor-pointer border-none p-0 bg-transparent"
-                />
-                <span className="text-[10px] font-mono text-accent uppercase">{shadowColor}</span>
-              </div>
-            </div>
-
-            <SliderControl
-              label="Opacity"
-              icon={<Contrast className="w-3.5 h-3.5" />}
-              value={shadowOpacity}
-              min={0}
-              max={100}
-              unit="%"
-              onChange={setShadowOpacity}
-            />
-            <SliderControl
-              label="Blur"
-              icon={<CloudFog className="w-3.5 h-3.5" />}
-              value={shadowBlur}
-              min={0}
-              max={200}
-              unit="px"
-              onChange={setShadowBlur}
-            />
-          </ControlGroup>
-        )}
-      </div>
+      <ShadowGlowPanel />
     </div>
   );
 };
