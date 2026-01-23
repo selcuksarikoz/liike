@@ -5,8 +5,8 @@ import { open } from '@tauri-apps/plugin-shell';
 import { useRenderStore } from '../store/renderStore';
 import type { ExportFormat } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { 
-  getExportFolder, 
+import {
+  getExportFolder,
   getVideoFilename,
   getFileExtension,
   seekTimeline,
@@ -14,6 +14,7 @@ import {
   pauseAndSeekVideos,
   waitForRender,
   preloadResources,
+  preloadFonts,
   captureFrame,
   arrayToBase64,
   nodeToSvgDataUrl,
@@ -266,9 +267,10 @@ export const useStreamingRender = () => {
         pauseAndSeekAnimations(node, 0);
         pauseAndSeekVideos(node, 0);
 
-        // Preload resources (ensure images are cached before detailed capture)
+        // Preload resources and fonts (ensure images and fonts are cached before capture)
         await preloadResources(node);
-        
+        await preloadFonts(node);
+
         await waitForRender(50);
 
         // Capture and stream each frame
@@ -289,7 +291,9 @@ export const useStreamingRender = () => {
           
           if (abortController.signal.aborted) return;
 
-          await waitForRender(8); // Minimal wait for speed
+          // Wait for React to re-render and browser to compute styles
+          // First frame needs more time to ensure animation state is correct
+          await waitForRender(frameIndex === 0 ? 32 : 8);
 
           if (abortController.signal.aborted) return;
 

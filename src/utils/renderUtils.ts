@@ -74,16 +74,35 @@ export const getFileExtension = (format: ExportFormat): string => {
 // Image Cache: URL -> DataURL
 const imageCache = new Map<string, string>();
 
+// Animation-related CSS properties that should be preserved from inline styles
+const ANIMATION_PROPERTIES = [
+  'opacity',
+  'transform',
+  'filter',
+  'clip-path',
+  'visibility',
+  'will-change',
+];
+
 // Helper: Inline computed styles from source to clone
+// Preserves inline animation styles (opacity, transform, filter) set by React
 const inlineStyles = async (source: HTMLElement, clone: HTMLElement) => {
   const sourceStyles = window.getComputedStyle(source);
-  if (source.style.cssText) {
-      clone.style.cssText = source.style.cssText;
-  }
+
+  // Start with computed styles
   const cssText = Array.from(sourceStyles).reduce((css, prop) => {
     return `${css}${prop}:${sourceStyles.getPropertyValue(prop)};`;
   }, '');
   clone.style.cssText = cssText;
+
+  // Override with explicit inline styles for animation properties
+  // These are set by React for text/device animations and must be preserved
+  for (const prop of ANIMATION_PROPERTIES) {
+    const inlineValue = source.style.getPropertyValue(prop);
+    if (inlineValue) {
+      clone.style.setProperty(prop, inlineValue);
+    }
+  }
 
   // Recursively process children
   const sourceChildren = source.children;
@@ -237,6 +256,27 @@ const extractUsedFonts = (node: HTMLElement): Set<string> => {
   return fonts;
 };
 
+// Font cache for embedded CSS (avoids re-fetching during frame capture)
+const fontCssCache = new Map<string, string>();
+
+// Preload fonts into the font cache
+export const preloadFonts = async (node: HTMLElement): Promise<void> => {
+  const usedFonts = extractUsedFonts(node);
+  console.log('[StreamRender] Preloading fonts:', Array.from(usedFonts));
+
+  for (const fontName of usedFonts) {
+    if (fontCssCache.has(fontName)) continue;
+    try {
+      const fontCSS = await getEmbeddedFontCSS(fontName);
+      if (fontCSS) {
+        fontCssCache.set(fontName, fontCSS);
+      }
+    } catch (e) {
+      console.warn('[StreamRender] Font preload failed:', fontName, e);
+    }
+  }
+};
+
 // Helper: Convert DOM node to SVG data URL using foreignObject
 export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height: number): Promise<string> => {
   // Clone the node
@@ -257,30 +297,38 @@ export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height:
   // Convert videos to static images (frame capture)
   await convertVideosToImages(node, clone);
 
-  // Extract and embed fonts used in the node
+  // Get cached font CSS (fonts should be preloaded before capture starts)
   const usedFonts = extractUsedFonts(node);
   let fontStyles = '';
   for (const fontName of usedFonts) {
-    try {
-      const fontCSS = await getEmbeddedFontCSS(fontName);
-      fontStyles += fontCSS;
-    } catch {
-      // Font not available locally, skip
+    const cachedCSS = fontCssCache.get(fontName);
+    if (cachedCSS) {
+      fontStyles += cachedCSS;
+    } else {
+      // Fallback: try to fetch if not in cache
+      try {
+        const fontCSS = await getEmbeddedFontCSS(fontName);
+        if (fontCSS) {
+          fontCssCache.set(fontName, fontCSS);
+          fontStyles += fontCSS;
+        }
+      } catch {
+        // Font not available locally, skip
+      }
     }
   }
 
   const serializer = new XMLSerializer();
   const nodeString = serializer.serializeToString(clone);
 
+  // Embed fonts in XHTML style block for better foreignObject compatibility
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-      <defs>
-        <style type="text/css">
-          ${fontStyles}
-        </style>
-      </defs>
       <foreignObject width="100%" height="100%">
         <div xmlns="http://www.w3.org/1999/xhtml">
+          <style type="text/css">
+            ${fontStyles}
+          </style>
           ${nodeString}
         </div>
       </foreignObject>
