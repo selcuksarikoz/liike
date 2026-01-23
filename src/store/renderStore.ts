@@ -29,6 +29,11 @@ export type MediaAsset = {
   type: 'image' | 'video';
 };
 
+export type TextPosition =
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'center-left' | 'center' | 'center-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
 export type TextOverlay = {
   enabled: boolean;
   text: string; // combined text for backwards compat
@@ -39,7 +44,7 @@ export type TextOverlay = {
   taglineFontSize: number;
   fontWeight: number;
   color: string;
-  position: 'top' | 'center' | 'bottom';
+  position: TextPosition;
   animation: string; // text animation type
   layout: string; // text-device layout type
   deviceOffset: number; // negative = overflow bottom
@@ -167,12 +172,12 @@ export const useRenderStore = create<RenderStore>((set) => ({
     text: '',
     headline: 'Your Headline',
     tagline: 'Your tagline here',
-    fontFamily: 'Inter',
+    fontFamily: 'Manrope',
     fontSize: 64,
     taglineFontSize: 24,
     fontWeight: 700,
     color: '#ffffff',
-    position: 'top',
+    position: 'top-center',
     animation: 'blur',
     layout: 'text-top-device-bottom',
     deviceOffset: -20,

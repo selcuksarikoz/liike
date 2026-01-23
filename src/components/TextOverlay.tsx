@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { generateTextKeyframes } from '../constants/textAnimations';
-import { useRenderStore } from '../store/renderStore';
+import { useRenderStore, type TextPosition } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 
 type TextOverlayProps = {
@@ -11,12 +11,22 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
   const { textOverlay, durationMs } = useRenderStore();
   const { playheadMs, isPlaying } = useTimelineStore();
 
-  // Calculate animation progress (0 to 1)
-  const progress = useMemo(() => {
+  // Calculate animation progress for headline (0 to 1)
+  const headlineProgress = useMemo(() => {
     if (!isPlaying && playheadMs === 0) return 1;
-    // Animate in first 40% of duration
-    const animDuration = (durationMs || 3000) * 0.4;
+    // Headline animates in first 30% of duration
+    const animDuration = (durationMs || 3000) * 0.3;
     return Math.min(1, playheadMs / animDuration);
+  }, [playheadMs, durationMs, isPlaying]);
+
+  // Calculate animation progress for tagline (staggered, starts at 15%)
+  const taglineProgress = useMemo(() => {
+    if (!isPlaying && playheadMs === 0) return 1;
+    // Tagline starts after 15% of duration, animates for 30%
+    const staggerDelay = (durationMs || 3000) * 0.15;
+    const animDuration = (durationMs || 3000) * 0.3;
+    const delayedPlayhead = Math.max(0, playheadMs - staggerDelay);
+    return Math.min(1, delayedPlayhead / animDuration);
   }, [playheadMs, durationMs, isPlaying]);
 
   if (!textOverlay.enabled) return null;
@@ -30,7 +40,7 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     fontWeight,
     color,
     animation,
-    layout,
+    position,
   } = textOverlay;
 
   // Scale for preview mode
@@ -39,38 +49,51 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
   const taglineSize = Math.max(10, taglineFontSize * scale);
   const padding = isPreview ? 8 : 40;
 
-  // Position styles based on layout
+  // Get alignment based on 9-position grid
   const getPositionStyle = (): React.CSSProperties => {
-    const baseStyle: React.CSSProperties = {
+    const pos = (position || 'top-center') as TextPosition;
+
+    // Vertical alignment
+    let justifyContent: React.CSSProperties['justifyContent'] = 'center';
+    if (pos.startsWith('top')) {
+      justifyContent = 'flex-start';
+    } else if (pos.startsWith('bottom')) {
+      justifyContent = 'flex-end';
+    }
+
+    // Horizontal alignment
+    let alignItems: React.CSSProperties['alignItems'] = 'center';
+    let textAlign: React.CSSProperties['textAlign'] = 'center';
+
+    if (pos.endsWith('left')) {
+      alignItems = 'flex-start';
+      textAlign = 'left';
+    } else if (pos.endsWith('right')) {
+      alignItems = 'flex-end';
+      textAlign = 'right';
+    }
+
+    return {
       position: 'absolute',
-      left: 0,
-      right: 0,
+      inset: 0,
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent,
+      alignItems,
       padding,
+      paddingTop: pos.startsWith('top') ? padding * 1.5 : padding,
+      paddingBottom: pos.startsWith('bottom') ? padding * 1.5 : padding,
       zIndex: 50,
       pointerEvents: 'none',
       gap: isPreview ? 4 : 12,
+      textAlign,
     };
-
-    switch (layout) {
-      case 'text-top-device-bottom':
-        return { ...baseStyle, top: 0, height: '35%' };
-      case 'text-bottom-device-top':
-        return { ...baseStyle, bottom: 0, height: '35%' };
-      case 'text-center-device-behind':
-      case 'text-overlay':
-        return { ...baseStyle, top: 0, bottom: 0, height: '100%' };
-      default:
-        return { ...baseStyle, top: 0, height: '35%' };
-    }
   };
 
-  // Get animation styles for headline
-  const animationType = (animation || 'fade') as 'fade' | 'slide-up' | 'slide-down' | 'scale' | 'blur';
-  const animStyles = generateTextKeyframes(animationType, progress);
+  // Get animation styles
+  const animationType = (animation || 'blur') as 'fade' | 'slide-up' | 'slide-down' | 'scale' | 'blur';
+  const headlineAnimStyles = generateTextKeyframes(animationType, headlineProgress);
+  const taglineAnimStyles = generateTextKeyframes(animationType, taglineProgress);
 
   // Headline style (animated)
   const headlineStyle: React.CSSProperties = {
@@ -80,14 +103,14 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     color,
     textAlign: 'center',
     lineHeight: 1.1,
-    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-    opacity: animStyles.opacity,
-    transform: animStyles.transform,
-    filter: animStyles.filter,
+    textShadow: '0 2px 4px rgba(0,0,0,0.4)',
+    opacity: headlineAnimStyles.opacity,
+    transform: headlineAnimStyles.transform,
+    filter: headlineAnimStyles.filter,
     willChange: 'opacity, transform, filter',
   };
 
-  // Tagline style (static, always visible)
+  // Tagline style (animated with stagger)
   const taglineStyle: React.CSSProperties = {
     fontFamily,
     fontSize: taglineSize,
@@ -95,8 +118,11 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     color,
     textAlign: 'center',
     lineHeight: 1.3,
-    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-    opacity: 0.85,
+    textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+    opacity: taglineAnimStyles.opacity * 0.9,
+    transform: taglineAnimStyles.transform,
+    filter: taglineAnimStyles.filter,
+    willChange: 'opacity, transform, filter',
   };
 
   return (

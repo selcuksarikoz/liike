@@ -7,6 +7,7 @@ import { useFavorites } from '../store/favoritesStore';
 import type { ImageLayout } from '../store/renderStore';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
+import { loadGoogleFont } from '../hooks/useFontLoader';
 import { AnimatedLayoutCard } from './animations/AnimatedLayoutCard';
 import { TextAnimationCard } from './animations/TextAnimationCard';
 import { TextEditor } from './TextEditor';
@@ -56,6 +57,9 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
 
   const handleApplyPreset = (preset: LayoutPreset, layout: ImageLayout) => {
     setActivePresetId(preset.id);
+
+    // Clear text overlay when selecting a non-text animation
+    setTextOverlay({ enabled: false });
 
     applyPreset({
       rotationX: preset.rotationX,
@@ -300,11 +304,14 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                     isActive={activePresetId === preset.id}
                     onApply={() => {
                       setActivePresetId(preset.id);
+                      // Preload the font
+                      loadGoogleFont('Manrope');
                       setTextOverlay({
                         enabled: true,
                         text: `${preset.headline}\n${preset.tagline}`,
                         headline: preset.headline,
                         tagline: preset.tagline,
+                        fontFamily: 'Manrope',
                         animation: preset.textAnimation,
                         position: preset.textPosition,
                         layout: preset.layout,
