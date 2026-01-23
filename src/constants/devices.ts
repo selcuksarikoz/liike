@@ -24,20 +24,20 @@ const PRESETS = {
     landscape: { top: '5.2%', left: '2.3%', width: '95.4%', height: '89.6%', radius: '45px' },
   },
   ipad: {
-    portrait: { top: '5.5%', left: '5.5%', width: '89%', height: '89%', radius: '16px' },
-    landscape: { top: '5.5%', left: '5.5%', width: '89%', height: '89%', radius: '16px' },
+    portrait: { top: '4%', left: '4%', width: '92%', height: '92%', radius: '16px' },
+    landscape: { top: '4%', left: '4%', width: '92%', height: '92%', radius: '16px' },
   },
   macbook: {
-    // Laptop screens have flat/square corners
-    default: { top: '6%', left: '12.5%', width: '75%', height: '80%', radius: '0px' },
-    pro16: { top: '5.5%', left: '12%', width: '76%', height: '82%', radius: '0px' },
-    pro14: { top: '6%', left: '12%', width: '76%', height: '81%', radius: '0px' },
+    // Laptop screens - measured from actual mockup images
+    default: { top: '3.5%', left: '4.5%', width: '91%', height: '73%', radius: '8px' },
+    pro16: { top: '3.5%', left: '4.5%', width: '91%', height: '73%', radius: '8px' },
+    pro14: { top: '3.5%', left: '4.5%', width: '91%', height: '73%', radius: '8px' },
   },
   imac: {
-    default: { top: '4%', left: '4%', width: '92%', height: '62%', radius: '0px' } // Desktop screens are square
+    default: { top: '4%', left: '3.5%', width: '93%', height: '58%', radius: '0px' }
   },
   watch: {
-    default: { top: '22%', left: '22%', width: '56%', height: '56%', radius: '50%' }
+    default: { top: '27%', left: '18%', width: '64%', height: '32%', radius: '22%' }
   }
 };
 
@@ -293,7 +293,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadBasePortrait,
     width: 540,
     aspectRatio: 3/4,
-    screen: { ...PRESETS.ipad.portrait, top: '7%', left: '7%', width: '86%', height: '86%' } // Thicker bezels
+    screen: { top: '6%', left: '6%', width: '88%', height: '88%', radius: '12px' }
   },
   {
     id: 'ipad-base-l',
@@ -302,7 +302,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadBaseLandscape,
     width: 640,
     aspectRatio: 4/3,
-    screen: { ...PRESETS.ipad.landscape, top: '7%', left: '7%', width: '86%', height: '86%' }
+    screen: { top: '6%', left: '6%', width: '88%', height: '88%', radius: '12px' }
   },
 
   // --- Macs ---
@@ -331,7 +331,7 @@ export const DEVICES: DeviceConfig[] = [
     image: macbookAir13,
     width: 700,
     aspectRatio: 1.6,
-    screen: { ...PRESETS.macbook.default, top: '6.5%', height: '82%' } 
+    screen: { top: '2.5%', left: '4%', width: '92%', height: '76%', radius: '8px' }
   },
   {
     id: 'imac-24',
@@ -349,7 +349,7 @@ export const DEVICES: DeviceConfig[] = [
     image: imac27,
     width: 800,
     aspectRatio: 1.3,
-    screen: { ...PRESETS.imac.default, radius: '0px', height: '65%' } 
+    screen: { top: '4%', left: '3.5%', width: '93%', height: '60%', radius: '0px' }
   },
 
   // --- Watches ---
@@ -359,8 +359,8 @@ export const DEVICES: DeviceConfig[] = [
     type: 'watch',
     image: watchUltra,
     width: 320,
-    aspectRatio: 1,
-    screen: { top: '23%', left: '23%', width: '54%', height: '54%', radius: '15%' }
+    aspectRatio: 0.58,
+    screen: { top: '28%', left: '17%', width: '66%', height: '30%', radius: '18%' }
   },
   {
     id: 'watch-s8',
@@ -368,8 +368,8 @@ export const DEVICES: DeviceConfig[] = [
     type: 'watch',
     image: watchS8,
     width: 300,
-    aspectRatio: 1,
-    screen: {  top: '22%', left: '22%', width: '56%', height: '56%', radius: '20%' }
+    aspectRatio: 0.6,
+    screen: { top: '26%', left: '18%', width: '64%', height: '32%', radius: '22%' }
   },
   {
     id: 'watch-s8-1',
@@ -377,7 +377,7 @@ export const DEVICES: DeviceConfig[] = [
     type: 'watch',
     image: watchS8_1,
     width: 300,
-    aspectRatio: 1,
-    screen: {  top: '22%', left: '22%', width: '56%', height: '56%', radius: '20%' }
+    aspectRatio: 0.6,
+    screen: { top: '26%', left: '18%', width: '64%', height: '32%', radius: '22%' }
   }
 ];

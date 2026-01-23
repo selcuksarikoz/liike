@@ -9,7 +9,7 @@ import {
 import { loadGoogleFont } from './useFontLoader';
 
 export const useAnimationManager = () => {
-  const { applyPreset, setTextOverlay, setDurationMs } = useRenderStore();
+  const { applyPreset, setTextOverlay, setMediaPosition, setDurationMs } = useRenderStore();
   const { addClip, clearTrack, setPlayhead, setIsPlaying } = useTimelineStore();
 
   // Clear all animations and reset to defaults
@@ -17,16 +17,13 @@ export const useAnimationManager = () => {
     setIsPlaying(false);
     setPlayhead(0);
     clearTrack('track-animation');
+    setMediaPosition(DEFAULT_DEVICE_CONFIG.position);
     setTextOverlay({
       enabled: false,
-      devicePosition: DEFAULT_DEVICE_CONFIG.position,
-      deviceScale: DEFAULT_DEVICE_CONFIG.scale,
-      deviceOffsetX: DEFAULT_DEVICE_CONFIG.offsetX,
-      deviceOffsetY: DEFAULT_DEVICE_CONFIG.offsetY,
       deviceAnimateIn: DEFAULT_DEVICE_CONFIG.animateIn,
       deviceAnimation: DEFAULT_DEVICE_CONFIG.animation,
     });
-  }, [clearTrack, setPlayhead, setIsPlaying, setTextOverlay]);
+  }, [clearTrack, setPlayhead, setIsPlaying, setTextOverlay, setMediaPosition]);
 
   // Apply any preset (layout or text)
   const applyAnimation = useCallback(
@@ -42,6 +39,9 @@ export const useAnimationManager = () => {
       // Check if this is a text preset
       const hasText = preset.text?.enabled || preset.category === 'text';
 
+      // Set media position from preset
+      setMediaPosition(deviceConfig.position);
+
       if (hasText && preset.text) {
         // Load font
         loadGoogleFont(preset.text.fontFamily || 'Manrope');
@@ -49,7 +49,7 @@ export const useAnimationManager = () => {
         // Merge text config with defaults
         const textConfig = { ...DEFAULT_TEXT_CONFIG, ...preset.text };
 
-        // Set text overlay with device config
+        // Set text overlay
         setTextOverlay({
           enabled: true,
           headline: textConfig.headline,
@@ -61,21 +61,13 @@ export const useAnimationManager = () => {
           fontSize: textConfig.headlineFontSize,
           taglineFontSize: textConfig.taglineFontSize,
           color: textConfig.color,
-          devicePosition: deviceConfig.position,
-          deviceScale: deviceConfig.scale,
-          deviceOffsetX: deviceConfig.offsetX,
-          deviceOffsetY: deviceConfig.offsetY,
           deviceAnimateIn: deviceConfig.animateIn,
           deviceAnimation: deviceConfig.animation,
         });
       } else {
-        // Layout-only preset - disable text, set device config
+        // Layout-only preset - disable text
         setTextOverlay({
           enabled: false,
-          devicePosition: deviceConfig.position,
-          deviceScale: deviceConfig.scale,
-          deviceOffsetX: deviceConfig.offsetX,
-          deviceOffsetY: deviceConfig.offsetY,
           deviceAnimateIn: deviceConfig.animateIn,
           deviceAnimation: deviceConfig.animation,
         });
@@ -116,7 +108,7 @@ export const useAnimationManager = () => {
         setTimeout(() => setIsPlaying(true), 100);
       }
     },
-    [applyPreset, setTextOverlay, setDurationMs, addClip, setIsPlaying, setPlayhead, clearTrack]
+    [applyPreset, setTextOverlay, setMediaPosition, setDurationMs, addClip, setIsPlaying, setPlayhead, clearTrack]
   );
 
   return {

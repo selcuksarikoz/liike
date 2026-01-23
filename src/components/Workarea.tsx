@@ -45,6 +45,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     frameMode,
     deviceType,
     textOverlay,
+    mediaOffsetX,
+    mediaOffsetY,
     animationSpeed,
   } = useRenderStore();
 
@@ -346,11 +348,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   const baseTransform =
                     imageLayout === 'single' ? animationStyle.transform : 'none';
 
-                  // Get device transform from store (set by layout presets)
-                  const { deviceOffsetX, deviceOffsetY, deviceScale } = textOverlay;
+                  // Get media transform from store
                   const posTransform =
-                    deviceOffsetX !== 0 || deviceOffsetY !== 0 || deviceScale !== 1
-                      ? `translate(${deviceOffsetX}%, ${deviceOffsetY}%) scale(${deviceScale})`
+                    mediaOffsetX !== 0 || mediaOffsetY !== 0
+                      ? `translate(${mediaOffsetX}%, ${mediaOffsetY}%)`
                       : '';
 
                   // Add device entry animation transform

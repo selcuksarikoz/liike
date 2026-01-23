@@ -19,7 +19,7 @@ export {
 export {
   type LayoutAnimation,
   type LayoutPreset,
-  type DevicePosition,
+  type MediaPosition,
   type DeviceConfig,
   type TextPosition,
   type TextAnimationType,

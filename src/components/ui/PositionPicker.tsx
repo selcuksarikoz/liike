@@ -1,6 +1,6 @@
-import type { DevicePosition, TextPosition } from '../../store/renderStore';
+import type { MediaPosition, TextPosition } from '../../store/renderStore';
 
-type Position = DevicePosition | TextPosition;
+type Position = MediaPosition | TextPosition;
 
 type PositionPickerProps = {
   value: Position;

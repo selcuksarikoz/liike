@@ -37,8 +37,8 @@ export const CameraStylePanel = () => {
     stylePreset,
     frameMode,
     deviceType,
-    textOverlay,
-    setTextOverlay,
+    mediaPosition,
+    setMediaPosition,
   } = useRenderStore();
 
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
@@ -132,8 +132,8 @@ export const CameraStylePanel = () => {
       <div className="style-section">
         <SidebarHeader icon={<Move className="w-4 h-4" />}>Media Position</SidebarHeader>
         <PositionPicker
-          value={textOverlay.devicePosition}
-          onChange={(pos) => setTextOverlay({ devicePosition: pos as any })}
+          value={mediaPosition}
+          onChange={(pos) => setMediaPosition(pos as any)}
           type="media"
           size="sm"
         />

@@ -36,7 +36,7 @@ export type TextPosition =
   | 'center-left' | 'center' | 'center-right'
   | 'bottom-left' | 'bottom-center' | 'bottom-right';
 
-export type DevicePosition =
+export type MediaPosition =
   | 'center'
   | 'top'
   | 'bottom'
@@ -46,6 +46,19 @@ export type DevicePosition =
   | 'top-right'
   | 'bottom-left'
   | 'bottom-right';
+
+// Convert semantic position to offset values (smaller values to stay in canvas)
+const MEDIA_POSITION_OFFSETS: Record<MediaPosition, { offsetX: number; offsetY: number }> = {
+  'center': { offsetX: 0, offsetY: 0 },
+  'top': { offsetX: 0, offsetY: -8 },
+  'bottom': { offsetX: 0, offsetY: 8 },
+  'left': { offsetX: -10, offsetY: 0 },
+  'right': { offsetX: 10, offsetY: 0 },
+  'top-left': { offsetX: -8, offsetY: -6 },
+  'top-right': { offsetX: 8, offsetY: -6 },
+  'bottom-left': { offsetX: -8, offsetY: 6 },
+  'bottom-right': { offsetX: 8, offsetY: 6 },
+};
 
 export type TextOverlay = {
   enabled: boolean;
@@ -61,11 +74,6 @@ export type TextOverlay = {
   animation: string; // text animation type
   layout: string; // text-device layout type
   deviceOffset: number; // negative = overflow bottom
-  // Device positioning & animation (set by layout presets)
-  devicePosition: DevicePosition;
-  deviceScale: number; // 0-1 scale factor
-  deviceOffsetX: number; // percentage offset X
-  deviceOffsetY: number; // percentage offset Y
   deviceAnimateIn: boolean;
   deviceAnimation: string;
 };
@@ -95,6 +103,10 @@ type RenderStore = RenderSettings & {
   shadowY: number;
   imageAspectRatio: AspectRatio;
   imageLayout: ImageLayout;
+  // Media positioning (image/video)
+  mediaPosition: MediaPosition;
+  mediaOffsetX: number;
+  mediaOffsetY: number;
   // Animation speed
   animationSpeed: AnimationSpeed;
   // Render status
@@ -128,6 +140,7 @@ type RenderStore = RenderSettings & {
   setShadowY: (px: number) => void;
   setImageAspectRatio: (ratio: AspectRatio) => void;
   setImageLayout: (layout: ImageLayout) => void;
+  setMediaPosition: (position: MediaPosition) => void;
   setAnimationSpeed: (speed: AnimationSpeed) => void;
   applyPreset: (preset: Partial<RenderStore>) => void;
   setRenderStatus: (status: Partial<RenderStatus>) => void;
@@ -180,6 +193,9 @@ export const useRenderStore = create<RenderStore>((set) => ({
   shadowY: 0,
   imageAspectRatio: 'free',
   imageLayout: 'single',
+  mediaPosition: 'center',
+  mediaOffsetX: 0,
+  mediaOffsetY: 0,
   animationSpeed: 'normal',
   renderStatus: initialRenderStatus,
   renderQuality: '1080p',
@@ -202,10 +218,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
     animation: 'blur',
     layout: 'text-top-device-bottom',
     deviceOffset: -20,
-    devicePosition: 'center',
-    deviceScale: 1,
-    deviceOffsetX: 0,
-    deviceOffsetY: 0,
     deviceAnimateIn: false,
     deviceAnimation: 'none',
   },
@@ -238,6 +250,10 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setShadowY: (shadowY) => set({ shadowY }),
   setImageAspectRatio: (imageAspectRatio) => set({ imageAspectRatio }),
   setImageLayout: (imageLayout) => set({ imageLayout }),
+  setMediaPosition: (position) => {
+    const offsets = MEDIA_POSITION_OFFSETS[position];
+    return set({ mediaPosition: position, mediaOffsetX: offsets.offsetX, mediaOffsetY: offsets.offsetY });
+  },
   setAnimationSpeed: (animationSpeed) => set({ animationSpeed }),
   applyPreset: (preset) => set((state) => ({ ...state, ...preset })),
   setRenderStatus: (status) => set((state) => ({ renderStatus: { ...state.renderStatus, ...status } })),
@@ -245,8 +261,8 @@ export const useRenderStore = create<RenderStore>((set) => ({
 
   setFrameMode: (frameMode) => set({ frameMode }),
   setDeviceType: (deviceType) => set({ deviceType }),
-  setTextOverlay: (overlay) => set((state) => ({ 
-    textOverlay: { ...state.textOverlay, ...overlay } 
+  setTextOverlay: (overlay) => set((state) => ({
+    textOverlay: { ...state.textOverlay, ...overlay }
   })),
   clearTextOverlay: () => set((state) => ({
     textOverlay: { ...state.textOverlay, enabled: false, text: 'Your Text Here', deviceAnimateIn: false, deviceAnimation: 'none' }

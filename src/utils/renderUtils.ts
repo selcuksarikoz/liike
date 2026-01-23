@@ -236,6 +236,32 @@ export const preloadResources = async (node: HTMLElement) => {
   console.log('[StreamRender] Preloading resources...');
   await convertImagesToDataUrls(node); // This will populate cache
   await convertBackgroundImagesToDataUrls(node);
+
+  // Ensure ALL images are decoded (including bundled assets like device mockups)
+  const allImages = node.querySelectorAll('img');
+  const decodePromises: Promise<void>[] = [];
+  for (const img of allImages) {
+    if (img.complete && img.naturalWidth > 0) {
+      // Already loaded, but ensure decoded
+      decodePromises.push(img.decode().catch(() => {}));
+    } else {
+      // Wait for load then decode
+      decodePromises.push(
+        new Promise<void>((resolve) => {
+          img.onload = () => img.decode().then(() => resolve()).catch(() => resolve());
+          img.onerror = () => resolve();
+          // Trigger load if src is set but not loading
+          if (img.src && !img.complete) {
+            const src = img.src;
+            img.src = '';
+            img.src = src;
+          }
+        })
+      );
+    }
+  }
+  await Promise.all(decodePromises);
+
   console.log('[StreamRender] Resources preloaded.');
 };
 
@@ -432,61 +458,85 @@ export const renderTextOverlay = (
   ctx.textAlign = textAlign;
   ctx.textBaseline = 'top';
 
-  // Render headline
-  if (headline && headlineAnim.opacity > 0) {
+  // Helper to parse transform values
+  const parseTransform = (transform: string | undefined) => {
+    if (!transform || transform === 'none') return { translateX: 0, translateY: 0, scaleVal: 1, rotate: 0, skewX: 0 };
+
+    const translateYMatch = transform.match(/translateY\(([^)]+)\)/);
+    const translateXMatch = transform.match(/translateX\(([^)]+)\)/);
+    const scaleMatch = transform.match(/scale\(([^)]+)\)/);
+    const rotateMatch = transform.match(/rotate\(([^)]+)\)/);
+    const skewXMatch = transform.match(/skewX\(([^)]+)\)/);
+
+    return {
+      translateX: translateXMatch ? parseFloat(translateXMatch[1]) : 0,
+      translateY: translateYMatch ? parseFloat(translateYMatch[1]) : 0,
+      scaleVal: scaleMatch ? parseFloat(scaleMatch[1]) : 1,
+      rotate: rotateMatch ? parseFloat(rotateMatch[1]) : 0,
+      skewX: skewXMatch ? parseFloat(skewXMatch[1]) : 0,
+    };
+  };
+
+  // Helper to render text with animation transforms
+  const renderAnimatedText = (
+    text: string,
+    anim: { opacity: number; transform: string; filter?: string },
+    x: number,
+    y: number,
+    fontSizePx: number,
+    weight: number | string,
+    alphaMultiplier = 1
+  ) => {
+    if (!text || anim.opacity === 0) return;
+
     ctx.save();
 
-    // Apply transform (parse translateY if present)
-    const translateMatch = headlineAnim.transform?.match(/translateY\(([^)]+)\)/);
-    const translateY = translateMatch ? parseFloat(translateMatch[1]) * scale : 0;
+    const { translateX, translateY, scaleVal, rotate, skewX } = parseTransform(anim.transform);
 
-    ctx.globalAlpha = headlineAnim.opacity;
-    ctx.font = `${fontWeight} ${fontSize * scale}px "${fontFamily}"`;  // Quote font family for multi-word fonts
+    // Apply blur filter if present
+    if (anim.filter) {
+      const blurMatch = anim.filter.match(/blur\(([^)]+)\)/);
+      if (blurMatch) {
+        ctx.filter = `blur(${parseFloat(blurMatch[1]) * scale}px)`;
+      }
+    }
+
+    ctx.globalAlpha = anim.opacity * alphaMultiplier;
+    ctx.font = `${weight} ${fontSizePx}px "${fontFamily}"`;
     ctx.fillStyle = color;
     ctx.shadowColor = 'rgba(0,0,0,0.4)';
     ctx.shadowBlur = 4 * scale;
     ctx.shadowOffsetY = 2 * scale;
 
-    // Apply blur filter if present
-    if (headlineAnim.filter) {
-      const blurMatch = headlineAnim.filter.match(/blur\(([^)]+)\)/);
-      if (blurMatch) {
-        ctx.filter = `blur(${parseFloat(blurMatch[1]) * scale}px)`;
-      }
-    }
+    // Apply transforms around text center
+    const textMetrics = ctx.measureText(text);
+    const textWidth = textMetrics.width;
+    const textHeight = fontSizePx;
 
-    ctx.fillText(headline, textX, textY + translateY);
+    // Calculate center point based on text alignment
+    let centerX = x;
+    if (textAlign === 'center') centerX = x;
+    else if (textAlign === 'left') centerX = x + textWidth / 2;
+    else if (textAlign === 'right') centerX = x - textWidth / 2;
+    const centerY = y + textHeight / 2;
+
+    // Apply transformations
+    ctx.translate(centerX + translateX * scale, centerY + translateY * scale);
+    if (rotate !== 0) ctx.rotate((rotate * Math.PI) / 180);
+    if (skewX !== 0) ctx.transform(1, 0, Math.tan((skewX * Math.PI) / 180), 1, 0, 0);
+    ctx.scale(scaleVal, scaleVal);
+    ctx.translate(-centerX, -centerY);
+
+    ctx.fillText(text, x, y);
     ctx.restore();
-  }
+  };
+
+  // Render headline
+  renderAnimatedText(headline, headlineAnim, textX, textY, fontSize * scale, fontWeight);
 
   // Render tagline
-  if (tagline && taglineAnim.opacity > 0) {
-    ctx.save();
-
-    const taglineY = textY + (fontSize * scale) + 12 * scale;
-
-    // Apply transform
-    const translateMatch = taglineAnim.transform?.match(/translateY\(([^)]+)\)/);
-    const translateY = translateMatch ? parseFloat(translateMatch[1]) * scale : 0;
-
-    ctx.globalAlpha = taglineAnim.opacity * 0.9;
-    ctx.font = `400 ${taglineFontSize * scale}px "${fontFamily}"`;  // Quote font family for multi-word fonts
-    ctx.fillStyle = color;
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 3 * scale;
-    ctx.shadowOffsetY = 1 * scale;
-
-    // Apply blur filter if present
-    if (taglineAnim.filter) {
-      const blurMatch = taglineAnim.filter.match(/blur\(([^)]+)\)/);
-      if (blurMatch) {
-        ctx.filter = `blur(${parseFloat(blurMatch[1]) * scale}px)`;
-      }
-    }
-
-    ctx.fillText(tagline, textX, taglineY + translateY);
-    ctx.restore();
-  }
+  const taglineY = textY + (fontSize * scale) + 12 * scale;
+  renderAnimatedText(tagline, taglineAnim, textX, taglineY, taglineFontSize * scale, 400, 0.9);
 
   ctx.restore();
 };

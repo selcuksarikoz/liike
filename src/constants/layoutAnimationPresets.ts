@@ -6,7 +6,7 @@ export type LayoutAnimation = {
   stagger?: number;
 };
 
-export type DevicePosition = 'center' | 'top' | 'bottom' | 'left' | 'right' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type MediaPosition = 'center' | 'top' | 'bottom' | 'left' | 'right' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 export type TextPosition =
   | 'top-left' | 'top-center' | 'top-right'
@@ -18,7 +18,7 @@ export type TextAnimationType =
   | 'bounce' | 'elastic' | 'typewriter' | 'wave' | 'glitch' | 'flip' | 'scale';
 
 export type DeviceConfig = {
-  position: DevicePosition;
+  position: MediaPosition;
   scale: number;
   offsetX: number; // percentage
   offsetY: number; // percentage
