@@ -6,6 +6,8 @@ export type LayoutAnimation = {
   stagger?: number;
 };
 
+export type DevicePosition = 'center' | 'top' | 'bottom' | 'left' | 'right';
+
 export type LayoutPreset = {
   id: string;
   name: string;
@@ -17,6 +19,8 @@ export type LayoutPreset = {
   color: string;
   animations: LayoutAnimation[];
   durationMs: number;
+  // Optional device positioning - defaults to 'center' if not specified
+  devicePosition?: DevicePosition;
 };
 
 export const LAYOUT_PRESETS: LayoutPreset[] = [

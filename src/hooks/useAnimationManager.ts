@@ -1,11 +1,9 @@
 import { useCallback } from 'react';
 import { useRenderStore, type ImageLayout } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import type { LayoutPreset } from '../constants/styles';
+import type { LayoutPreset, DevicePosition } from '../constants/layoutAnimationPresets';
 import type { TextDevicePreset } from '../constants/textAnimations';
 import { loadGoogleFont } from './useFontLoader';
-
-type DevicePosition = 'center' | 'top' | 'bottom' | 'left' | 'right';
 
 const getDevicePosition = (layout: TextDevicePreset['layout']): DevicePosition => {
   switch (layout) {
@@ -60,13 +58,28 @@ export const useAnimationManager = () => {
     setIsPlaying(false);
     setPlayhead(0);
     clearTrack('track-animation');
-    setTextOverlay({ enabled: false });
+    setTextOverlay({
+      enabled: false,
+      devicePosition: 'center',
+      deviceAnimateIn: false,
+      deviceAnimation: 'none',
+    });
   }, [clearTrack, setPlayhead, setIsPlaying, setTextOverlay]);
 
   const applyLayoutAnimation = useCallback(
     (preset: LayoutPreset, layout: ImageLayout) => {
-      // Clear everything first
-      clearAnimations();
+      // Stop playback and reset
+      setIsPlaying(false);
+      setPlayhead(0);
+      clearTrack('track-animation');
+
+      // Apply device position from preset (defaults to 'center')
+      setTextOverlay({
+        enabled: false,
+        devicePosition: preset.devicePosition || 'center',
+        deviceAnimateIn: false,
+        deviceAnimation: 'none',
+      });
 
       // Apply layout preset
       applyPreset({
@@ -103,7 +116,7 @@ export const useAnimationManager = () => {
         setTimeout(() => setIsPlaying(true), 100);
       }
     },
-    [applyPreset, clearAnimations, setDurationMs, addClip, setIsPlaying]
+    [applyPreset, setTextOverlay, setDurationMs, addClip, setIsPlaying, setPlayhead, clearTrack]
   );
 
   const applyTextAnimation = useCallback(

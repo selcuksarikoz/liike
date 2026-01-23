@@ -19,5 +19,6 @@ export {
 export {
   type LayoutAnimation,
   type LayoutPreset,
+  type DevicePosition,
   LAYOUT_PRESETS,
 } from './layoutAnimationPresets';
