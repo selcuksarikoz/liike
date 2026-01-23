@@ -1,9 +1,14 @@
 import { flushSync } from 'react-dom';
 import { useTimelineStore } from '../store/timelineStore';
-import type { ExportFormat } from '../store/renderStore';
+import { useRenderStore, type ExportFormat, type TextPosition } from '../store/renderStore';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { mkdir } from '@tauri-apps/plugin-fs';
-import { getEmbeddedFontCSS } from '../services/fontService';
+import { getEmbeddedFontCSS, loadFontsForExport } from '../services/fontService';
+import {
+  generateTextKeyframes,
+  ANIMATION_SPEED_MULTIPLIERS,
+  type TextAnimationType,
+} from '../constants/textAnimations';
 
 // Seek timeline synchronously
 export const seekTimeline = (timeMs: number) => {
@@ -259,11 +264,16 @@ const extractUsedFonts = (node: HTMLElement): Set<string> => {
 // Font cache for embedded CSS (avoids re-fetching during frame capture)
 const fontCssCache = new Map<string, string>();
 
-// Preload fonts into the font cache
+// Preload fonts into the font cache and browser's FontFace API
 export const preloadFonts = async (node: HTMLElement): Promise<void> => {
   const usedFonts = extractUsedFonts(node);
-  console.log('[StreamRender] Preloading fonts:', Array.from(usedFonts));
+  const fontArray = Array.from(usedFonts);
+  console.log('[StreamRender] Preloading fonts:', fontArray);
 
+  // Load fonts into browser's FontFace API for reliable canvas rendering
+  await loadFontsForExport(fontArray);
+
+  // Also cache embedded CSS for SVG fallback
   for (const fontName of usedFonts) {
     if (fontCssCache.has(fontName)) continue;
     try {
@@ -272,7 +282,7 @@ export const preloadFonts = async (node: HTMLElement): Promise<void> => {
         fontCssCache.set(fontName, fontCSS);
       }
     } catch (e) {
-      console.warn('[StreamRender] Font preload failed:', fontName, e);
+      console.warn('[StreamRender] Font CSS cache failed:', fontName, e);
     }
   }
 };
@@ -281,6 +291,10 @@ export const preloadFonts = async (node: HTMLElement): Promise<void> => {
 export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height: number): Promise<string> => {
   // Clone the node
   const clone = node.cloneNode(true) as HTMLElement;
+
+  // Remove elements marked for export skip (text overlays are rendered separately via Canvas)
+  const skipElements = clone.querySelectorAll('[data-export-skip]');
+  skipElements.forEach((el) => el.remove());
 
   // Inline all computed styles for the clone
   await inlineStyles(node, clone);
@@ -297,38 +311,14 @@ export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height:
   // Convert videos to static images (frame capture)
   await convertVideosToImages(node, clone);
 
-  // Get cached font CSS (fonts should be preloaded before capture starts)
-  const usedFonts = extractUsedFonts(node);
-  let fontStyles = '';
-  for (const fontName of usedFonts) {
-    const cachedCSS = fontCssCache.get(fontName);
-    if (cachedCSS) {
-      fontStyles += cachedCSS;
-    } else {
-      // Fallback: try to fetch if not in cache
-      try {
-        const fontCSS = await getEmbeddedFontCSS(fontName);
-        if (fontCSS) {
-          fontCssCache.set(fontName, fontCSS);
-          fontStyles += fontCSS;
-        }
-      } catch {
-        // Font not available locally, skip
-      }
-    }
-  }
-
   const serializer = new XMLSerializer();
   const nodeString = serializer.serializeToString(clone);
 
-  // Embed fonts in XHTML style block for better foreignObject compatibility
+  // Simple SVG with foreignObject - fonts will be handled by Rust/FFmpeg
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
       <foreignObject width="100%" height="100%">
         <div xmlns="http://www.w3.org/1999/xhtml">
-          <style type="text/css">
-            ${fontStyles}
-          </style>
           ${nodeString}
         </div>
       </foreignObject>
@@ -339,13 +329,22 @@ export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height:
 };
 
 // Helper: Load an image from URL
-export const loadImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
+export const loadImage = async (src: string): Promise<HTMLImageElement> => {
+  const img = new Image();
+  img.src = src;
+
+  // Use decode() to ensure image is fully ready including embedded fonts
+  try {
+    await img.decode();
+  } catch {
+    // Fallback to onload if decode fails
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = reject;
+    });
+  }
+
+  return img;
 };
 
 // Helper: Convert Uint8ClampedArray to base64 string
@@ -356,6 +355,140 @@ export const arrayToBase64 = (data: Uint8ClampedArray): string => {
     binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary);
+};
+
+// Helper: Render text overlay directly on canvas using Canvas 2D API
+// This bypasses SVG foreignObject font issues
+const renderTextOverlay = (
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  scale: number
+) => {
+  const { textOverlay, durationMs, animationSpeed } = useRenderStore.getState();
+  const { playheadMs } = useTimelineStore.getState();
+
+  if (!textOverlay.enabled) return;
+
+  const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed];
+  const startDelay = 300 / speedMultiplier;
+
+  // Calculate headline animation progress
+  const delayedPlayhead = Math.max(0, playheadMs - startDelay);
+  const headlineAnimDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
+  const headlineProgress = delayedPlayhead === 0 ? 0 : Math.min(1, delayedPlayhead / headlineAnimDuration);
+
+  // Calculate tagline animation progress (staggered)
+  const staggerDelay = startDelay + ((durationMs || 3000) * 0.15) / speedMultiplier;
+  const taglineAnimDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
+  const taglineDelayedPlayhead = Math.max(0, playheadMs - staggerDelay);
+  const taglineProgress = Math.min(1, taglineDelayedPlayhead / taglineAnimDuration);
+
+  const {
+    headline,
+    tagline,
+    fontFamily,
+    fontSize,
+    taglineFontSize,
+    fontWeight,
+    color,
+    animation,
+    position,
+  } = textOverlay;
+
+  // Get animation styles
+  const animationType = (animation || 'blur') as TextAnimationType;
+  const headlineAnim = generateTextKeyframes(animationType, headlineProgress);
+  const taglineAnim = generateTextKeyframes(animationType, taglineProgress);
+
+  // Skip if both are invisible
+  if (headlineAnim.opacity === 0 && taglineAnim.opacity === 0) return;
+
+  const padding = 40 * scale;
+  const pos = (position || 'top-center') as TextPosition;
+
+  // Calculate text position
+  let textX = canvasWidth / 2;
+  let textY = padding * 1.5;
+  let textAlign: CanvasTextAlign = 'center';
+
+  // Horizontal position
+  if (pos.endsWith('left')) {
+    textX = padding;
+    textAlign = 'left';
+  } else if (pos.endsWith('right')) {
+    textX = canvasWidth - padding;
+    textAlign = 'right';
+  }
+
+  // Vertical position
+  if (pos.startsWith('center')) {
+    textY = canvasHeight / 2 - (fontSize * scale) / 2;
+  } else if (pos.startsWith('bottom')) {
+    textY = canvasHeight - padding * 1.5 - (taglineFontSize * scale) - 12;
+  }
+
+  ctx.save();
+  ctx.textAlign = textAlign;
+  ctx.textBaseline = 'top';
+
+  // Render headline
+  if (headline && headlineAnim.opacity > 0) {
+    ctx.save();
+
+    // Apply transform (parse translateY if present)
+    const translateMatch = headlineAnim.transform?.match(/translateY\(([^)]+)\)/);
+    const translateY = translateMatch ? parseFloat(translateMatch[1]) * scale : 0;
+
+    ctx.globalAlpha = headlineAnim.opacity;
+    ctx.font = `${fontWeight} ${fontSize * scale}px ${fontFamily}`;
+    ctx.fillStyle = color;
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 4 * scale;
+    ctx.shadowOffsetY = 2 * scale;
+
+    // Apply blur filter if present
+    if (headlineAnim.filter) {
+      const blurMatch = headlineAnim.filter.match(/blur\(([^)]+)\)/);
+      if (blurMatch) {
+        ctx.filter = `blur(${parseFloat(blurMatch[1]) * scale}px)`;
+      }
+    }
+
+    ctx.fillText(headline, textX, textY + translateY);
+    ctx.restore();
+  }
+
+  // Render tagline
+  if (tagline && taglineAnim.opacity > 0) {
+    ctx.save();
+
+    const taglineY = textY + (fontSize * scale) + 12 * scale;
+
+    // Apply transform
+    const translateMatch = taglineAnim.transform?.match(/translateY\(([^)]+)\)/);
+    const translateY = translateMatch ? parseFloat(translateMatch[1]) * scale : 0;
+
+    ctx.globalAlpha = taglineAnim.opacity * 0.9;
+    ctx.font = `400 ${taglineFontSize * scale}px ${fontFamily}`;
+    ctx.fillStyle = color;
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 3 * scale;
+    ctx.shadowOffsetY = 1 * scale;
+
+    // Apply blur filter if present
+    if (taglineAnim.filter) {
+      const blurMatch = taglineAnim.filter.match(/blur\(([^)]+)\)/);
+      if (blurMatch) {
+        ctx.filter = `blur(${parseFloat(blurMatch[1]) * scale}px)`;
+      }
+    }
+
+    ctx.fillText(tagline, textX, taglineY + translateY);
+    ctx.restore();
+  }
+
+  ctx.restore();
 };
 
 // Helper: Capture a single frame from DOM to Canvas
@@ -413,10 +546,16 @@ export const captureFrame = async (
 
   // Use drawImage if node has a canvas child, otherwise use html2canvas-like approach
   // For now, we use foreignObject SVG approach (fast, supports CSS)
-  const svgData = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height);
-  const img = await loadImage(svgData);
-  
+  const svgUrl = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height);
+  const img = await loadImage(svgUrl);
+
   ctx.drawImage(img, 0, 0, nodeRect.width, nodeRect.height);
+
+  // Reset transform for text overlay (text is rendered in output coordinates)
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  // Render text overlay using Canvas API (bypasses SVG font issues)
+  renderTextOverlay(ctx, outputWidth, outputHeight, scale);
 
   // Get raw RGBA pixel data
   const imageData = ctx.getImageData(0, 0, outputWidth, outputHeight);

@@ -14,7 +14,6 @@ import {
   pauseAndSeekVideos,
   waitForRender,
   preloadResources,
-  preloadFonts,
   captureFrame,
   arrayToBase64,
   nodeToSvgDataUrl,
@@ -267,9 +266,8 @@ export const useStreamingRender = () => {
         pauseAndSeekAnimations(node, 0);
         pauseAndSeekVideos(node, 0);
 
-        // Preload resources and fonts (ensure images and fonts are cached before capture)
+        // Preload resources (images, videos)
         await preloadResources(node);
-        await preloadFonts(node);
 
         await waitForRender(50);
 

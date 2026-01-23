@@ -273,6 +273,54 @@ export async function isFontAvailable(fontName: string): Promise<boolean> {
   return isFontCached(fontName);
 }
 
+// Load fonts into the browser's FontFace API for reliable rendering
+// This ensures fonts are available when rendering SVG to canvas
+export async function loadFontsForExport(fontNames: string[]): Promise<void> {
+  console.log('[FontService] Loading fonts for export:', fontNames);
+
+  for (const fontName of fontNames) {
+    for (const weight of FONT_WEIGHTS) {
+      try {
+        const dataUrl = await getFontAsDataUrl(fontName, weight);
+        if (!dataUrl) continue;
+
+        // Check if font is already loaded
+        const existingFonts = Array.from(document.fonts).filter(
+          (f) => f.family === fontName && String(f.weight) === String(weight)
+        );
+
+        if (existingFonts.length > 0 && existingFonts.every((f) => f.status === 'loaded')) {
+          continue; // Already loaded
+        }
+
+        // Convert data URL to ArrayBuffer
+        const base64 = dataUrl.split(',')[1];
+        const binaryString = atob(base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        // Create and load FontFace
+        const fontFace = new FontFace(fontName, bytes.buffer, {
+          weight: String(weight),
+          style: 'normal',
+        });
+
+        await fontFace.load();
+        document.fonts.add(fontFace);
+        console.log(`[FontService] Loaded: ${fontName} weight ${weight}`);
+      } catch (e) {
+        console.warn(`[FontService] Failed to load ${fontName} weight ${weight}:`, e);
+      }
+    }
+  }
+
+  // Wait for all fonts to be ready
+  await document.fonts.ready;
+  console.log('[FontService] All fonts ready for export');
+}
+
 // Force re-download all fonts
 export async function refreshFonts(onProgress?: (progress: number, fontName: string) => void): Promise<void> {
   const allFontNames = FONT_OPTIONS.map(f => f.value);
