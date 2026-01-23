@@ -94,6 +94,12 @@
       "allow": [
         {
           "url": "https://tavggalbjqwdfobiaoec.supabase.co/*"
+        },
+        {
+          "url": "https://fonts.googleapis.com/*"
+        },
+        {
+          "url": "https://fonts.gstatic.com/*"
         }
       ]
     },

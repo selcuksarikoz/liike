@@ -194,7 +194,7 @@ export const useStreamingRender = () => {
            ctx.restore();
 
            // Render text overlay on canvas (uses Canvas 2D API for proper font rendering)
-           renderTextOverlay(ctx, outputWidth, outputHeight, scale);
+           renderTextOverlay(ctx, outputWidth, outputHeight, scale, durationMs, playheadMs);
 
            // Convert to blob and write to disk
            const blob = await new Promise<Blob | null>(resolve => 
@@ -305,7 +305,7 @@ export const useStreamingRender = () => {
           if (abortController.signal.aborted) return;
 
           // Capture frame to raw RGBA
-          const rgbaData = await captureFrame(node, outputWidth, outputHeight);
+          const rgbaData = await captureFrame(node, outputWidth, outputHeight, durationMs, timeMs);
           
           if (abortController.signal.aborted) return;
           

@@ -135,7 +135,7 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
   };
 
   return (
-    <div style={getPositionStyle()} data-export-skip="true">
+    <div style={getPositionStyle()}>
       {headline && <div style={headlineStyle}>{headline}</div>}
       {tagline && <div style={taglineStyle}>{tagline}</div>}
     </div>

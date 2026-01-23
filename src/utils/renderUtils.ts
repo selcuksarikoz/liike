@@ -3,7 +3,7 @@ import { useTimelineStore } from '../store/timelineStore';
 import { useRenderStore, type ExportFormat, type TextPosition } from '../store/renderStore';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { mkdir } from '@tauri-apps/plugin-fs';
-import { getEmbeddedFontCSS, loadFontsForExport } from '../services/fontService';
+import { getEmbeddedFontCSS, loadFontsForExport, fetchGoogleFontCSS } from '../services/fontService';
 import {
   generateTextKeyframes,
   ANIMATION_SPEED_MULTIPLIERS,
@@ -301,24 +301,47 @@ export const preloadFonts = async (node: HTMLElement): Promise<void> => {
 
   // Also cache embedded CSS for SVG fallback
   for (const fontName of usedFonts) {
-    if (fontCssCache.has(fontName)) continue;
+    // Skip system fonts
+    if (fontName.startsWith('-apple') || fontName === 'system-ui' || fontName === 'BlinkMacSystemFont') {
+      console.log(`[StreamRender] Skipping system font: ${fontName}`);
+      continue;
+    }
+    if (fontCssCache.has(fontName)) {
+      console.log(`[StreamRender] Font already cached: ${fontName}`);
+      continue;
+    }
     try {
       const fontCSS = await getEmbeddedFontCSS(fontName);
-      if (fontCSS) {
+      if (fontCSS && fontCSS.length > 0) {
         fontCssCache.set(fontName, fontCSS);
+        console.log(`[StreamRender] Cached font CSS: ${fontName} (${fontCSS.length} chars)`);
+      } else {
+        console.warn(`[StreamRender] No CSS returned for font: ${fontName}`);
       }
     } catch (e) {
       console.warn('[StreamRender] Font CSS cache failed:', fontName, e);
     }
   }
+  console.log(`[StreamRender] Font cache size: ${fontCssCache.size}`);
 };
 
 // Helper: Convert DOM node to SVG data URL using foreignObject
-export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height: number): Promise<string> => {
+// outputWidth/outputHeight = final export size, sourceWidth/sourceHeight = DOM element size
+export const nodeToSvgDataUrl = async (
+  node: HTMLElement,
+  sourceWidth: number,
+  sourceHeight: number,
+  outputWidth?: number,
+  outputHeight?: number
+): Promise<string> => {
+  const finalWidth = outputWidth || sourceWidth;
+  const finalHeight = outputHeight || sourceHeight;
+  const scaleX = finalWidth / sourceWidth;
+  const scaleY = finalHeight / sourceHeight;
   // Clone the node
   const clone = node.cloneNode(true) as HTMLElement;
 
-  // Remove elements marked for export skip (text overlays are rendered separately via Canvas)
+  // Remove elements marked for export skip
   const skipElements = clone.querySelectorAll('[data-export-skip]');
   skipElements.forEach((el) => el.remove());
 
@@ -337,14 +360,54 @@ export const nodeToSvgDataUrl = async (node: HTMLElement, width: number, height:
   // Convert videos to static images (frame capture)
   await convertVideosToImages(node, clone);
 
+  // Get embedded font CSS from cache or fetch directly
+  const usedFonts = extractUsedFonts(node);
+  let fontCss = '';
+  for (const fontName of usedFonts) {
+    // Skip system fonts
+    if (fontName.startsWith('-apple') || fontName === 'system-ui' || fontName === 'BlinkMacSystemFont') {
+      continue;
+    }
+
+    if (fontCssCache.has(fontName)) {
+      fontCss += fontCssCache.get(fontName);
+    } else {
+      // Try local cache first, then Google Fonts API
+      try {
+        let css = await getEmbeddedFontCSS(fontName);
+        if (!css || css.length === 0) {
+          // Fallback: fetch directly from Google Fonts
+          console.log(`[SVG Export] Local cache empty, fetching from Google: ${fontName}`);
+          css = await fetchGoogleFontCSS(fontName);
+        }
+        if (css && css.length > 0) {
+          fontCssCache.set(fontName, css);
+          fontCss += css;
+          console.log(`[SVG Export] Cached font: ${fontName} (${css.length} chars)`);
+        } else {
+          console.warn(`[SVG Export] No CSS for font: ${fontName}`);
+        }
+      } catch (e) {
+        console.warn(`[SVG Export] Failed to get font: ${fontName}`, e);
+      }
+    }
+  }
+  console.log(`[SVG Export] Embedding fonts, CSS length: ${fontCss.length}`);
+
   const serializer = new XMLSerializer();
   const nodeString = serializer.serializeToString(clone);
 
-  // Simple SVG with foreignObject - fonts will be handled by Rust/FFmpeg
+  // SVG with embedded fonts and foreignObject
+  // Apply scale transform to render at output resolution
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-      <foreignObject width="100%" height="100%">
-        <div xmlns="http://www.w3.org/1999/xhtml">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${finalWidth}" height="${finalHeight}">
+      <defs>
+        <style type="text/css">
+          ${fontCss}
+        </style>
+      </defs>
+      <foreignObject width="${finalWidth}" height="${finalHeight}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="transform: scale(${scaleX}, ${scaleY}); transform-origin: top left; width: ${sourceWidth}px; height: ${sourceHeight}px;">
           ${nodeString}
         </div>
       </foreignObject>
@@ -389,25 +452,41 @@ export const renderTextOverlay = (
   ctx: CanvasRenderingContext2D,
   canvasWidth: number,
   canvasHeight: number,
-  scale: number
+  scale: number,
+  overrideDurationMs?: number,
+  overridePlayheadMs?: number
 ) => {
-  const { textOverlay, durationMs, animationSpeed } = useRenderStore.getState();
-  const { playheadMs } = useTimelineStore.getState();
+  const { textOverlay, durationMs: storeDurationMs, animationSpeed } = useRenderStore.getState();
+  const { playheadMs: storePlayheadMs } = useTimelineStore.getState();
+
+  // Use override values if provided (for export), otherwise use store values (for preview)
+  const durationMs = overrideDurationMs ?? storeDurationMs;
+  const playheadMs = overridePlayheadMs ?? storePlayheadMs;
+
+  console.log('[TextOverlay] Rendering:', {
+    enabled: textOverlay.enabled,
+    animation: textOverlay.animation,
+    durationMs,
+    playheadMs,
+    animationSpeed,
+    headline: textOverlay.headline?.slice(0, 20),
+  });
 
   if (!textOverlay.enabled) return;
 
-  const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed];
+  const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1;
   const startDelay = 300 / speedMultiplier;
 
   // Calculate headline animation progress
-  const delayedPlayhead = Math.max(0, playheadMs - startDelay);
-  const headlineAnimDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
-  const headlineProgress = delayedPlayhead === 0 ? 0 : Math.min(1, delayedPlayhead / headlineAnimDuration);
+  const effectiveDuration = durationMs || 3000;
+  const delayedPlayhead = Math.max(0, (playheadMs || 0) - startDelay);
+  const headlineAnimDuration = Math.max(1, (effectiveDuration * 0.3) / speedMultiplier);
+  const headlineProgress = delayedPlayhead <= 0 ? 0 : Math.min(1, delayedPlayhead / headlineAnimDuration);
 
   // Calculate tagline animation progress (staggered)
-  const staggerDelay = startDelay + ((durationMs || 3000) * 0.15) / speedMultiplier;
-  const taglineAnimDuration = ((durationMs || 3000) * 0.3) / speedMultiplier;
-  const taglineDelayedPlayhead = Math.max(0, playheadMs - staggerDelay);
+  const staggerDelay = startDelay + (effectiveDuration * 0.15) / speedMultiplier;
+  const taglineAnimDuration = Math.max(1, (effectiveDuration * 0.3) / speedMultiplier);
+  const taglineDelayedPlayhead = Math.max(0, (playheadMs || 0) - staggerDelay);
   const taglineProgress = Math.min(1, taglineDelayedPlayhead / taglineAnimDuration);
 
   const {
@@ -422,13 +501,37 @@ export const renderTextOverlay = (
     position,
   } = textOverlay;
 
-  // Get animation styles
-  const animationType = (animation || 'blur') as TextAnimationType;
+  // Get animation styles - validate animation type
+  const validAnimations = ['fade', 'slide-up', 'slide-down', 'scale', 'blur', 'bounce', 'typewriter', 'glitch', 'wave', 'flip', 'zoom-blur', 'elastic'];
+  const animationType = validAnimations.includes(animation || '')
+    ? (animation as TextAnimationType)
+    : 'blur';
+
+  if (animation && !validAnimations.includes(animation)) {
+    console.warn(`[TextOverlay] Unknown animation type "${animation}", falling back to "blur"`);
+  }
+
   const headlineAnim = generateTextKeyframes(animationType, headlineProgress);
   const taglineAnim = generateTextKeyframes(animationType, taglineProgress);
 
-  // Skip if both are invisible
-  if (headlineAnim.opacity === 0 && taglineAnim.opacity === 0) return;
+  console.log('[TextOverlay] Animation:', {
+    animationType,
+    headlineProgress: headlineProgress.toFixed(3),
+    taglineProgress: taglineProgress.toFixed(3),
+    headlineOpacity: headlineAnim.opacity.toFixed(3),
+    taglineOpacity: taglineAnim.opacity.toFixed(3),
+    delayedPlayhead: Math.max(0, playheadMs - (300 / speedMultiplier)),
+  });
+
+  // Skip if both are invisible (but allow small opacity values)
+  if (headlineAnim.opacity <= 0.001 && taglineAnim.opacity <= 0.001) {
+    console.log('[TextOverlay] Skipping - both nearly invisible');
+    return;
+  }
+
+  // DEBUG: Draw a small test marker to verify canvas rendering is working
+  // ctx.fillStyle = 'red';
+  // ctx.fillRect(10, 10, 20, 20);
 
   const padding = 40 * scale;
   const pos = (position || 'top-center') as TextPosition;
@@ -532,6 +635,14 @@ export const renderTextOverlay = (
   };
 
   // Render headline
+  console.log('[TextOverlay] Drawing headline:', {
+    text: headline?.slice(0, 20),
+    x: textX.toFixed(0),
+    y: textY.toFixed(0),
+    fontSize: (fontSize * scale).toFixed(0),
+    fontFamily,
+    color,
+  });
   renderAnimatedText(headline, headlineAnim, textX, textY, fontSize * scale, fontWeight);
 
   // Render tagline
@@ -545,7 +656,9 @@ export const renderTextOverlay = (
 export const captureFrame = async (
   node: HTMLElement,
   outputWidth: number,
-  outputHeight: number
+  outputHeight: number,
+  _durationMs?: number,
+  _playheadMs?: number
 ): Promise<Uint8ClampedArray> => {
   // Create an offscreen canvas at exact output dimensions
   const canvas = document.createElement('canvas');
@@ -560,52 +673,42 @@ export const captureFrame = async (
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // Get the current computed styles and render state
+  // Get the source node dimensions (may be smaller than output due to preview scaling)
   const nodeRect = node.getBoundingClientRect();
-  const scaleX = outputWidth / nodeRect.width;
-  const scaleY = outputHeight / nodeRect.height;
-  const scale = Math.min(scaleX, scaleY);
-  
-  
-  // Get computed styles
+
+  // Get computed styles for background
   const computedStyle = window.getComputedStyle(node);
 
-  // Center the content
-  const offsetX = (outputWidth - nodeRect.width * scale) / 2;
-  const offsetY = (outputHeight - nodeRect.height * scale) / 2;
+  // Use foreignObject SVG approach - renders at full output resolution
+  const svgUrl = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
+  const img = await loadImage(svgUrl);
 
-  ctx.translate(offsetX, offsetY);
-  ctx.scale(scale, scale);
+  // Apply clipping for rounded corners (scale radius to output size)
+  const scaleRatio = outputWidth / nodeRect.width;
+  const radius = (parseFloat(computedStyle.borderRadius) || 0) * scaleRatio;
 
-  // Apply clipping for rounded corners to enable transparency
-  const radius = parseFloat(computedStyle.borderRadius) || 0;
+  ctx.save();
   if (radius > 0) {
       ctx.beginPath();
-      // Use roundRect if available, otherwise simple rect (most modern environments support roundRect)
       if (ctx.roundRect) {
-          ctx.roundRect(0, 0, nodeRect.width, nodeRect.height, radius);
+          ctx.roundRect(0, 0, outputWidth, outputHeight, radius);
       } else {
-          ctx.rect(0, 0, nodeRect.width, nodeRect.height);
+          ctx.rect(0, 0, outputWidth, outputHeight);
       }
       ctx.clip();
   }
 
-  // Fill background inside the clipped area
+  // Fill background first
   ctx.fillStyle = computedStyle.backgroundColor || '#000000';
-  ctx.fillRect(0, 0, nodeRect.width, nodeRect.height);
+  ctx.fillRect(0, 0, outputWidth, outputHeight);
 
-  // Use drawImage if node has a canvas child, otherwise use html2canvas-like approach
-  // For now, we use foreignObject SVG approach (fast, supports CSS)
-  const svgUrl = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height);
-  const img = await loadImage(svgUrl);
+  // Draw SVG at full output size (already scaled internally)
+  ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+  ctx.restore();
 
-  ctx.drawImage(img, 0, 0, nodeRect.width, nodeRect.height);
-
-  // Reset transform for text overlay (text is rendered in output coordinates)
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-  // Render text overlay using Canvas API (bypasses SVG font issues)
-  renderTextOverlay(ctx, outputWidth, outputHeight, scale);
+  // Text overlay is now captured directly from DOM (CSS animations preserved)
+  // Canvas rendering disabled - was causing blur/opacity animation issues
+  // renderTextOverlay(ctx, outputWidth, outputHeight, scale, durationMs, playheadMs);
 
   // Get raw RGBA pixel data
   const imageData = ctx.getImageData(0, 0, outputWidth, outputHeight);

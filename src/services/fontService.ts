@@ -321,6 +321,53 @@ export async function loadFontsForExport(fontNames: string[]): Promise<void> {
   console.log('[FontService] All fonts ready for export');
 }
 
+// Fetch font CSS directly from Google Fonts (for SVG embedding)
+// This fetches the CSS and converts font URLs to base64 data URLs
+export async function fetchGoogleFontCSS(fontName: string): Promise<string> {
+  try {
+    const weights = [400, 500, 600, 700, 800, 900];
+    const cssUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@${weights.join(';')}&display=swap`;
+
+    const response = await fetch(cssUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      console.warn(`[FontService] Failed to fetch Google Font CSS for ${fontName}`);
+      return '';
+    }
+
+    let css = await response.text();
+
+    // Find all font URLs and convert to base64
+    const urlRegex = /url\(([^)]+\.woff2)\)/g;
+    const matches = css.matchAll(urlRegex);
+
+    for (const match of matches) {
+      const fontUrl = match[1];
+      try {
+        const fontResponse = await fetch(fontUrl);
+        if (fontResponse.ok) {
+          const fontData = await fontResponse.arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(fontData)));
+          const dataUrl = `data:font/woff2;base64,${base64}`;
+          css = css.replace(fontUrl, dataUrl);
+        }
+      } catch (e) {
+        console.warn(`[FontService] Failed to convert font URL to base64: ${fontUrl}`);
+      }
+    }
+
+    console.log(`[FontService] Fetched Google Font CSS for ${fontName} (${css.length} chars)`);
+    return css;
+  } catch (e) {
+    console.warn(`[FontService] Error fetching Google Font: ${fontName}`, e);
+    return '';
+  }
+}
+
 // Force re-download all fonts
 export async function refreshFonts(onProgress?: (progress: number, fontName: string) => void): Promise<void> {
   const allFontNames = FONT_OPTIONS.map(f => f.value);
