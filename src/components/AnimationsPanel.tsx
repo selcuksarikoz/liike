@@ -3,11 +3,10 @@ import { useState } from 'react';
 import type { LayoutPreset } from '../constants/styles';
 import { LAYOUT_PRESETS } from '../constants/styles';
 import { TEXT_DEVICE_PRESETS, type AnimationSpeed } from '../constants/textAnimations';
+import { useAnimationManager } from '../hooks/useAnimationManager';
 import { useFavorites } from '../store/favoritesStore';
 import type { ImageLayout } from '../store/renderStore';
 import { useRenderStore } from '../store/renderStore';
-import { useTimelineStore } from '../store/timelineStore';
-import { loadGoogleFont } from '../hooks/useFontLoader';
 import { AnimatedLayoutCard } from './animations/AnimatedLayoutCard';
 import { TextAnimationCard } from './animations/TextAnimationCard';
 import { TextEditor } from './TextEditor';
@@ -46,18 +45,15 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     shadowOpacity,
     stylePreset,
     imageAspectRatio,
-    applyPreset,
-    setDurationMs,
     backgroundType,
     backgroundGradient,
     backgroundColor,
     backgroundImage,
-    setTextOverlay,
     animationSpeed,
     setAnimationSpeed,
   } = useRenderStore();
 
-  const { addClip, clearTrack, setPlayhead, setIsPlaying } = useTimelineStore();
+  const { applyLayoutAnimation, applyTextAnimation } = useAnimationManager();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
 
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -65,45 +61,12 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
 
   const handleApplyPreset = (preset: LayoutPreset, layout: ImageLayout) => {
     setActivePresetId(preset.id);
+    applyLayoutAnimation(preset, layout);
+  };
 
-    applyPreset({
-      rotationX: preset.rotationX,
-      rotationY: preset.rotationY,
-      rotationZ: preset.rotationZ,
-      imageLayout: layout,
-    });
-
-    // Clear text overlay and timeline when switching to a layout animation
-    setTextOverlay({ enabled: false });
-    clearTrack('track-animation');
-
-    const hasAnimation = preset.animations.some((a) => a.type !== 'none');
-    if (hasAnimation) {
-      setIsPlaying(false);
-      setDurationMs(preset.durationMs);
-      setPlayhead(0);
-      addClip('track-animation', {
-        trackId: 'track-animation',
-        type: 'animation',
-        name: preset.name,
-        startMs: 0,
-        durationMs: preset.durationMs,
-        color: preset.color,
-        icon: preset.icon,
-        data: {
-          animationPreset: {
-            id: preset.id,
-            name: preset.name,
-            animations: preset.animations.map((a) => a.type).filter((t) => t !== 'none') as any[],
-            icon: preset.icon,
-            color: preset.color,
-            duration: preset.durationMs,
-            easing: preset.animations[0]?.easing || 'ease-in-out',
-          },
-        },
-      });
-      setTimeout(() => setIsPlaying(true), 100);
-    }
+  const handleApplyTextPreset = (preset: (typeof TEXT_DEVICE_PRESETS)[number]) => {
+    setActivePresetId(preset.id);
+    applyTextAnimation(preset);
   };
 
   const handleDragStart = (e: React.DragEvent, preset: LayoutPreset) => {
@@ -336,101 +299,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                     key={preset.id}
                     preset={preset}
                     isActive={activePresetId === preset.id}
-                    onApply={() => {
-                      setActivePresetId(preset.id);
-                      // Preload the font
-                      loadGoogleFont('Manrope');
-                      // Map layout to devicePosition
-                      let devicePosition: 'center' | 'top' | 'bottom' | 'left' | 'right' = 'center';
-
-                      if (preset.layout === 'text-top-device-bottom') {
-                        devicePosition = 'bottom';
-                      } else if (preset.layout === 'text-bottom-device-top') {
-                        devicePosition = 'top';
-                      } else if (preset.layout === 'text-left-device-right') {
-                        devicePosition = 'right';
-                      } else if (preset.layout === 'text-right-device-left') {
-                        devicePosition = 'left';
-                      } else if (preset.layout === 'text-center-device-behind') {
-                        devicePosition = 'center';
-                      }
-
-                      // Creative device animations based on text animation type
-                      const getCreativeDeviceAnimation = () => {
-                        // Match device animation to text animation style for cohesive presentation
-                        switch (preset.textAnimation) {
-                          case 'blur':
-                          case 'zoom-blur':
-                            return 'zoom-in'; // Dramatic zoom with text blur
-                          case 'bounce':
-                            return 'bounce-in'; // Bouncy entrance
-                          case 'elastic':
-                            return 'bounce-in'; // Elastic text + bouncy device
-                          case 'flip':
-                            return 'flip-up'; // 3D flip entrance
-                          case 'glitch':
-                            return Math.random() > 0.5 ? 'zoom-out' : 'rotate-in'; // Chaotic entrance
-                          case 'wave':
-                            return 'rise'; // Smooth rise with wave text
-                          case 'typewriter':
-                            return 'fade'; // Subtle fade for dramatic reveal
-                          case 'scale':
-                            return 'zoom-in'; // Scale together
-                          case 'slide-up':
-                            return devicePosition === 'bottom' ? 'peek-bottom' : 'rise';
-                          case 'slide-down':
-                            return 'drop'; // Drop from above
-                          default:
-                            return 'rise';
-                        }
-                      };
-
-                      const deviceAnimation = getCreativeDeviceAnimation();
-
-                      setTextOverlay({
-                        enabled: true,
-                        text: `${preset.headline}\n${preset.tagline}`,
-                        headline: preset.headline,
-                        tagline: preset.tagline,
-                        fontFamily: 'Manrope',
-                        animation: preset.textAnimation,
-                        position: preset.textPosition,
-                        layout: preset.layout,
-                        fontSize: preset.headlineFontSize,
-                        taglineFontSize: preset.taglineFontSize,
-                        color: preset.color,
-                        deviceOffset: preset.deviceOffset ?? -20,
-                        devicePosition,
-                        deviceAnimateIn: true,
-                        deviceAnimation,
-                      });
-
-                      setIsPlaying(false);
-                      setDurationMs(preset.durationMs);
-                      setPlayhead(0);
-                      clearTrack('track-animation');
-                      addClip('track-animation', {
-                        trackId: 'track-animation',
-                        type: 'animation',
-                        name: preset.name,
-                        startMs: 0,
-                        durationMs: preset.durationMs,
-                        color: preset.color,
-                        icon: preset.icon,
-                        data: {
-                          animationPreset: {
-                            id: preset.id,
-                            name: preset.name,
-                            animations: [preset.textAnimation as any],
-                            icon: preset.icon,
-                            color: preset.color,
-                            duration: preset.durationMs,
-                            easing: 'ease-out',
-                          },
-                        },
-                      });
-                      setTimeout(() => setIsPlaying(true), 100);
-                    }}
+                    onApply={() => handleApplyTextPreset(preset)}
                   />
                 ))}
               </div>
