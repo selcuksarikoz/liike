@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Palette, Smartphone, Laptop, Tablet, Watch, Monitor } from 'lucide-react';
 import { useRenderStore } from '../../store/renderStore';
 import { STYLE_PRESETS } from '../../constants/styles';
+import { DEVICES } from '../../constants/devices';
 import { Modal } from './Modal';
 
 type FrameTab = 'styles' | 'iphone' | 'macbook' | 'ipad' | 'imac' | 'watch';
@@ -67,7 +68,7 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
           })}
         </div>
 
-        {/* Content */}
+          {/* Content */}
         <div className="flex-1 overflow-y-auto p-5">
           
           {/* Styles Tab */}
@@ -82,7 +83,7 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
                         setStylePreset(preset.id as any);
                         setFrameMode('basic');
                     }}
-                    className={`group relative aspect-square rounded-xl border overflow-hidden transition-all ${
+                    className={`group relative aspect-square rounded-xl border overflow-hidden transition-all text-left ${
                       isActive 
                          ? 'border-accent ring-2 ring-accent/30 scale-105 shadow-xl' 
                          : 'border-ui-border hover:border-accent/50 hover:scale-105'
@@ -100,7 +101,7 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
                       />
                     </div>
                     <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                        <span className={`text-[10px] font-medium text-center block ${isActive ? 'text-accent' : 'text-white'}`}>
+                        <span className={`text-[10px] font-medium block truncate ${isActive ? 'text-accent' : 'text-white'}`}>
                         {preset.label}
                         </span>
                     </div>
@@ -112,36 +113,46 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
 
           {/* Device Tabs */}
           {activeTab !== 'styles' && (
-             <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                <div className="p-6 rounded-full bg-ui-panel/50 border border-ui-border">
-                   {activeTab === 'iphone' && <Smartphone className="w-12 h-12 text-accent" />}
-                   {activeTab === 'macbook' && <Laptop className="w-12 h-12 text-accent" />}
-                   {activeTab === 'ipad' && <Tablet className="w-12 h-12 text-accent" />}
-                   {activeTab === 'imac' && <Monitor className="w-12 h-12 text-accent" />}
-                   {activeTab === 'watch' && <Watch className="w-12 h-12 text-accent" />}
-                </div>
-                <div>
-                   <h3 className="text-xl font-bold text-white mb-2">
-                       {tabs.find(t => t.id === activeTab)?.label} Mockup Selected
-                   </h3>
-                   <p className="text-sm text-ui-muted max-w-xs mx-auto">
-                       Your content will be automatically wrapped in a high-fidelity vector mockup of this device.
-                   </p>
-                </div>
-                
-                {/* Future: Add Color / Model variants here */}
-                {/* For now, just a placeholder for variants */}
-                <div className="mt-8 pt-6 border-t border-ui-border w-full">
-                    <p className="text-[10px] text-ui-muted uppercase tracking-widest mb-3">Device Color (Coming Soon)</p>
-                    <div className="flex justify-center gap-2">
-                        {['#333', '#e3e3e3', '#f5f5f7', '#1d1d1f'].map(c => (
-                            <div key={c} className="w-6 h-6 rounded-full border border-ui-border" style={{ backgroundColor: c }} />
-                        ))}
-                    </div>
-                </div>
+             <div className="grid grid-cols-3 gap-3">
+                {DEVICES.filter(d => {
+                   if (activeTab === 'iphone') return d.type === 'phone';
+                   if (activeTab === 'macbook') return d.type === 'laptop';
+                   if (activeTab === 'ipad') return d.type === 'tablet';
+                   if (activeTab === 'imac') return d.type === 'desktop';
+                   if (activeTab === 'watch') return d.type === 'watch';
+                   return false;
+                }).map((device) => {
+                   const isActive = deviceType === device.id && frameMode === 'device';
+                   return (
+                      <button
+                         key={device.id}
+                         onClick={() => {
+                            setFrameMode('device');
+                            setDeviceType(device.id); // Set specific device ID
+                         }}
+                         className={`group relative aspect-[3/4] rounded-xl border overflow-hidden transition-all bg-ui-panel/30 ${
+                           isActive 
+                              ? 'border-accent ring-2 ring-accent/30 scale-105 shadow-xl' 
+                              : 'border-ui-border hover:border-accent/50 hover:scale-105'
+                         }`}
+                      >
+                         <div className="absolute inset-0 p-4 flex items-center justify-center">
+                            <img 
+                               src={device.image} 
+                               alt={device.name}
+                               className="w-full h-full object-contain filter drop-shadow-lg transition-transform group-hover:scale-110"
+                            />
+                         </div>
+                         <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                            <span className={`text-[10px] font-medium leading-tight block text-center ${isActive ? 'text-accent' : 'text-white'}`}>
+                               {device.name}
+                            </span>
+                         </div>
+                      </button>
+                   );
+                })}
              </div>
           )}
-
         </div>
 
         {/* Footer */}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from './Modal';
 import { useRenderStore } from '../../store/renderStore';
 import { FRAMES_DATA } from '../../constants/styles';
+import { DEVICES } from '../../constants/devices';
 
 type FrameSelectorModalProps = {
   isOpen: boolean;
@@ -12,19 +13,61 @@ export const FrameSelectorModal = ({ isOpen, onClose }: FrameSelectorModalProps)
   const { canvasWidth, canvasHeight, setCanvasSize } = useRenderStore();
   const [activeTab, setActiveTab] = useState(FRAMES_DATA[0].category);
 
-  const handleSelectFrame = (frame: { label: string; width: number; height: number }) => {
+  const handleSelectFrame = (frame: { width: number; height: number }) => {
     setCanvasSize(frame.width, frame.height);
     onClose();
   };
 
-  const activeFrames = FRAMES_DATA.find(g => g.category === activeTab)?.frames || [];
+  // Generate Device Frames dynamically
+  const deviceFrames = DEVICES.map(device => {
+    // Determine base resolution size
+    let w, h;
+    const ar = Number(device.aspectRatio); // component AR (W/H)
+    
+    // Logic to set high-res canvas size matching aspect ratio
+    if (device.type === 'phone') {
+       w = 1170; // iPhone standard width
+       h = Math.round(w / ar);
+    } else if (device.type === 'watch') {
+       w = 800;
+       h = 800;
+    } else if (device.type === 'desktop' || device.type === 'laptop') {
+       w = 1920; 
+       h = Math.round(w / ar);
+    } else {
+       // Tablet
+       w = 1600;
+       h = Math.round(w / ar);
+    }
+    
+    return {
+       label: device.name,
+       ratio: device.type.toUpperCase(),
+       width: w,
+       height: h,
+       previewRatio: ar
+    };
+  });
+
+  const allData = [
+    ...FRAMES_DATA.map(cat => ({
+        ...cat,
+        frames: cat.frames.map(f => ({ ...f, previewRatio: f.width / f.height }))
+    })),
+    { 
+        category: 'Devices', 
+        frames: deviceFrames 
+    }
+  ];
+
+  const activeFrames = allData.find(g => g.category === activeTab)?.frames || [];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Select Frame" position="center">
       <div className="p-4">
         {/* Category Tabs */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1">
-          {FRAMES_DATA.map(group => (
+          {allData.map(group => (
             <button
               key={group.category}
               onClick={() => setActiveTab(group.category)}
@@ -43,7 +86,7 @@ export const FrameSelectorModal = ({ isOpen, onClose }: FrameSelectorModalProps)
         <div className="grid grid-cols-3 gap-3">
           {activeFrames.map((frame, i) => {
             const isActive = canvasWidth === frame.width && canvasHeight === frame.height;
-            const aspectRatio = frame.width / frame.height;
+            const aspectRatio = frame.previewRatio;
 
             return (
               <button

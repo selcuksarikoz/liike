@@ -94,6 +94,13 @@ export const SidebarRight = () => {
 
   // Handle filter change - update canvas layout (filter will auto-derive)
   const handleFilterChange = (filter: LayoutFilter) => {
+    // If the selected filter category matches the current layout, 
+    // don't reset the specific layout variant (e.g. keep 'stacked' if 'duo' is clicked)
+    if (getFilterFromLayout(imageLayout) === filter) {
+      setLayoutFilter(filter);
+      return;
+    }
+
     // Pause video and reset timeline
     setIsPlaying(false);
     setPlayhead(0);

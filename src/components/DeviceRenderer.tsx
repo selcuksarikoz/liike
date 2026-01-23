@@ -3,11 +3,8 @@ import { ImagePlus } from 'lucide-react';
 import { STYLE_PRESETS } from '../constants/styles';
 import type { MediaAsset } from '../store/renderStore';
 import { combineAnimations, CSS_TRANSITIONS } from '../constants/animations';
-import { IphoneMockup } from './DeviceMockups/IphoneMockup';
-import { MacbookMockup } from './DeviceMockups/MacbookMockup';
-import { IpadMockup } from './DeviceMockups/IpadMockup';
-import { ImacMockup } from './DeviceMockups/ImacMockup';
-import { AppleWatchMockup } from './DeviceMockups/AppleWatchMockup';
+import { DEVICES } from '../constants/devices';
+import { GenericDeviceMockup } from './DeviceMockups/GenericDeviceMockup';
 
 export type AspectRatio = 'free' | '1:1' | '4:5' | '9:16' | '16:9' | '3:4' | '4:3' | '21:9' | '2:3' | '3:2';
 
@@ -40,8 +37,9 @@ type ImageRendererProps = {
   animationInfo?: AnimationInfo;
   playing?: boolean;
   frameMode?: 'basic' | 'device';
-  deviceType?: 'iphone' | 'macbook' | 'ipad' | 'imac' | 'watch';
+  deviceType?: string; // Updated type from literal to string to support IDs
 };
+
 
 // =============================================================================
 // MediaContainer - Extracted and memoized for performance
@@ -232,7 +230,8 @@ const DeviceRendererComponent = ({
 
   // Memoized computed shadow - drop-shadow filter (works better with 3D transforms)
   const shadowFilter = useMemo(() => {
-    if (isPreview || shadowType === 'none') {
+    // Disable user shadows if in device mode (mockups have their own cached shadows)
+    if (isPreview || shadowType === 'none' || frameMode === 'device') {
       return 'none';
     }
 
@@ -245,39 +244,33 @@ const DeviceRendererComponent = ({
 
     // drop-shadow(x-offset y-offset blur-radius color)
     return `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px ${rgba})`;
-  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowX, shadowY]);
+  }, [isPreview, shadowType, shadowColor, shadowOpacity, shadowBlur, shadowX, shadowY, frameMode]);
 
   const aspectValue = getAspectRatioValue(aspectRatio);
 
   // Helper to wrap content in device mockup if enabled
   const renderWithMockup = (content: React.ReactNode, key?: number | string) => {
-    if (frameMode === 'device') {
-       const MockupComponent = 
-          deviceType === 'macbook' ? MacbookMockup : 
-          deviceType === 'ipad' ? IpadMockup : 
-          deviceType === 'imac' ? ImacMockup :
-          deviceType === 'watch' ? AppleWatchMockup :
-          IphoneMockup;
+    if (frameMode === 'device' && deviceType) {
+       // Find config by ID or fallback type
+       // Fallbacks for legacy/default states:
+       const config = DEVICES.find(d => d.id === deviceType) 
+          || DEVICES.find(d => d.id === 'iphone-16-pro') // default fallback
        
        // Adjust scale slightly for different devices to fit better in grid cells
+       // This logic effectively normalizes visual size relative to "grid unit"
+       const type = config?.type;
        const deviceScale = 
-          deviceType === 'watch' ? (scale * 0.9) :
-          deviceType === 'imac' ? (scale * 0.4) : // iMac is huge
-          deviceType === 'macbook' ? (scale * 0.5) : // MacBook is wide
-          deviceType === 'ipad' ? (scale * 0.65) :
-          (scale * 0.8); // iPhone default
+          type === 'watch' ? (scale * 0.9) :
+          type === 'desktop' ? (scale * 0.45) : 
+          type === 'laptop' ? (scale * 0.55) : 
+          type === 'tablet' ? (scale * 0.65) :
+          (scale * 0.85); // phone default
 
        return (
           <div key={key} className="relative flex items-center justify-center pointer-events-none"> 
-              {/* pointer-events-none on wrapper to let clicks pass through to screen? 
-                  Actually screen has pointer-events-auto usually. 
-                  The Mockup components don't pass onClick. 
-                  MediaContainer handles click. 
-                  Mockups render children in a div that should allow interaction.
-              */}
-              <MockupComponent scale={isPreview ? 0.2 : deviceScale}>
+              <GenericDeviceMockup config={config} scale={isPreview ? 0.2 : deviceScale}>
                  {content}
-              </MockupComponent>
+              </GenericDeviceMockup>
           </div>
        );
     }
