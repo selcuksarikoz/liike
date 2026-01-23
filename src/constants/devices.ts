@@ -381,3 +381,54 @@ export const DEVICES: DeviceConfig[] = [
     screen: { top: '26%', left: '18%', width: '64%', height: '32%', radius: '22%' }
   }
 ];
+
+// Global cache for preloaded device images
+const deviceImageCache = new Map<string, HTMLImageElement>();
+
+// Preload all device images for instant switching
+export const preloadDeviceImages = async (): Promise<void> => {
+  console.log('[Devices] Preloading device images...');
+
+  const promises = DEVICES.map((device) => {
+    return new Promise<void>((resolve) => {
+      // Skip if already cached
+      if (deviceImageCache.has(device.id)) {
+        resolve();
+        return;
+      }
+
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          await img.decode();
+          deviceImageCache.set(device.id, img);
+        } catch {
+          // Still cache even if decode fails
+          deviceImageCache.set(device.id, img);
+        }
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = device.image;
+    });
+  });
+
+  await Promise.all(promises);
+  console.log(`[Devices] Preloaded ${deviceImageCache.size}/${DEVICES.length} device images`);
+};
+
+// Get preloaded image for a device
+export const getPreloadedDeviceImage = (deviceId: string): HTMLImageElement | null => {
+  return deviceImageCache.get(deviceId) || null;
+};
+
+// Check if device image is preloaded
+export const isDeviceImagePreloaded = (deviceId: string): boolean => {
+  return deviceImageCache.has(deviceId);
+};
+
+// Auto-start preloading when module is imported (runs immediately)
+// This ensures images start loading before React even mounts
+if (typeof window !== 'undefined') {
+  preloadDeviceImages();
+}

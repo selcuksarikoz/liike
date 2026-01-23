@@ -76,6 +76,12 @@ export type TextOverlay = {
   deviceOffset: number; // negative = overflow bottom
   deviceAnimateIn: boolean;
   deviceAnimation: string;
+  // Text shadow settings
+  shadowEnabled: boolean;
+  shadowBlur: number;
+  shadowOffsetY: number;
+  shadowColor: string;
+  shadowOpacity: number;
 };
 
 type RenderStore = RenderSettings & {
@@ -220,6 +226,12 @@ export const useRenderStore = create<RenderStore>((set) => ({
     deviceOffset: -20,
     deviceAnimateIn: false,
     deviceAnimation: 'none',
+    // Text shadow defaults
+    shadowEnabled: true,
+    shadowBlur: 6,
+    shadowOffsetY: 2,
+    shadowColor: '#000000',
+    shadowOpacity: 50,
   },
 
   // Setters

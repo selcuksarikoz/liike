@@ -8,15 +8,20 @@ import { SidebarRight } from './components/SidebarRight';
 import { Workarea } from './components/Workarea';
 import { Timeline } from './components/Timeline';
 import { initializeFonts } from './services/fontService';
+import { preloadDeviceImages } from './constants/devices';
 
 const App = () => {
   const stageRef = useRef<HTMLDivElement>(null);
 
-  // Initialize fonts on app startup
+  // Initialize fonts and preload device images on app startup
   useEffect(() => {
-    initializeFonts((progress, fontName) => {
-      console.log(`[Fonts] ${Math.round(progress * 100)}% - ${fontName}`);
-    }).catch(console.error);
+    // Preload in parallel for faster startup
+    Promise.all([
+      initializeFonts((progress, fontName) => {
+        console.log(`[Fonts] ${Math.round(progress * 100)}% - ${fontName}`);
+      }),
+      preloadDeviceImages()
+    ]).catch(console.error);
   }, []);
 
   // Fast streaming hook for all formats (video & image)

@@ -48,6 +48,11 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     color,
     animation,
     position,
+    shadowEnabled,
+    shadowBlur,
+    shadowOffsetY,
+    shadowColor,
+    shadowOpacity,
   } = textOverlay;
 
   // Scale for preview mode
@@ -102,6 +107,21 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
   const headlineAnimStyles = generateTextKeyframes(animationType, headlineProgress);
   const taglineAnimStyles = generateTextKeyframes(animationType, taglineProgress);
 
+  // Convert hex color to rgba with opacity
+  const hexToRgba = (hex: string, opacity: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${opacity / 100})`;
+  };
+
+  // Text shadow from store settings (scales with content)
+  const shadowRgba = hexToRgba(shadowColor, shadowOpacity);
+  const shadowRgbaLight = hexToRgba(shadowColor, shadowOpacity * 0.5);
+  const textShadow = shadowEnabled
+    ? `0 ${shadowOffsetY * scale}px ${shadowBlur * scale}px ${shadowRgba}, 0 ${shadowOffsetY * 0.5 * scale}px ${shadowBlur * 0.3 * scale}px ${shadowRgbaLight}`
+    : 'none';
+
   // Headline style (animated)
   const headlineStyle: React.CSSProperties = {
     fontFamily,
@@ -110,7 +130,7 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     color,
     textAlign: 'center',
     lineHeight: 1.1,
-    textShadow: '0 2px 4px rgba(0,0,0,0.4)',
+    textShadow,
     opacity: headlineAnimStyles.opacity,
     transform: headlineAnimStyles.transform,
     filter: headlineAnimStyles.filter,
@@ -126,7 +146,7 @@ export const TextOverlayRenderer = ({ isPreview = false }: TextOverlayProps) => 
     color,
     textAlign: 'center',
     lineHeight: 1.3,
-    textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+    textShadow,
     opacity: taglineAnimStyles.opacity * 0.9,
     transform: taglineAnimStyles.transform,
     filter: taglineAnimStyles.filter,

@@ -36,6 +36,67 @@ const Section = ({ icon, title, description, children }: SectionProps) => (
   </div>
 );
 
+// Text Animations Section
+type TextAnimationsSectionProps = {
+  textPresets: LayoutPreset[];
+  renderCard: (preset: LayoutPreset, layout: ImageLayout, assets: any[]) => React.ReactNode;
+  mediaAssets: any[];
+  textMode: 'presets' | 'edit';
+  setTextMode: (mode: 'presets' | 'edit') => void;
+};
+
+const TextAnimationsSection = ({
+  textPresets,
+  renderCard,
+  mediaAssets,
+  textMode,
+  setTextMode,
+}: TextAnimationsSectionProps) => {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Type className="w-4 h-4 text-violet-400" />
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+          Text Animations
+        </h3>
+      </div>
+
+      {/* Sub-Tabs */}
+      <div className="flex bg-ui-panel/40 p-1 rounded-lg mb-4 border border-ui-border/50">
+        <button
+          onClick={() => setTextMode('presets')}
+          className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
+            textMode === 'presets' ? 'bg-accent text-black' : 'text-ui-muted hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-3 h-3" />
+          Presets
+        </button>
+        <button
+          onClick={() => setTextMode('edit')}
+          className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
+            textMode === 'edit' ? 'bg-accent text-black' : 'text-ui-muted hover:text-white'
+          }`}
+        >
+          <Type className="w-3 h-3" />
+          Edit Text
+        </button>
+      </div>
+
+      {textMode === 'edit' ? (
+        <TextEditor />
+      ) : (
+        <>
+          <p className="text-[9px] text-ui-muted/70 mb-4">Text + device animation presets</p>
+          <div className="space-y-3">
+            {textPresets.map((preset) => renderCard(preset, 'single', [mediaAssets[0] || null]))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) => {
   const {
     cornerRadius,
@@ -253,49 +314,13 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
       )}
 
       {filter === 'text' && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Type className="w-4 h-4 text-violet-400" />
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
-              Text Animations
-            </h3>
-          </div>
-
-          {/* Sub-Tabs */}
-          <div className="flex bg-ui-panel/40 p-1 rounded-lg mb-4 border border-ui-border/50">
-            <button
-              onClick={() => setTextMode('presets')}
-              className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
-                textMode === 'presets' ? 'bg-accent text-black' : 'text-ui-muted hover:text-white'
-              }`}
-            >
-              <Sparkles className="w-3 h-3" />
-              Presets
-            </button>
-            <button
-              onClick={() => setTextMode('edit')}
-              className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
-                textMode === 'edit' ? 'bg-accent text-black' : 'text-ui-muted hover:text-white'
-              }`}
-            >
-              <Type className="w-3 h-3" />
-              Edit Text
-            </button>
-          </div>
-
-          {textMode === 'edit' ? (
-            <TextEditor />
-          ) : (
-            <>
-              <p className="text-[9px] text-ui-muted/70 mb-4">
-                Text + device animation presets
-              </p>
-              <div className="space-y-3">
-                {textPresets.map((preset) => renderCard(preset, 'single', [mediaAssets[0] || null]))}
-              </div>
-            </>
-          )}
-        </div>
+        <TextAnimationsSection
+          textPresets={textPresets}
+          renderCard={renderCard}
+          mediaAssets={mediaAssets}
+          textMode={textMode}
+          setTextMode={setTextMode}
+        />
       )}
     </div>
   );

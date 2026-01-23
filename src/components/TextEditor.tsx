@@ -1,21 +1,11 @@
-import { useEffect } from 'react';
-import { Type, Palette, X, Move } from 'lucide-react';
-import { useRenderStore, type TextPosition } from '../store/renderStore';
+import { Type, X } from 'lucide-react';
+import { useRenderStore } from '../store/renderStore';
 import { loadGoogleFont } from '../hooks/useFontLoader';
-import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
-import { SliderControl } from './ui/SliderControl';
-import { PositionPicker } from './ui/PositionPicker';
-import { FONT_OPTIONS } from '../constants/ui';
+import { SidebarHeader } from './ui/SidebarPrimitives';
+import { FontStyleControls } from './ui/FontStyleControls';
 
 export const TextEditor = () => {
   const { textOverlay, setTextOverlay, clearTextOverlay } = useRenderStore();
-
-  // Preload font when text is enabled
-  useEffect(() => {
-    if (textOverlay.enabled && textOverlay.fontFamily) {
-      loadGoogleFont(textOverlay.fontFamily);
-    }
-  }, [textOverlay.enabled, textOverlay.fontFamily]);
 
   if (!textOverlay.enabled) {
     return (
@@ -44,7 +34,7 @@ export const TextEditor = () => {
     <div className="space-y-4">
       {/* Text Content */}
       <div>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-start justify-between mb-2">
           <SidebarHeader icon={<Type className="w-4 h-4" />}>Text Content</SidebarHeader>
           <button
             onClick={clearTextOverlay}
@@ -78,115 +68,8 @@ export const TextEditor = () => {
         </div>
       </div>
 
-      {/* Font & Style */}
-      <div>
-        <SidebarHeader icon={<Palette className="w-4 h-4" />}>Font & Style</SidebarHeader>
-        <ControlGroup>
-          {/* Font Family */}
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] text-ui-muted">Font</span>
-            <select
-              value={textOverlay.fontFamily}
-              onChange={(e) => {
-                const font = e.target.value;
-                loadGoogleFont(font);
-                setTextOverlay({ fontFamily: font });
-              }}
-              className="px-2 py-1 rounded bg-ui-panel/50 border border-ui-border text-white text-xs focus:outline-none focus:border-accent max-w-[140px]"
-            >
-              <optgroup label="Sans-Serif">
-                {FONT_OPTIONS.filter((f) => f.category === 'sans').map((font) => (
-                  <option key={font.value} value={font.value}>
-                    {font.label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Serif">
-                {FONT_OPTIONS.filter((f) => f.category === 'serif').map((font) => (
-                  <option key={font.value} value={font.value}>
-                    {font.label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Display">
-                {FONT_OPTIONS.filter((f) => f.category === 'display').map((font) => (
-                  <option key={font.value} value={font.value}>
-                    {font.label}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Monospace">
-                {FONT_OPTIONS.filter((f) => f.category === 'mono').map((font) => (
-                  <option key={font.value} value={font.value}>
-                    {font.label}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          </div>
-
-          {/* Color */}
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] text-ui-muted">Color</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={textOverlay.color}
-                onChange={(e) => setTextOverlay({ color: e.target.value })}
-                className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent"
-              />
-              <span className="text-[10px] font-mono text-accent uppercase">
-                {textOverlay.color}
-              </span>
-            </div>
-          </div>
-
-          {/* Headline Font Size */}
-          <SliderControl
-            label="Headline Size"
-            icon={<Type className="w-3.5 h-3.5" />}
-            value={textOverlay.fontSize}
-            min={24}
-            max={120}
-            unit="px"
-            onChange={(v) => setTextOverlay({ fontSize: v })}
-          />
-
-          {/* Tagline Font Size */}
-          <SliderControl
-            label="Tagline Size"
-            icon={<Type className="w-3.5 h-3.5" />}
-            value={textOverlay.taglineFontSize}
-            min={12}
-            max={48}
-            unit="px"
-            onChange={(v) => setTextOverlay({ taglineFontSize: v })}
-          />
-
-          {/* Font Weight */}
-          <SliderControl
-            label="Weight"
-            icon={<Type className="w-3.5 h-3.5" />}
-            value={textOverlay.fontWeight}
-            min={100}
-            max={900}
-            step={100}
-            unit=""
-            onChange={(v) => setTextOverlay({ fontWeight: v })}
-          />
-        </ControlGroup>
-      </div>
-
-      {/* Text Position */}
-      <div>
-        <SidebarHeader icon={<Move className="w-4 h-4" />}>Text Position</SidebarHeader>
-        <PositionPicker
-          value={textOverlay.position}
-          onChange={(pos) => setTextOverlay({ position: pos as TextPosition })}
-          type="text"
-          size="sm"
-        />
-      </div>
+      {/* Font & Style, Text Shadow, Position */}
+      <FontStyleControls />
     </div>
   );
 };
