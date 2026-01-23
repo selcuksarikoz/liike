@@ -1,6 +1,6 @@
 import { memo, type ReactNode, type CSSProperties } from 'react';
 
-export type ShadowType = 'none' | 'drop' | 'glow' | 'soft' | 'hard' | 'spread';
+export type ShadowType = 'none' | 'soft' | 'float' | 'dream' | 'glow';
 
 export type ShadowGlowProps = {
   children: ReactNode;
@@ -38,26 +38,23 @@ const generateBoxShadow = (
 
   const rgba = `rgba(${r}, ${g}, ${b}, ${alpha})`;
 
+  // box-shadow: offsetX offsetY blur spread color
   switch (type) {
-    case 'drop':
-      // Standard drop shadow
-      return `${offsetX}px ${offsetY}px ${blur}px ${rgba}`;
+    case 'soft':
+      // Soft shadow
+      return `${offsetX}px ${offsetY}px ${blur}px ${spread}px ${rgba}`;
+
+    case 'float':
+      // Float shadow - slightly elevated feel
+      return `${offsetX}px ${offsetY}px ${blur}px ${spread}px ${rgba}`;
+
+    case 'dream':
+      // Dream shadow - colored glow effect
+      return `${offsetX}px ${offsetY}px ${blur}px ${spread}px ${rgba}`;
 
     case 'glow':
-      // Glow effect - no offset, larger blur, spread
-      return `0 0 ${blur * 1.5}px ${spread + 10}px ${rgba}`;
-
-    case 'soft':
-      // Soft shadow - larger blur, less opacity feel
-      return `${offsetX}px ${offsetY}px ${blur * 2}px ${spread}px ${rgba}`;
-
-    case 'hard':
-      // Hard shadow - minimal blur
-      return `${offsetX}px ${offsetY}px ${Math.max(2, blur * 0.3)}px ${rgba}`;
-
-    case 'spread':
-      // Spread shadow - emphasizes spread
-      return `${offsetX}px ${offsetY}px ${blur}px ${spread + 15}px ${rgba}`;
+      // Glow effect - spreads outward
+      return `${offsetX}px ${offsetY}px ${blur}px ${spread}px ${rgba}`;
 
     default:
       return undefined;
@@ -119,7 +116,7 @@ export const parseLegacyDropShadow = (
   const color = `#${toHex(parseInt(r))}${toHex(parseInt(g))}${toHex(parseInt(b))}`;
 
   return {
-    type: 'drop',
+    type: 'soft',
     offsetX: parseInt(x),
     offsetY: parseInt(y),
     blur: parseInt(blur),
