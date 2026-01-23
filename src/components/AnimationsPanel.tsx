@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Columns2, LayoutGrid } from 'lucide-react';
+import { Sparkles, Columns2, LayoutGrid, Heart, Type } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { LAYOUT_PRESETS, type LayoutPreset } from '../constants/styles';
 import { DeviceRenderer } from './DeviceRenderer';
 import { ANIMATION_PRESETS, createLayoutAnimation, DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
+import { useFavorites } from '../store/favoritesStore';
+import { TEXT_DEVICE_PRESETS, TEXT_ANIMATIONS, type TextDevicePreset, type TextAnimationType } from '../constants/textAnimations';
 
 const AnimatedLayoutCard = ({
   preset,
@@ -22,6 +24,8 @@ const AnimatedLayoutCard = ({
   backgroundGradient,
   backgroundColor,
   backgroundImage,
+  isFavorite = false,
+  onToggleFavorite,
 }: {
   preset: LayoutPreset;
   isActive: boolean;
@@ -38,6 +42,8 @@ const AnimatedLayoutCard = ({
   backgroundGradient: string;
   backgroundColor: string;
   backgroundImage: string | null;
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: string) => void;
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const deviceRef = useRef<HTMLDivElement>(null);
@@ -172,6 +178,24 @@ const AnimatedLayoutCard = ({
         )}
       </div>
 
+      {/* Favorite Button */}
+      {onToggleFavorite && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(preset.id);
+          }}
+          className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm ${
+            isFavorite 
+              ? 'bg-rose-500/90 text-white scale-110' 
+              : 'bg-black/30 text-white/60 hover:bg-black/50 hover:text-white hover:scale-110'
+          }`}
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <Heart className={`w-3 h-3 ${isFavorite ? 'fill-current' : ''}`} />
+        </button>
+      )}
+
       {/* Preset Name & Duration */}
       <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
         <div className="flex items-center justify-between">
@@ -184,7 +208,71 @@ const AnimatedLayoutCard = ({
   );
 };
 
-type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative';
+// Text Animation Preview Card Component
+const TextAnimationCard = ({
+  preset,
+  isActive,
+  onApply,
+}: {
+  preset: TextDevicePreset;
+  isActive: boolean;
+  onApply: () => void;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onClick={onApply}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`relative w-full aspect-[16/10] cursor-pointer rounded-xl border overflow-hidden transition-all duration-300 ${
+        isActive ? 'border-accent ring-2 ring-accent/30' : 'border-ui-border hover:border-accent/50'
+      }`}
+    >
+      {/* Gradient Background */}
+      <div 
+        className="absolute inset-0 opacity-80 group-hover:opacity-100"
+        style={{ background: `linear-gradient(135deg, ${preset.color}20, ${preset.color}40)` }}
+      />
+      
+      {/* Text Animation Preview */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+        <span className="text-2xl mb-1">{preset.icon}</span>
+        <span 
+          className={`text-sm font-bold text-white transition-all duration-500 ${
+            isHovered ? 'opacity-100 transform-none' : 'opacity-60'
+          }`}
+          style={{ 
+            color: preset.color,
+            textShadow: isHovered ? `0 0 20px ${preset.color}80` : 'none'
+          }}
+        >
+          {preset.defaultText}
+        </span>
+      </div>
+
+      {/* Type Badge */}
+      <div className="absolute top-2 left-2">
+        <span
+          className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase"
+          style={{ backgroundColor: preset.color }}
+        >
+          {preset.textAnimation}
+        </span>
+      </div>
+
+      {/* Info Footer */}
+      <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-medium text-white">{preset.name}</span>
+          <span className="text-[8px] text-white/60">{preset.durationMs / 1000}s</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative' | 'favorites' | 'text';
 
 export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) => {
   const {
@@ -203,6 +291,9 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
   } = useRenderStore();
 
   const { addClip, clearTrack, setPlayhead, setIsPlaying } = useTimelineStore();
+  
+  // Favorites hook
+  const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites();
 
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const presetsContainerRef = useRef<HTMLDivElement>(null);
@@ -296,12 +387,17 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
   );
   const dualAnimations = LAYOUT_PRESETS.filter(p => p.id.startsWith('duo-'));
   const trioAnimations = LAYOUT_PRESETS.filter(p => p.id.startsWith('trio-'));
+  
+  // Favorites - get all presets that are in favorites set
+  const favoritePresets = LAYOUT_PRESETS.filter(p => isFavorite(p.id));
 
   const showSingle = filter === 'single';
   const showDuo = filter === 'duo';
   const showTrio = filter === 'trio';
   const showQuad = filter === 'quad';
   const showCreative = filter === 'creative';
+  const showFavorites = filter === 'favorites';
+  const showText = filter === 'text';
 
   return (
     <div className="p-4">
@@ -336,6 +432,8 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                 backgroundGradient={backgroundGradient}
                 backgroundColor={backgroundColor}
                 backgroundImage={backgroundImage}
+                isFavorite={isFavorite(preset.id)}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </div>
@@ -373,6 +471,8 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                 backgroundGradient={backgroundGradient}
                 backgroundColor={backgroundColor}
                 backgroundImage={backgroundImage}
+                isFavorite={isFavorite(preset.id)}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </div>
@@ -410,6 +510,8 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                 backgroundGradient={backgroundGradient}
                 backgroundColor={backgroundColor}
                 backgroundImage={backgroundImage}
+                isFavorite={isFavorite(preset.id)}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </div>
@@ -447,6 +549,8 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                 backgroundGradient={backgroundGradient}
                 backgroundColor={backgroundColor}
                 backgroundImage={backgroundImage}
+                isFavorite={isFavorite(preset.id)}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </div>
@@ -483,6 +587,8 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                   backgroundGradient={backgroundGradient}
                   backgroundColor={backgroundColor}
                   backgroundImage={backgroundImage}
+                  isFavorite={isFavorite(preset.id)}
+                  onToggleFavorite={toggleFavorite}
                 />
               ))}
             </div>
@@ -515,6 +621,8 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                   backgroundGradient={backgroundGradient}
                   backgroundColor={backgroundColor}
                   backgroundImage={backgroundImage}
+                  isFavorite={isFavorite(preset.id)}
+                  onToggleFavorite={toggleFavorite}
                 />
               ))}
             </div>
@@ -547,7 +655,145 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                   backgroundGradient={backgroundGradient}
                   backgroundColor={backgroundColor}
                   backgroundImage={backgroundImage}
+                  isFavorite={isFavorite(preset.id)}
+                  onToggleFavorite={toggleFavorite}
                 />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Favorites Section */}
+      {showFavorites && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Heart className="w-4 h-4 text-rose-400" />
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+              Your Favorites
+            </h3>
+          </div>
+          <p className="text-[9px] text-ui-muted/70 mb-3">
+            Quick access to your saved animations
+          </p>
+          {favoritePresets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Heart className="w-8 h-8 text-ui-muted/30 mb-3" />
+              <p className="text-sm text-ui-muted/60 mb-1">No favorites yet</p>
+              <p className="text-xs text-ui-muted/40">
+                Click the ❤️ on any animation to save it here
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {favoritePresets.map((preset) => {
+                // Determine layout based on preset id
+                const layout = preset.id.startsWith('duo-') 
+                  ? 'side-by-side' 
+                  : preset.id.startsWith('trio-') 
+                    ? 'trio-row' 
+                    : 'single';
+                return (
+                  <AnimatedLayoutCard
+                    key={`fav-${preset.id}`}
+                    preset={preset}
+                    isActive={activePresetId === preset.id}
+                    onApply={() => handleApplyPreset(preset, layout)}
+                    onDragStart={(e) => handlePresetDragStart(e, preset)}
+                    cornerRadius={cornerRadius}
+                    mediaAssets={mediaAssets.length > 0 ? [mediaAssets[0]] : [null]}
+                    stylePreset={stylePreset}
+                    shadowType={shadowType}
+                    shadowOpacity={shadowOpacity}
+                    aspectRatio={imageAspectRatio}
+                    layout={layout}
+                    backgroundType={backgroundType}
+                    backgroundGradient={backgroundGradient}
+                    backgroundColor={backgroundColor}
+                    backgroundImage={backgroundImage}
+                    isFavorite={isFavorite(preset.id)}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Text Animations Section */}
+      {showText && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Type className="w-4 h-4 text-violet-400" />
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+              Text Animations
+            </h3>
+          </div>
+          <p className="text-[9px] text-ui-muted/70 mb-4">
+            Combine dynamic text with device mockups
+          </p>
+          
+          {/* Text + Device Presets */}
+          <div className="space-y-3">
+            {TEXT_DEVICE_PRESETS.map((preset) => (
+              <TextAnimationCard
+                key={preset.id}
+                preset={preset}
+                isActive={activePresetId === preset.id}
+                onApply={() => {
+                  setActivePresetId(preset.id);
+                  // TODO: Apply text animation preset to canvas
+                  setIsPlaying(false);
+                  setDurationMs(preset.durationMs);
+                  setPlayhead(0);
+                  clearTrack('track-animation');
+                  addClip('track-animation', {
+                    trackId: 'track-animation',
+                    type: 'animation',
+                    name: preset.name,
+                    startMs: 0,
+                    durationMs: preset.durationMs,
+                    color: preset.color,
+                    icon: preset.icon,
+                    data: {
+                      animationPreset: {
+                        id: preset.id,
+                        name: preset.name,
+                        animations: [preset.textAnimation as any],
+                        icon: preset.icon,
+                        color: preset.color,
+                        duration: preset.durationMs,
+                        easing: 'ease-out',
+                        textOverlay: {
+                          text: preset.defaultText,
+                          animation: preset.textAnimation,
+                          position: preset.textPosition,
+                        },
+                      },
+                    },
+                  });
+                  setTimeout(() => setIsPlaying(true), 100);
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Available Text Effects */}
+          <div className="mt-6">
+            <h4 className="text-[9px] font-bold uppercase tracking-widest text-ui-muted/60 mb-3">
+              Available Effects
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              {TEXT_ANIMATIONS.map((anim) => (
+                <div
+                  key={anim.id}
+                  className="flex flex-col items-center p-2 rounded-lg bg-ui-bg/50 border border-ui-border/50 hover:border-accent/50 transition-colors cursor-pointer"
+                  title={anim.description}
+                >
+                  <span className="text-lg mb-1">{anim.icon}</span>
+                  <span className="text-[8px] text-ui-muted text-center">{anim.name}</span>
+                </div>
               ))}
             </div>
           </div>

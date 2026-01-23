@@ -28,7 +28,10 @@ const PRESETS = {
     landscape: { top: '5.5%', left: '5.5%', width: '89%', height: '89%', radius: '16px' },
   },
   macbook: {
-    default: { top: '5.5%', left: '11.8%', width: '76.4%', height: '84%', radius: '10px' }
+    // Adjusted screen position for better fit - content is more centered
+    default: { top: '6%', left: '12.5%', width: '75%', height: '80%', radius: '8px' },
+    pro16: { top: '5.5%', left: '12%', width: '76%', height: '82%', radius: '10px' },
+    pro14: { top: '6%', left: '12%', width: '76%', height: '81%', radius: '10px' },
   },
   imac: {
     default: { top: '4%', left: '4%', width: '92%', height: '62%', radius: '14px' } // 24" often has chin
@@ -346,7 +349,7 @@ export const DEVICES: DeviceConfig[] = [
     image: imac27,
     width: 800,
     aspectRatio: 1.3,
-    screen: { ...PRESETS.imac.default, radius: '0px', height: '65%', bottom: '25%' } 
+    screen: { ...PRESETS.imac.default, radius: '0px', height: '65%' } 
   },
 
   // --- Watches ---

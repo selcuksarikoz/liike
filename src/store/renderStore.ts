@@ -92,9 +92,9 @@ type RenderStore = RenderSettings & {
   resetRenderStatus: () => void;
   // Frame Settings
   frameMode: 'basic' | 'device';
-  deviceType: 'iphone' | 'macbook' | 'ipad' | 'imac' | 'watch';
+  deviceType: string;  // Changed to string to support specific device IDs like 'iphone-15-pro-max'
   setFrameMode: (mode: 'basic' | 'device') => void;
-  setDeviceType: (type: 'iphone' | 'macbook' | 'ipad' | 'imac' | 'watch') => void;
+  setDeviceType: (type: string) => void;
 };
 
 const initialRenderStatus: RenderStatus = {

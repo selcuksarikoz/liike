@@ -1,4 +1,4 @@
-import { CircleDot, Columns2, Film, Grid3x3, Layers, LayoutGrid, LayoutTemplate, Rows2, Square } from 'lucide-react';
+import { CircleDot, Columns2, Film, Grid3x3, Heart, Layers, LayoutGrid, LayoutTemplate, Rows2, Square, Type } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FRAMES_DATA } from '../constants/styles';
 import type { ImageLayout } from '../store/renderStore';
@@ -13,9 +13,11 @@ import { DropdownTrigger } from './ui/Dropdown';
 import { ActionCard, ControlGroup, SidebarContainer, SidebarContent, SidebarHeader, SidebarSection, TabButton, TabContainer } from './ui/SidebarPrimitives';
 import { SliderControl } from './ui/SliderControl';
 
-export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative';
+export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative' | 'favorites' | 'text';
 
 const FILTER_OPTIONS: { id: LayoutFilter; label: string; icon: string }[] = [
+  { id: 'favorites', label: '❤️', icon: 'favorite' },
+  { id: 'text', label: 'Aa', icon: 'text_fields' },
   { id: 'single', label: 'Single', icon: 'crop_square' },
   { id: 'duo', label: 'Duo', icon: 'view_column_2' },
   { id: 'trio', label: 'Trio', icon: 'view_week' },

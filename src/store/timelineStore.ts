@@ -33,6 +33,11 @@ export type AnimationPreset = {
   duration: number;
   easing: string;
   category?: 'Basic' | 'Creative' | '3D' | 'Combo';
+  textOverlay?: {
+    text: string;
+    animation: string;
+    position: 'top' | 'center' | 'bottom';
+  };
 };
 
 export type TimelineClip = {
