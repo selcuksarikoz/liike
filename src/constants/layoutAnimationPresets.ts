@@ -235,18 +235,36 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     durationMs: 2500,
   },
 
-  // 3D Showcases
+  // Dynamic Effects
   {
-    id: 'showcase-spin',
-    name: '3D Spin',
-    rotationX: 10,
+    id: 'meteor-impact',
+    name: 'Meteor',
+    rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
-    backgroundGradient: 'from-cyan-600 via-teal-600 to-emerald-600',
-    icon: '360',
-    color: '#14B8A6',
-    animations: [{ type: 'rotate', duration: 5000, easing: 'linear', intensity: 360 }],
-    durationMs: 5000,
+    backgroundGradient: 'from-slate-950 via-orange-950 to-slate-950',
+    icon: 'local_fire_department',
+    color: '#F97316',
+    animations: [
+      { type: 'zoom-down', duration: 400, easing: 'ease-in', intensity: 1.8 },
+      { type: 'bounce', duration: 600, easing: 'ease-out', intensity: 25 },
+    ],
+    durationMs: 2000,
+  },
+  {
+    id: 'neon-flicker',
+    name: 'Neon Flicker',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-black via-purple-950 to-black',
+    icon: 'fluorescent',
+    color: '#E879F9',
+    animations: [
+      { type: 'glitch', duration: 200, easing: 'linear', intensity: 3 },
+      { type: 'pulse', duration: 800, easing: 'ease-in-out', intensity: 1.08 },
+    ],
+    durationMs: 2500,
   },
 
   // Attention Grabbers
@@ -587,18 +605,51 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     durationMs: 3000,
   },
 
-  // 3D & PRESENTATION PRESETS
+  // Cinematic & Presentation
   {
-    id: 'present-3d-spin',
-    name: '3D Cube',
+    id: 'morphic-shift',
+    name: 'Morphic',
     rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
-    backgroundGradient: 'from-blue-900 via-slate-900 to-black',
-    icon: 'view_in_ar',
-    color: '#60a5fa',
-    animations: [{ type: 'rotate-3d', duration: 4000, easing: 'linear', intensity: 360 }],
-    durationMs: 4000,
+    backgroundGradient: 'from-indigo-950 via-slate-900 to-violet-950',
+    icon: 'transform',
+    color: '#818CF8',
+    animations: [
+      { type: 'skew-slide', duration: 800, easing: 'ease-out', intensity: 15 },
+      { type: 'zoom-in', duration: 1200, easing: 'ease-out', intensity: 1.15 },
+    ],
+    durationMs: 2500,
+  },
+  {
+    id: 'vortex-zoom',
+    name: 'Vortex',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-black via-cyan-950 to-black',
+    icon: 'cyclone',
+    color: '#22D3EE',
+    animations: [
+      { type: 'spiral', duration: 1200, easing: 'ease-out', intensity: 180 },
+      { type: 'zoom-out', duration: 800, easing: 'ease-out', intensity: 1.3 },
+    ],
+    durationMs: 2500,
+  },
+  {
+    id: 'gravity-pull',
+    name: 'Gravity',
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-slate-950 via-blue-950 to-slate-950',
+    icon: 'compress',
+    color: '#3B82F6',
+    animations: [
+      { type: 'converge', duration: 600, easing: 'ease-in', intensity: 80 },
+      { type: 'elastic-rotate', duration: 800, easing: 'ease-out', intensity: 8 },
+    ],
+    durationMs: 2200,
   },
   {
     id: 'present-elevator',

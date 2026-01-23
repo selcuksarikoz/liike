@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Heart } from 'lucide-react';
 import type { MediaAsset, AspectRatio, ImageLayout, BackgroundType } from '../../store/renderStore';
 import type { LayoutPreset } from '../../constants/styles';
-import type { ShadowType } from '../layouts/types';
+import type { ShadowType } from '../DeviceRenderer';
 import {
   ANIMATION_PRESETS,
   combineAnimations,

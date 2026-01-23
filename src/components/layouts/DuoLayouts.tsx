@@ -8,7 +8,6 @@ export const SideBySideLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -53,7 +52,6 @@ export const SideBySideLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -72,7 +70,6 @@ export const StackedLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -117,7 +114,6 @@ export const StackedLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -136,7 +132,6 @@ export const DiagonalLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -183,7 +178,6 @@ export const DiagonalLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -201,7 +195,6 @@ export const PolaroidLayout = ({
   containerRef,
   containerStyle,
   mediaAssets,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -246,7 +239,6 @@ export const PolaroidLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />
               </div>

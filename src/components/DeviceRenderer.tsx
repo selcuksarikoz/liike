@@ -6,8 +6,8 @@ import { GenericDeviceMockup } from './DeviceMockups/GenericDeviceMockup';
 import { getAspectRatioValue } from '../constants/ui';
 import type { ImageLayout } from '../constants/layouts';
 import type { AnimationInfo } from '../utils/animationHelpers';
-import { MediaContainer } from './MediaContainer';
-import type { ShadowType } from './layouts/types';
+
+export type ShadowType = 'none' | 'soft' | 'float' | 'dream' | 'glow';
 
 // Layout components
 import {
@@ -52,7 +52,6 @@ type ImageRendererProps = {
   shadowBlur?: number;
   shadowX?: number;
   shadowY?: number;
-  shadowSpread?: number;
   layout?: ImageLayout;
   animationInfo?: AnimationInfo;
   playing?: boolean;
@@ -77,7 +76,6 @@ const DeviceRendererComponent = ({
   shadowBlur = 30,
   shadowX = 0,
   shadowY = 20,
-  shadowSpread = 0,
   layout = 'single',
   animationInfo,
   playing = true,
@@ -176,7 +174,6 @@ const DeviceRendererComponent = ({
     containerStyle,
     mediaAssets,
     effectiveCornerRadius,
-    shadowFilter,
     styleCSS,
     isPreview,
     onScreenClick,
@@ -186,126 +183,76 @@ const DeviceRendererComponent = ({
     sizePercent,
     renderWithMockup,
     cornerRadius,
-    // New shadow props
-    shadowType: frameMode === 'device' ? 'none' : shadowType,
-    shadowColor,
-    shadowOpacity,
-    shadowBlur,
-    shadowX,
-    shadowY,
-    shadowSpread,
   };
 
-  // Layout routing
-  switch (layout) {
-    case 'single':
-      return <SingleLayout {...layoutProps} />;
+  // Wrapper to apply shadow filter at container level
+  const withShadow = (content: React.ReactNode) => (
+    <div className="w-full h-full" style={{ filter: shadowFilter }}>
+      {content}
+    </div>
+  );
 
-    // Duo layouts
-    case 'side-by-side':
-      return <SideBySideLayout {...layoutProps} />;
-    case 'stacked':
-      return <StackedLayout {...layoutProps} />;
-    case 'diagonal':
-      return <DiagonalLayout {...layoutProps} />;
-    case 'polaroid':
-      return <PolaroidLayout {...layoutProps} />;
+  // Layout routing - shadow applied at container level
+  const layoutContent = (() => {
+    switch (layout) {
+      case 'single':
+        return <SingleLayout {...layoutProps} />;
 
-    // Trio layouts
-    case 'trio-row':
-      return <TrioRowLayout {...layoutProps} />;
-    case 'trio-column':
-      return <TrioColumnLayout {...layoutProps} />;
-    case 'fan':
-      return <FanLayout {...layoutProps} />;
-    case 'masonry':
-      return <MasonryLayout {...layoutProps} />;
-    case 'mosaic':
-      return <MosaicLayout {...layoutProps} />;
-    case 'film-strip':
-      return <FilmStripLayout {...layoutProps} />;
-    case 'spotlight':
-      return <SpotlightLayout {...layoutProps} />;
-    case 'asymmetric':
-      return <AsymmetricLayout {...layoutProps} />;
+      // Duo layouts
+      case 'side-by-side':
+        return <SideBySideLayout {...layoutProps} />;
+      case 'stacked':
+        return <StackedLayout {...layoutProps} />;
+      case 'diagonal':
+        return <DiagonalLayout {...layoutProps} />;
+      case 'polaroid':
+        return <PolaroidLayout {...layoutProps} />;
 
-    // Quad layouts
-    case 'grid':
-      return <GridLayout {...layoutProps} />;
-    case 'overlap':
-      return <OverlapLayout {...layoutProps} />;
-    case 'creative':
-      return <CreativeLayout {...layoutProps} />;
-    case 'cross':
-      return <CrossLayout {...layoutProps} />;
-    case 'magazine':
-      return <MagazineLayout {...layoutProps} />;
-    case 'showcase':
-      return <ShowcaseLayout {...layoutProps} />;
-    case 'scattered':
-      return <ScatteredLayout {...layoutProps} />;
-    case 'cascade':
-      return <CascadeLayout {...layoutProps} />;
-    case 'brick':
-      return <BrickLayout {...layoutProps} />;
+      // Trio layouts
+      case 'trio-row':
+        return <TrioRowLayout {...layoutProps} />;
+      case 'trio-column':
+        return <TrioColumnLayout {...layoutProps} />;
+      case 'fan':
+        return <FanLayout {...layoutProps} />;
+      case 'masonry':
+        return <MasonryLayout {...layoutProps} />;
+      case 'mosaic':
+        return <MosaicLayout {...layoutProps} />;
+      case 'film-strip':
+        return <FilmStripLayout {...layoutProps} />;
+      case 'spotlight':
+        return <SpotlightLayout {...layoutProps} />;
+      case 'asymmetric':
+        return <AsymmetricLayout {...layoutProps} />;
 
-    // Default fallback (single)
-    default: {
-      const { dropShadow: _, ...containerCSS } = styleCSS as typeof styleCSS & {
-        dropShadow?: string;
-      };
+      // Quad layouts
+      case 'grid':
+        return <GridLayout {...layoutProps} />;
+      case 'overlap':
+        return <OverlapLayout {...layoutProps} />;
+      case 'creative':
+        return <CreativeLayout {...layoutProps} />;
+      case 'cross':
+        return <CrossLayout {...layoutProps} />;
+      case 'magazine':
+        return <MagazineLayout {...layoutProps} />;
+      case 'showcase':
+        return <ShowcaseLayout {...layoutProps} />;
+      case 'scattered':
+        return <ScatteredLayout {...layoutProps} />;
+      case 'cascade':
+        return <CascadeLayout {...layoutProps} />;
+      case 'brick':
+        return <BrickLayout {...layoutProps} />;
 
-      // Calculate container style with contain behavior
-      const getDefaultContainerStyle = () => {
-        const baseStyle = {
-          ...containerStyle,
-          borderRadius: `${effectiveCornerRadius}px`,
-          backfaceVisibility: 'hidden' as const,
-          ...containerCSS,
-        };
-
-        if (!aspectValue) {
-          return {
-            ...baseStyle,
-            width: sizePercent,
-            height: sizePercent,
-            maxWidth: sizePercent,
-            maxHeight: sizePercent,
-          };
-        }
-
-        return {
-          ...baseStyle,
-          width: 'auto',
-          height: 'auto',
-          aspectRatio: aspectValue,
-          maxWidth: sizePercent,
-          maxHeight: sizePercent,
-        };
-      };
-
-      return (
-        <div className="flex h-full w-full items-center justify-center overflow-hidden">
-          <div
-            ref={containerRef}
-            className="relative overflow-hidden transition-[transform,border-radius] duration-300 ease-out"
-            style={getDefaultContainerStyle()}
-          >
-            <MediaContainer
-              index={0}
-              media={mediaAssets[0]}
-              cornerRadius={effectiveCornerRadius}
-              isPreview={isPreview}
-              onScreenClick={onScreenClick}
-              styleCSS={styleCSS}
-              dropShadowFilter={shadowFilter}
-              playing={playing}
-            />
-          </div>
-        </div>
-      );
+      // Default fallback (single)
+      default:
+        return <SingleLayout {...layoutProps} />;
     }
-  }
+  })();
+
+  return withShadow(layoutContent);
 };
 
 // Memoized DeviceRenderer export - prevents unnecessary re-renders

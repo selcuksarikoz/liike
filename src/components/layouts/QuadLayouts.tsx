@@ -1,6 +1,6 @@
 import { MediaContainer } from '../MediaContainer';
 import { getStaggeredAnimationStyle, getLayoutTransition } from '../../utils/animationHelpers';
-import { getContainerCSS, type LayoutBaseProps } from './types';
+import { type LayoutBaseProps } from './types';
 
 // Grid layout (2x2)
 export const GridLayout = ({
@@ -8,7 +8,6 @@ export const GridLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -18,8 +17,6 @@ export const GridLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden p-2">
       <div
@@ -55,7 +52,6 @@ export const GridLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -74,7 +70,6 @@ export const OverlapLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -84,7 +79,6 @@ export const OverlapLayout = ({
   renderWithMockup,
   sizePercent,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
   const offsets = [
     { x: 0, y: 0, rotate: -8, zIndex: 40 },
     { x: 15, y: 10, rotate: -2, zIndex: 30 },
@@ -132,7 +126,6 @@ export const OverlapLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -151,7 +144,6 @@ export const CreativeLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -161,7 +153,6 @@ export const CreativeLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
   const positions = [
     { left: '0%', top: '0%', width: '60%', height: '60%', zIndex: 10 },
     { right: '0%', bottom: '0%', width: '55%', height: '55%', zIndex: 20 },
@@ -204,7 +195,6 @@ export const CreativeLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -223,7 +213,6 @@ export const CrossLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -232,7 +221,6 @@ export const CrossLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
   const crossPositions = [
     { gridArea: '1 / 2' },
     { gridArea: '2 / 1' },
@@ -274,7 +262,6 @@ export const CrossLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -293,7 +280,6 @@ export const MagazineLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -302,8 +288,6 @@ export const MagazineLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
@@ -338,7 +322,6 @@ export const MagazineLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -357,7 +340,6 @@ export const ShowcaseLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -365,8 +347,6 @@ export const ShowcaseLayout = ({
   animationInfo,
   sizePercent,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
@@ -395,7 +375,6 @@ export const ShowcaseLayout = ({
             isPreview={isPreview}
             onScreenClick={onScreenClick}
             styleCSS={styleCSS}
-            dropShadowFilter={shadowFilter}
             playing={playing}
           />
         </div>
@@ -419,7 +398,6 @@ export const ShowcaseLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />
               </div>
@@ -437,7 +415,6 @@ export const ScatteredLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -447,7 +424,6 @@ export const ScatteredLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
   const scatteredPositions = [
     { left: '5%', top: '5%', width: '45%', rotation: -5, zIndex: 10 },
     { right: '5%', top: '15%', width: '40%', rotation: 8, zIndex: 20 },
@@ -489,7 +465,6 @@ export const ScatteredLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -508,7 +483,6 @@ export const CascadeLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -518,8 +492,6 @@ export const CascadeLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
@@ -558,7 +530,6 @@ export const CascadeLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -577,7 +548,6 @@ export const BrickLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -586,8 +556,6 @@ export const BrickLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
@@ -622,7 +590,6 @@ export const BrickLayout = ({
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
-                    dropShadowFilter={shadowFilter}
                     playing={playing}
                   />,
                   index
@@ -652,7 +619,6 @@ export const BrickLayout = ({
                     isPreview={isPreview}
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
-                    dropShadowFilter={shadowFilter}
                     playing={playing}
                   />,
                   index

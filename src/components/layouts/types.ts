@@ -37,14 +37,11 @@ export const getContainedItemStyle = (
   };
 };
 
-export type ShadowType = 'none' | 'soft' | 'float' | 'dream' | 'glow';
-
 export type LayoutBaseProps = {
   containerRef: React.RefObject<HTMLDivElement | null>;
   containerStyle: CSSProperties;
   mediaAssets: (MediaAsset | null)[];
   effectiveCornerRadius: number;
-  shadowFilter: string; // Legacy - kept for backwards compatibility
   styleCSS: CSSProperties & { dropShadow?: string };
   isPreview: boolean;
   onScreenClick?: (index: number) => void;
@@ -54,12 +51,4 @@ export type LayoutBaseProps = {
   sizePercent: string;
   renderWithMockup: (content: ReactNode, key?: number | string) => ReactNode;
   cornerRadius?: number;
-  // New shadow props
-  shadowType?: ShadowType;
-  shadowColor?: string;
-  shadowOpacity?: number;
-  shadowBlur?: number;
-  shadowX?: number;
-  shadowY?: number;
-  shadowSpread?: number;
 };

@@ -6,7 +6,6 @@ export const SingleLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -23,7 +22,6 @@ export const SingleLayout = ({
       isPreview={isPreview}
       onScreenClick={onScreenClick}
       styleCSS={styleCSS}
-      dropShadowFilter={shadowFilter}
       playing={playing}
     />
   );

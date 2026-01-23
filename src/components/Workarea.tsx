@@ -270,7 +270,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
 
       <div
         ref={containerRef}
-        className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-ui-bg-secondary"
+        className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-ui-bg-secondary select-none"
       >
         {/* Background Gradient / Canvas Area */}
         <div
@@ -333,7 +333,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             className="relative z-10 w-full h-full flex items-center justify-center overflow-hidden"
             style={{
               borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px`,
-              padding: '3%', // Reduced from 5% for more content space
+              // padding: '3%',
             }}
           >
             {/* Animation wrapper - only apply outer animation for single layout */}

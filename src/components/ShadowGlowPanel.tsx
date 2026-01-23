@@ -1,4 +1,4 @@
-import { CloudFog, Contrast, Palette, RotateCcw, MoveHorizontal, MoveVertical, Maximize2 } from 'lucide-react';
+import { CloudFog, Contrast, Palette, RotateCcw, MoveHorizontal, MoveVertical } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { SHADOW_TYPES } from '../constants/styles';
 import { SliderControl } from './ui/SliderControl';
@@ -14,8 +14,6 @@ export const ShadowGlowPanel = () => {
     setShadowBlur,
     shadowColor,
     setShadowColor,
-    shadowSpread,
-    setShadowSpread,
     shadowX,
     setShadowX,
     shadowY,
@@ -27,7 +25,6 @@ export const ShadowGlowPanel = () => {
     setShadowColor('#000000');
     setShadowOpacity(40);
     setShadowBlur(30);
-    setShadowSpread(0);
     setShadowX(0);
     setShadowY(20);
   };
@@ -43,7 +40,6 @@ export const ShadowGlowPanel = () => {
         setShadowColor('#000000');
         setShadowOpacity(40);
         setShadowBlur(30);
-        setShadowSpread(0);
         setShadowX(0);
         setShadowY(20);
         break;
@@ -51,7 +47,6 @@ export const ShadowGlowPanel = () => {
         setShadowColor('#000000');
         setShadowOpacity(50);
         setShadowBlur(50);
-        setShadowSpread(-5);
         setShadowX(0);
         setShadowY(30);
         break;
@@ -59,7 +54,6 @@ export const ShadowGlowPanel = () => {
         setShadowColor('#4f46e5');
         setShadowOpacity(30);
         setShadowBlur(60);
-        setShadowSpread(0);
         setShadowX(0);
         setShadowY(25);
         break;
@@ -67,7 +61,6 @@ export const ShadowGlowPanel = () => {
         setShadowColor('#ffffff');
         setShadowOpacity(50);
         setShadowBlur(40);
-        setShadowSpread(5);
         setShadowX(0);
         setShadowY(0);
         break;
@@ -170,16 +163,6 @@ export const ShadowGlowPanel = () => {
             max={200}
             unit="px"
             onChange={setShadowBlur}
-          />
-
-          <SliderControl
-            label="Spread"
-            icon={<Maximize2 className="w-3.5 h-3.5" />}
-            value={shadowSpread}
-            min={-50}
-            max={50}
-            unit="px"
-            onChange={setShadowSpread}
           />
 
           <SliderControl

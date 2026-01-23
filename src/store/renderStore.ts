@@ -91,7 +91,6 @@ type RenderStore = RenderSettings & {
   shadowColor: string;
   shadowOpacity: number;
   shadowBlur: number;
-  shadowSpread: number;
   shadowX: number;
   shadowY: number;
   imageAspectRatio: AspectRatio;
@@ -125,7 +124,6 @@ type RenderStore = RenderSettings & {
   setShadowColor: (color: string) => void;
   setShadowOpacity: (opacity: number) => void;
   setShadowBlur: (px: number) => void;
-  setShadowSpread: (px: number) => void;
   setShadowX: (px: number) => void;
   setShadowY: (px: number) => void;
   setImageAspectRatio: (ratio: AspectRatio) => void;
@@ -178,7 +176,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
   shadowColor: '#000000',
   shadowOpacity: 25,
   shadowBlur: 6,
-  shadowSpread: 0,
   shadowX: 0,
   shadowY: 0,
   imageAspectRatio: 'free',
@@ -237,7 +234,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setShadowColor: (shadowColor) => set({ shadowColor }),
   setShadowOpacity: (shadowOpacity) => set({ shadowOpacity }),
   setShadowBlur: (shadowBlur) => set({ shadowBlur }),
-  setShadowSpread: (shadowSpread) => set({ shadowSpread }),
   setShadowX: (shadowX) => set({ shadowX }),
   setShadowY: (shadowY) => set({ shadowY }),
   setImageAspectRatio: (imageAspectRatio) => set({ imageAspectRatio }),

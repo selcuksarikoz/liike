@@ -8,7 +8,6 @@ export const TrioRowLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -18,8 +17,6 @@ export const TrioRowLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
@@ -55,7 +52,6 @@ export const TrioRowLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -74,7 +70,6 @@ export const TrioColumnLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -84,8 +79,6 @@ export const TrioColumnLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
@@ -121,7 +114,6 @@ export const TrioColumnLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -140,7 +132,6 @@ export const FanLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -149,8 +140,6 @@ export const FanLayout = ({
   renderWithMockup,
   sizePercent,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
@@ -184,7 +173,6 @@ export const FanLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -203,7 +191,6 @@ export const MasonryLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -211,8 +198,6 @@ export const MasonryLayout = ({
   animationInfo,
   sizePercent,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
@@ -242,7 +227,6 @@ export const MasonryLayout = ({
             isPreview={isPreview}
             onScreenClick={onScreenClick}
             styleCSS={styleCSS}
-            dropShadowFilter={shadowFilter}
             playing={playing}
           />
         </div>
@@ -261,7 +245,6 @@ export const MasonryLayout = ({
             isPreview={isPreview}
             onScreenClick={onScreenClick}
             styleCSS={styleCSS}
-            dropShadowFilter={shadowFilter}
             playing={playing}
           />
         </div>
@@ -280,7 +263,6 @@ export const MasonryLayout = ({
             isPreview={isPreview}
             onScreenClick={onScreenClick}
             styleCSS={styleCSS}
-            dropShadowFilter={shadowFilter}
             playing={playing}
           />
         </div>
@@ -295,7 +277,6 @@ export const MosaicLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -304,8 +285,6 @@ export const MosaicLayout = ({
   sizePercent,
   renderWithMockup,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
@@ -341,7 +320,6 @@ export const MosaicLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />,
                 index
@@ -360,7 +338,6 @@ export const FilmStripLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -418,7 +395,6 @@ export const FilmStripLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />
               </div>
@@ -436,7 +412,6 @@ export const SpotlightLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -444,8 +419,6 @@ export const SpotlightLayout = ({
   animationInfo,
   sizePercent,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
@@ -474,7 +447,6 @@ export const SpotlightLayout = ({
             isPreview={isPreview}
             onScreenClick={onScreenClick}
             styleCSS={styleCSS}
-            dropShadowFilter={shadowFilter}
             playing={playing}
           />
         </div>
@@ -498,7 +470,6 @@ export const SpotlightLayout = ({
                   isPreview={isPreview}
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
-                  dropShadowFilter={shadowFilter}
                   playing={playing}
                 />
               </div>
@@ -516,7 +487,6 @@ export const AsymmetricLayout = ({
   containerStyle,
   mediaAssets,
   effectiveCornerRadius,
-  shadowFilter,
   styleCSS,
   isPreview,
   onScreenClick,
@@ -524,8 +494,6 @@ export const AsymmetricLayout = ({
   animationInfo,
   sizePercent,
 }: LayoutBaseProps) => {
-  const containerCSS = getContainerCSS(styleCSS);
-
   return (
     <div className="flex h-full w-full items-center justify-center p-4 overflow-hidden">
       <div
@@ -556,7 +524,6 @@ export const AsymmetricLayout = ({
             isPreview={isPreview}
             onScreenClick={onScreenClick}
             styleCSS={styleCSS}
-            dropShadowFilter={shadowFilter}
             playing={playing}
           />
         </div>
@@ -578,7 +545,6 @@ export const AsymmetricLayout = ({
                 isPreview={isPreview}
                 onScreenClick={onScreenClick}
                 styleCSS={styleCSS}
-                dropShadowFilter={shadowFilter}
                 playing={playing}
               />
             </div>
