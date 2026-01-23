@@ -32,6 +32,34 @@ export const FilterPreview = ({ filter, isActive }: { filter: LayoutFilter; isAc
     };
   }, [isActive, filter]);
 
+  // Favorites - Heart icon
+  if (filter === 'favorites') {
+    return (
+      <div ref={containerRef} className="flex items-center justify-center w-6 h-5">
+        <div
+          ref={(el) => { elementsRef.current[0] = el; }}
+          className={`text-lg ${isActive ? 'text-black' : 'text-current opacity-60'}`}
+        >
+          ❤️
+        </div>
+      </div>
+    );
+  }
+
+  // Text - Typography icon
+  if (filter === 'text') {
+    return (
+      <div ref={containerRef} className="flex items-center justify-center w-6 h-5">
+        <div
+          ref={(el) => { elementsRef.current[0] = el; }}
+          className={`text-sm font-bold ${isActive ? 'text-black' : 'text-current opacity-60'}`}
+        >
+          Aa
+        </div>
+      </div>
+    );
+  }
+
   // Different layouts for each filter type
   if (filter === 'single') {
     return (

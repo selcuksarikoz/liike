@@ -29,6 +29,18 @@ export type MediaAsset = {
   type: 'image' | 'video';
 };
 
+export type TextOverlay = {
+  enabled: boolean;
+  text: string;
+  fontFamily: string;
+  fontSize: number; // in px
+  fontWeight: number;
+  color: string;
+  position: 'top' | 'center' | 'bottom';
+  animation: string; // text animation type
+  layout: string; // text-device layout type
+};
+
 type RenderStore = RenderSettings & {
   rotationX: number;
   rotationY: number;
@@ -95,6 +107,10 @@ type RenderStore = RenderSettings & {
   deviceType: string;  // Changed to string to support specific device IDs like 'iphone-15-pro-max'
   setFrameMode: (mode: 'basic' | 'device') => void;
   setDeviceType: (type: string) => void;
+  // Text Overlay
+  textOverlay: TextOverlay;
+  setTextOverlay: (overlay: Partial<TextOverlay>) => void;
+  clearTextOverlay: () => void;
 };
 
 const initialRenderStatus: RenderStatus = {
@@ -140,6 +156,19 @@ export const useRenderStore = create<RenderStore>((set) => ({
   
   frameMode: 'basic',
   deviceType: 'iphone',
+  
+  // Text Overlay defaults
+  textOverlay: {
+    enabled: false,
+    text: 'Your Text Here',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: 48,
+    fontWeight: 700,
+    color: '#ffffff',
+    position: 'top',
+    animation: 'none',
+    layout: 'text-top-device-bottom',
+  },
 
   // Setters
   setRotationX: (rotationX) => set({ rotationX }),
@@ -176,4 +205,10 @@ export const useRenderStore = create<RenderStore>((set) => ({
 
   setFrameMode: (frameMode) => set({ frameMode }),
   setDeviceType: (deviceType) => set({ deviceType }),
+  setTextOverlay: (overlay) => set((state) => ({ 
+    textOverlay: { ...state.textOverlay, ...overlay } 
+  })),
+  clearTextOverlay: () => set((state) => ({ 
+    textOverlay: { ...state.textOverlay, enabled: false, text: 'Your Text Here' } 
+  })),
 }));

@@ -1,4 +1,4 @@
-import { CircleDot, Columns2, Film, Grid3x3, Heart, Layers, LayoutGrid, LayoutTemplate, Rows2, Square, Type } from 'lucide-react';
+import { CircleDot, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FRAMES_DATA } from '../constants/styles';
 import type { ImageLayout } from '../store/renderStore';
@@ -16,26 +16,13 @@ import { SliderControl } from './ui/SliderControl';
 export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative' | 'favorites' | 'text';
 
 const FILTER_OPTIONS: { id: LayoutFilter; label: string; icon: string }[] = [
-  { id: 'favorites', label: '❤️', icon: 'favorite' },
-  { id: 'text', label: 'Aa', icon: 'text_fields' },
+  { id: 'favorites', label: 'Fav', icon: 'favorite' },
+  { id: 'text', label: 'Text', icon: 'text_fields' },
   { id: 'single', label: 'Single', icon: 'crop_square' },
   { id: 'duo', label: 'Duo', icon: 'view_column_2' },
   { id: 'trio', label: 'Trio', icon: 'view_week' },
   { id: 'quad', label: 'Quad', icon: 'grid_view' },
   { id: 'creative', label: 'Mix', icon: 'auto_awesome_mosaic' },
-];
-
-const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = [
-  { value: 'single', label: 'Single', icon: <Square className="w-5 h-5" /> },
-  { value: 'side-by-side', label: 'Side', icon: <Columns2 className="w-5 h-5" /> },
-  { value: 'stacked', label: 'Stack', icon: <Rows2 className="w-5 h-5" /> },
-  { value: 'grid', label: 'Grid', icon: <LayoutGrid className="w-5 h-5" /> },
-  { value: 'masonry', label: 'Masonry', icon: <LayoutTemplate className="w-5 h-5" /> },
-  { value: 'mosaic', label: 'Mosaic', icon: <Grid3x3 className="w-5 h-5" /> },
-  { value: 'film-strip', label: 'Film', icon: <Film className="w-5 h-5" /> },
-  { value: 'overlap', label: 'Overlap', icon: <Layers className="w-5 h-5" /> },
-  { value: 'fan', label: 'Fan', icon: <CircleDot className="w-5 h-5" /> },
-  { value: 'creative', label: 'Mix', icon: <LayoutGrid className="w-5 h-5 rotate-45" /> },
 ];
 
 // Map imageLayout from store to filter type
@@ -285,29 +272,6 @@ export const SidebarRight = () => {
                  value={imageAspectRatio === 'free' ? 'No constraint' : `${imageAspectRatio} ratio`}
                  onClick={() => setIsAspectRatioModalOpen(true)}
                />
-             </SidebarSection>
-             
-             <div className="h-px bg-ui-border mx-4" />
-
-             {/* Layout */}
-             <SidebarSection padded>
-               <SidebarHeader>Layout</SidebarHeader>
-               <div className="grid grid-cols-3 gap-2">
-                 {LAYOUTS.map(({ value, label, icon }) => (
-                   <button
-                     key={value}
-                     onClick={() => setImageLayout(value)}
-                     className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg transition-all border ${
-                       imageLayout === value
-                         ? 'bg-accent text-black border-accent'
-                         : 'bg-ui-panel text-ui-text border-transparent hover:bg-ui-highlight hover:text-white hover:border-accent/30'
-                     }`}
-                   >
-                     {icon}
-                     <span className="text-[8px] font-medium uppercase">{label}</span>
-                   </button>
-                 ))}
-               </div>
              </SidebarSection>
           </div>
         )}

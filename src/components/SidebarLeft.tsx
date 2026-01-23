@@ -1,29 +1,25 @@
 import { useRef } from 'react';
-import { Sparkles } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { CameraStylePanel } from './CameraStylePanel';
-import { 
-  SidebarContainer, 
-  SidebarContent, 
-  SidebarSection, 
+import {
+  MediaSlot,
+  SidebarContainer,
+  SidebarContent,
   SidebarHeader,
+  SidebarSection,
   UploadBox,
-  MediaSlot 
 } from './ui/SidebarPrimitives';
 
 const IMAGE_SLOTS = [0, 1, 2, 3];
 
 export const SidebarLeft = () => {
-  const {
-    setMediaAssets,
-    mediaAssets,
-  } = useRenderStore();
+  const { setMediaAssets, mediaAssets } = useRenderStore();
 
   const inputRef0 = useRef<HTMLInputElement>(null);
   const inputRef1 = useRef<HTMLInputElement>(null);
   const inputRef2 = useRef<HTMLInputElement>(null);
   const inputRef3 = useRef<HTMLInputElement>(null);
-  
+
   const fileInputRefs = [inputRef0, inputRef1, inputRef2, inputRef3];
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -31,8 +27,6 @@ export const SidebarLeft = () => {
     if (files.length === 0) return;
 
     const newAssets = [...mediaAssets];
-    
-    // Process max 4 files to prevent overflow loops
     const filesToProcess = files.slice(0, 4);
 
     filesToProcess.forEach((file, i) => {
@@ -45,8 +39,6 @@ export const SidebarLeft = () => {
     });
 
     setMediaAssets(newAssets);
-    
-    // Reset input value to allow selecting the same file again if needed
     e.target.value = '';
   };
 
@@ -62,15 +54,9 @@ export const SidebarLeft = () => {
       <SidebarContent>
         {/* Media Selection */}
         <SidebarSection borderBottom>
-          <SidebarHeader>
-            Images & Videos
-          </SidebarHeader>
-          
-          {/* Main Upload Box */}
-          <UploadBox 
-            onClick={() => fileInputRefs[0].current?.click()} 
-            maxItems={4} 
-          />
+          <SidebarHeader>Images & Videos</SidebarHeader>
+
+          <UploadBox onClick={() => fileInputRefs[0].current?.click()} maxItems={4} />
 
           <div className="grid grid-cols-4 gap-2">
             {IMAGE_SLOTS.map((index) => (
@@ -79,11 +65,10 @@ export const SidebarLeft = () => {
                   ref={fileInputRefs[index]}
                   type="file"
                   className="hidden"
-                  multiple={true} // Explicitly set multiple
+                  multiple
                   accept="image/*,video/mp4,video/quicktime,video/webm"
                   onChange={(e) => handleFileSelect(e, index)}
                 />
-                
                 <MediaSlot
                   index={index}
                   mediaAsset={mediaAssets[index]}
@@ -94,7 +79,7 @@ export const SidebarLeft = () => {
             ))}
           </div>
         </SidebarSection>
-        
+
         {/* Visual Style */}
         <SidebarSection>
           <CameraStylePanel />

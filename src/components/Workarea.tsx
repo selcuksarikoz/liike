@@ -2,27 +2,44 @@ import { useRef, useState, useEffect, useMemo } from 'react';
 import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { DeviceRenderer } from './DeviceRenderer';
+import { TextOverlayRenderer } from './TextOverlay';
 import { useTimelinePlayback } from '../hooks/useTimelinePlayback';
 import { combineAnimations, ANIMATION_PRESETS } from '../constants/animations';
 import { LAYOUT_PRESETS } from '../constants/styles';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
   const {
-    rotationX, rotationY, rotationZ,
+    rotationX,
+    rotationY,
+    rotationZ,
     backgroundGradient,
-    backgroundType, backgroundColor, backgroundImage,
-    setMediaAssets, mediaAssets,
+    backgroundType,
+    backgroundColor,
+    backgroundImage,
+    setMediaAssets,
+    mediaAssets,
     setDurationMs,
-    canvasWidth, canvasHeight, canvasCornerRadius,
-    canvasBorderWidth, canvasBorderColor,
-    shadowType, shadowOpacity, shadowBlur, shadowColor, shadowX, shadowY,
+    canvasWidth,
+    canvasHeight,
+    canvasCornerRadius,
+    canvasBorderWidth,
+    canvasBorderColor,
+    shadowType,
+    shadowOpacity,
+    shadowBlur,
+    shadowColor,
+    shadowX,
+    shadowY,
     stylePreset,
-    deviceScale, imageAspectRatio, imageLayout,
+    deviceScale,
+    imageAspectRatio,
+    imageLayout,
     cornerRadius,
     applyPreset,
     renderStatus,
     frameMode,
     deviceType,
+    textOverlay,
   } = useRenderStore();
 
   const { tracks, playheadMs } = useTimelineStore();
@@ -74,7 +91,11 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     if (!animationInfo) {
       return { transform: 'none', opacity: 1 };
     }
-    return combineAnimations(animationInfo.animations, animationInfo.progress, animationInfo.easing);
+    return combineAnimations(
+      animationInfo.animations,
+      animationInfo.progress,
+      animationInfo.easing
+    );
   }, [animationInfo]);
 
   // Apply animation style to device
@@ -98,7 +119,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           const presetData = clip.data?.animationPreset;
           if (presetData?.id) {
             // Find matching layout preset
-            const layoutPreset = LAYOUT_PRESETS.find(p => p.id === presetData.id);
+            const layoutPreset = LAYOUT_PRESETS.find((p) => p.id === presetData.id);
             if (layoutPreset) {
               // Apply only rotation from layout preset (keep current background)
               applyPreset({
@@ -134,7 +155,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         tempVideo.onloadedmetadata = () => {
           const duration = tempVideo.duration * 1000;
           if (duration > 0 && isFinite(duration)) {
-             setDurationMs(Math.round(duration));
+            setDurationMs(Math.round(duration));
           }
         };
         tempVideo.src = url;
@@ -151,7 +172,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
       if (containerRef.current) {
         setContainerSize({
           width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight
+          height: containerRef.current.clientHeight,
         });
       }
     };
@@ -197,15 +218,16 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     return { width: displayWidth, height: displayHeight, scale, innerPadding };
   }, [canvasWidth, canvasHeight, containerSize]);
 
-
   // Animate background gradient changes with crossfade
   useEffect(() => {
     if (!backgroundRef.current || !prevBackgroundRef.current) return;
     if (prevGradient === backgroundGradient) return;
 
     // Smooth crossfade animation
-    const { keyframes: fadeInKeyframes, options: fadeInOptions } = ANIMATION_PRESETS.backgroundFadeIn;
-    const { keyframes: fadeOutKeyframes, options: fadeOutOptions } = ANIMATION_PRESETS.backgroundFadeOut;
+    const { keyframes: fadeInKeyframes, options: fadeInOptions } =
+      ANIMATION_PRESETS.backgroundFadeIn;
+    const { keyframes: fadeOutKeyframes, options: fadeOutOptions } =
+      ANIMATION_PRESETS.backgroundFadeOut;
 
     backgroundRef.current.animate([...fadeInKeyframes], fadeInOptions);
     const fadeOutAnim = prevBackgroundRef.current.animate([...fadeOutKeyframes], fadeOutOptions);
@@ -219,8 +241,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     <section className="relative flex flex-1 flex-col overflow-hidden bg-canvas">
       <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle,var(--color-ui-border)_1px,transparent_1px)] [background-size:32px_32px]" />
 
-
-
       {/* Hidden File Input */}
       <input
         type="file"
@@ -230,94 +250,127 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         onChange={handleFileChange}
       />
 
-      <div ref={containerRef} className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-ui-bg-secondary">
+      <div
+        ref={containerRef}
+        className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-ui-bg-secondary"
+      >
         {/* Background Gradient / Canvas Area */}
         <div
-            ref={(el) => {
-              canvasRef.current = el;
-              if (stageRef && 'current' in stageRef) {
-                (stageRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-              }
-            }}
-            className="relative shadow-2xl transition-all duration-300 ease-in-out flex items-center justify-center overflow-hidden"
-            style={{
-                width: `${displayDimensions.width}px`,
-                height: `${displayDimensions.height}px`,
-                borderRadius: `${canvasCornerRadius}px`,
-                borderWidth: `${canvasBorderWidth}px`,
-                borderColor: canvasBorderColor,
-                // Fallback background for video export (prevents transparent corners)
-                backgroundColor: backgroundColor || '#000',
-            }}
+          ref={(el) => {
+            canvasRef.current = el;
+            if (stageRef && 'current' in stageRef) {
+              (stageRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+            }
+          }}
+          className="relative shadow-2xl transition-all duration-300 ease-in-out flex items-center justify-center overflow-hidden"
+          style={{
+            width: `${displayDimensions.width}px`,
+            height: `${displayDimensions.height}px`,
+            borderRadius: `${canvasCornerRadius}px`,
+            borderWidth: `${canvasBorderWidth}px`,
+            borderColor: canvasBorderColor,
+            // Fallback background for video export (prevents transparent corners)
+            backgroundColor: backgroundColor || '#000',
+          }}
         >
-             {/* Canvas Background with Crossfade */}
-             <div
-                className="absolute inset-0 overflow-hidden"
-                style={{ borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px` }}
-             >
-               {/* Previous background (fades out) - only for gradient crossfade */}
-               {backgroundType === 'gradient' && (
-                 <div ref={prevBackgroundRef} className={`absolute inset-0 bg-gradient-to-br ${prevGradient}`} />
-               )}
-
-               {/* Current background based on type */}
-               {backgroundType === 'gradient' && (
-                 <div ref={backgroundRef} className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient}`} />
-               )}
-               {backgroundType === 'solid' && (
-                 <div ref={backgroundRef} className="absolute inset-0" style={{ backgroundColor }} />
-               )}
-               {backgroundType === 'image' && backgroundImage && (
-                 <div ref={backgroundRef} className="absolute inset-0 w-full h-full">
-                   <img 
-                      src={backgroundImage}
-                      className="w-full h-full object-cover object-center"
-                      alt="Background" 
-                      decoding='sync'
-                      loading='eager'
-                   />
-                 </div>
-               )}
-             </div>
-
-             {/* Dynamic Mockup Render - Centered in Canvas */}
-            <div
-              ref={deviceContainerRef}
-              className="relative z-10 w-full h-full flex items-center justify-center p-[5%] overflow-hidden"
-              style={{ borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px` }}
-            >
-              {/* Animation wrapper - only apply outer animation for single layout */}
+          {/* Canvas Background with Crossfade */}
+          <div
+            className="absolute inset-0 overflow-hidden"
+            style={{ borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px` }}
+          >
+            {/* Previous background (fades out) - only for gradient crossfade */}
+            {backgroundType === 'gradient' && (
               <div
-                ref={animatedDeviceRef}
-                className="transition-none w-full h-full"
-                style={{
-                  transform: imageLayout === 'single' ? animationStyle.transform : 'none',
-                  opacity: imageLayout === 'single' ? (animationStyle.opacity ?? 1) : 1,
-                }}
-              >
-                <DeviceRenderer
-                  rotationX={rotationX}
-                  rotationY={rotationY}
-                  rotationZ={rotationZ}
-                  cornerRadius={cornerRadius}
-                  mediaAssets={mediaAssets}
-                  onScreenClick={handleScreenClick}
-                  shadowType={shadowType}
-                  shadowOpacity={shadowOpacity}
-                  shadowBlur={shadowBlur}
-                  shadowColor={shadowColor}
-                  shadowX={shadowX}
-                  shadowY={shadowY}
-                  stylePreset={stylePreset}
-                  scale={deviceScale}
-                  aspectRatio={imageAspectRatio}
-                  layout={imageLayout}
-                  animationInfo={imageLayout !== 'single' ? animationInfo : undefined}
-                  frameMode={frameMode}
-                  deviceType={deviceType}
+                ref={prevBackgroundRef}
+                className={`absolute inset-0 bg-gradient-to-br ${prevGradient}`}
+              />
+            )}
+
+            {/* Current background based on type */}
+            {backgroundType === 'gradient' && (
+              <div
+                ref={backgroundRef}
+                className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient}`}
+              />
+            )}
+            {backgroundType === 'solid' && (
+              <div ref={backgroundRef} className="absolute inset-0" style={{ backgroundColor }} />
+            )}
+            {backgroundType === 'image' && backgroundImage && (
+              <div ref={backgroundRef} className="absolute inset-0 w-full h-full">
+                <img
+                  src={backgroundImage}
+                  className="w-full h-full object-cover object-center"
+                  alt="Background"
+                  decoding="sync"
+                  loading="eager"
                 />
               </div>
+            )}
+          </div>
+
+          {/* Dynamic Mockup Render - Centered in Canvas */}
+          <div
+            ref={deviceContainerRef}
+            className="relative z-10 w-full h-full flex items-center justify-center p-[5%] overflow-hidden"
+            style={{ borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px` }}
+          >
+            {/* Animation wrapper - only apply outer animation for single layout */}
+            <div
+              ref={animatedDeviceRef}
+              className="transition-all duration-500 ease-out w-full h-full"
+              style={{
+                transform: (() => {
+                  const baseTransform =
+                    imageLayout === 'single' ? animationStyle.transform : 'none';
+                  if (!textOverlay.enabled || !textOverlay.layout) return baseTransform;
+
+                  let offsetTransform = '';
+                  const layout = textOverlay.layout;
+
+                  if (layout === 'text-top-device-bottom')
+                    offsetTransform = 'translateY(15%) scale(0.85)';
+                  else if (layout === 'text-bottom-device-top')
+                    offsetTransform = 'translateY(-15%) scale(0.85)';
+                  else if (layout === 'text-left-device-right')
+                    offsetTransform = 'translateX(25%) scale(0.8)';
+                  else if (layout === 'text-right-device-left')
+                    offsetTransform = 'translateX(-25%) scale(0.8)';
+                  else if (layout === 'text-split-device-center') offsetTransform = 'scale(0.8)';
+
+                  return baseTransform === 'none'
+                    ? offsetTransform
+                    : `${baseTransform} ${offsetTransform}`;
+                })(),
+                opacity: imageLayout === 'single' ? (animationStyle.opacity ?? 1) : 1,
+              }}
+            >
+              <DeviceRenderer
+                rotationX={rotationX}
+                rotationY={rotationY}
+                rotationZ={rotationZ}
+                cornerRadius={cornerRadius}
+                mediaAssets={mediaAssets}
+                onScreenClick={handleScreenClick}
+                shadowType={shadowType}
+                shadowOpacity={shadowOpacity}
+                shadowBlur={shadowBlur}
+                shadowColor={shadowColor}
+                shadowX={shadowX}
+                shadowY={shadowY}
+                stylePreset={stylePreset}
+                scale={deviceScale}
+                aspectRatio={imageAspectRatio}
+                layout={imageLayout}
+                animationInfo={imageLayout !== 'single' ? animationInfo : undefined}
+                frameMode={frameMode}
+                deviceType={deviceType}
+              />
             </div>
+
+            {/* Text Overlay - renders on top of device */}
+            <TextOverlayRenderer />
+          </div>
         </div>
       </div>
     </section>

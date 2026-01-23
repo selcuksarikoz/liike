@@ -156,7 +156,11 @@ const getAspectRatioValue = (ratio: AspectRatio): number | null => {
     case '16:9': return 16 / 9;
     case '3:4': return 3 / 4;
     case '4:3': return 4 / 3;
-    default: return null;
+    case '21:9': return 21 / 9;
+    case '2:3': return 2 / 3;
+    case '3:2': return 3 / 2;
+    case 'free':
+    default: return null; // Free - no constraint
   }
 };
 

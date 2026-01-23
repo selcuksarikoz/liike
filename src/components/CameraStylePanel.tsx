@@ -4,16 +4,13 @@ import {
   ArrowLeftRight,
   RotateCw,
   Maximize2,
-  RectangleHorizontal,
   Palette,
   CloudFog,
   Contrast,
   RotateCcw,
   Box,
   Move3d,
-  Sparkles,
   Square,
-  Smartphone,
 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { SHADOW_TYPES } from '../constants/styles';
@@ -23,21 +20,34 @@ import { FrameStyleModal } from './modals/FrameStyleModal';
 import { DropdownTrigger } from './ui/Dropdown';
 import { SliderControl } from './ui/SliderControl';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
+import { LayoutPicker } from './LayoutPicker';
+import { CreativeAngles } from './CreativeAngles';
 
 export const CameraStylePanel = () => {
   const {
-    rotationX, setRotationX,
-    rotationY, setRotationY,
-    rotationZ, setRotationZ,
-    cornerRadius, setCornerRadius,
-    deviceScale, setDeviceScale,
+    rotationX,
+    setRotationX,
+    rotationY,
+    setRotationY,
+    rotationZ,
+    setRotationZ,
+    cornerRadius,
+    setCornerRadius,
+    deviceScale,
+    setDeviceScale,
     stylePreset,
-    shadowType, setShadowType,
-    shadowOpacity, setShadowOpacity,
-    shadowBlur, setShadowBlur,
-    shadowColor, setShadowColor,
-    setShadowSpread, setShadowX, setShadowY,
-    
+    shadowType,
+    setShadowType,
+    shadowOpacity,
+    setShadowOpacity,
+    shadowBlur,
+    setShadowBlur,
+    shadowColor,
+    setShadowColor,
+    setShadowSpread,
+    setShadowX,
+    setShadowY,
+
     frameMode,
     deviceType,
   } = useRenderStore();
@@ -47,14 +57,17 @@ export const CameraStylePanel = () => {
 
   // Helper to format values
   const getFormattedValue = () => {
-     if (frameMode === 'device') {
-        if (deviceType === 'imac') return 'iMac';
-        if (deviceType === 'iphone') return 'iPhone';
-        if (deviceType === 'ipad') return 'iPad';
-        return deviceType.charAt(0).toUpperCase() + deviceType.slice(1);
-     }
-     // Format style preset (e.g. soft-gradient -> Soft Gradient)
-     return stylePreset.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    if (frameMode === 'device') {
+      if (deviceType === 'imac') return 'iMac';
+      if (deviceType === 'iphone') return 'iPhone';
+      if (deviceType === 'ipad') return 'iPad';
+      return deviceType.charAt(0).toUpperCase() + deviceType.slice(1);
+    }
+    // Format style preset (e.g. soft-gradient -> Soft Gradient)
+    return stylePreset
+      .split('-')
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(' ');
   };
 
   useEffect(() => {
@@ -64,13 +77,13 @@ export const CameraStylePanel = () => {
         (section as HTMLElement).animate(
           [
             { opacity: 0, transform: 'translateY(15px)' },
-            { opacity: 1, transform: 'translateY(0)' }
+            { opacity: 1, transform: 'translateY(0)' },
           ],
           {
             duration: DURATIONS.standard,
             easing: EASINGS.easeOut,
             fill: 'forwards',
-            delay: i * STAGGER_DEFAULTS.cards * 2
+            delay: i * STAGGER_DEFAULTS.cards * 2,
           }
         );
       });
@@ -80,11 +93,7 @@ export const CameraStylePanel = () => {
   const handleReset = (section: string) => {
     if (containerRef.current) {
       containerRef.current.animate(
-        [
-          { transform: 'scale(1)' },
-          { transform: 'scale(0.98)' },
-          { transform: 'scale(1)' }
-        ],
+        [{ transform: 'scale(1)' }, { transform: 'scale(0.98)' }, { transform: 'scale(1)' }],
         { duration: DURATIONS.fast, easing: EASINGS.easeInOut }
       );
     }
@@ -118,27 +127,24 @@ export const CameraStylePanel = () => {
 
   return (
     <div ref={containerRef} className="space-y-6">
-
       {/* Frame Style & Device Selection */}
       <div className="style-section">
-        <SidebarHeader icon={<Palette className="w-4 h-4" />}>
-          Frame Style
-        </SidebarHeader>
-        
+        <SidebarHeader icon={<Palette className="w-4 h-4" />}>Frame Style</SidebarHeader>
+
         <DropdownTrigger
-           icon={frameMode === 'device' ? 'smartphone' : 'palette'}
-           label={frameMode === 'device' ? 'Device Mockup' : 'Frame Style'}
-           value={getFormattedValue()}
-           onClick={() => setIsFrameModalOpen(true)}
+          icon={frameMode === 'device' ? 'smartphone' : 'palette'}
+          label={frameMode === 'device' ? 'Device Mockup' : 'Frame Style'}
+          value={getFormattedValue()}
+          onClick={() => setIsFrameModalOpen(true)}
         />
       </div>
 
       <FrameStyleModal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} />
-        
+
       {/* 3D Rotation */}
       <div className="style-section group">
-        <SidebarHeader 
-          icon={<Box className="w-4 h-4" />} 
+        <SidebarHeader
+          icon={<Box className="w-4 h-4" />}
           action={<ResetButton section="rotation" />}
         >
           3D Rotation
@@ -176,8 +182,8 @@ export const CameraStylePanel = () => {
 
       {/* Transform */}
       <div className="style-section group">
-        <SidebarHeader 
-          icon={<Move3d className="w-4 h-4" />} 
+        <SidebarHeader
+          icon={<Move3d className="w-4 h-4" />}
           action={<ResetButton section="transform" />}
         >
           Transform
@@ -195,7 +201,7 @@ export const CameraStylePanel = () => {
           />
           <SliderControl
             label="Corner Radius"
-            icon={<RectangleHorizontal className="w-3.5 h-3.5" />}
+            icon={<Square className="w-3.5 h-3.5" />}
             value={cornerRadius}
             min={0}
             max={60}
@@ -207,13 +213,13 @@ export const CameraStylePanel = () => {
 
       {/* Shadow & Glow */}
       <div className="style-section group">
-        <SidebarHeader 
-          icon={<CloudFog className="w-4 h-4" />} 
+        <SidebarHeader
+          icon={<CloudFog className="w-4 h-4" />}
           action={<ResetButton section="shadow" />}
         >
           Shadow & Glow
         </SidebarHeader>
-        
+
         {/* Shadow Presets */}
         <div className="grid grid-cols-5 gap-2 mb-4">
           {SHADOW_TYPES.map((type) => {
@@ -257,22 +263,31 @@ export const CameraStylePanel = () => {
                   }
                 }}
                 className={`relative flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
-                  isActive ? 'bg-accent/10 border-accent' : 'border-ui-border hover:border-ui-muted bg-ui-panel/30'
+                  isActive
+                    ? 'bg-accent/10 border-accent'
+                    : 'border-ui-border hover:border-ui-muted bg-ui-panel/30'
                 }`}
               >
                 <div className="w-6 h-6 flex items-center justify-center">
                   <div
                     className="w-4 h-4 rounded-full bg-white/90 transition-transform"
                     style={{
-                      boxShadow: type.id === 'none' ? 'none'
-                        : type.id === 'soft' ? '0 4px 12px rgba(0,0,0,0.5)'
-                        : type.id === 'float' ? '0 10px 25px rgba(0,0,0,0.6)'
-                        : type.id === 'dream' ? '0 10px 20px rgba(80,80,255,0.4)'
-                        : '0 0 10px rgba(255,255,255,0.8)'
+                      boxShadow:
+                        type.id === 'none'
+                          ? 'none'
+                          : type.id === 'soft'
+                            ? '0 4px 12px rgba(0,0,0,0.5)'
+                            : type.id === 'float'
+                              ? '0 10px 25px rgba(0,0,0,0.6)'
+                              : type.id === 'dream'
+                                ? '0 10px 20px rgba(80,80,255,0.4)'
+                                : '0 0 10px rgba(255,255,255,0.8)',
                     }}
                   />
                 </div>
-                <span className={`text-[7px] font-medium transition-colors ${isActive ? 'text-accent' : 'text-ui-muted'}`}>
+                <span
+                  className={`text-[7px] font-medium transition-colors ${isActive ? 'text-accent' : 'text-ui-muted'}`}
+                >
                   {type.label}
                 </span>
               </button>
@@ -283,21 +298,21 @@ export const CameraStylePanel = () => {
         {/* Manual Controls */}
         {shadowType !== 'none' && (
           <ControlGroup>
-             <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-ui-muted" />
-                  <span className="text-[10px] text-ui-muted">Color</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={shadowColor}
-                    onChange={(e) => setShadowColor(e.target.value)}
-                    className="w-5 h-5 rounded cursor-pointer border-none p-0 bg-transparent"
-                  />
-                  <span className="text-[10px] font-mono text-accent uppercase">{shadowColor}</span>
-                </div>
-             </div>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-ui-muted" />
+                <span className="text-[10px] text-ui-muted">Color</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={shadowColor}
+                  onChange={(e) => setShadowColor(e.target.value)}
+                  className="w-5 h-5 rounded cursor-pointer border-none p-0 bg-transparent"
+                />
+                <span className="text-[10px] font-mono text-accent uppercase">{shadowColor}</span>
+              </div>
+            </div>
 
             <SliderControl
               label="Opacity"
@@ -321,43 +336,11 @@ export const CameraStylePanel = () => {
         )}
       </div>
 
-      {/* Quick Presets */}
-      <div className="style-section">
-        <SidebarHeader icon={<Sparkles className="w-4 h-4" />}>
-          Creative Angles
-        </SidebarHeader>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: 'Isometric', icon: <Box className="w-3.5 h-3.5" />, action: () => { setRotationX(30); setRotationY(-45); setRotationZ(0); setDeviceScale(0.85); } },
-            { label: 'Floating', icon: <CloudFog className="w-3.5 h-3.5" />, action: () => { setRotationX(15); setRotationY(0); setRotationZ(-5); setDeviceScale(0.9); } },
-            { label: 'Dynamic', icon: <Move3d className="w-3.5 h-3.5" />, action: () => { setRotationX(20); setRotationY(-30); setRotationZ(10); setDeviceScale(0.9); } },
-            { label: 'Flat Lay', icon: <Square className="w-3.5 h-3.5" />, action: () => { setRotationX(0); setRotationY(0); setRotationZ(0); setDeviceScale(1); } },
-            { label: 'Cinematic', icon: <Maximize2 className="w-3.5 h-3.5" />, action: () => { setRotationX(5); setRotationY(0); setRotationZ(0); setDeviceScale(1.1); } },
-            { label: 'Phone', icon: <RectangleHorizontal className="w-3.5 h-3.5 rotate-90" />, action: () => { setRotationX(10); setRotationY(-10); setRotationZ(2); setDeviceScale(0.95); } },
-          ].map((preset) => (
-            <button
-              key={preset.label}
-              onClick={() => {
-                if (containerRef.current) {
-                  containerRef.current.animate(
-                    [
-                      { opacity: 1 },
-                      { opacity: 0.8 },
-                      { opacity: 1 }
-                    ],
-                    { duration: 300, easing: 'ease-out' }
-                  );
-                }
-                preset.action();
-              }}
-              className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border border-ui-border bg-ui-panel/30 hover:bg-accent/10 hover:border-accent/50 transition-all hover:scale-105 active:scale-95 group"
-            >
-              <span className="text-ui-muted group-hover:text-accent transition-colors">{preset.icon}</span>
-              <span className="text-[9px] font-medium text-ui-muted group-hover:text-white transition-colors">{preset.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Creative Angles */}
+      <CreativeAngles />
+
+      {/* Layout Picker */}
+      <LayoutPicker />
     </div>
   );
 };

@@ -4,9 +4,21 @@ import { useRenderStore } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { LAYOUT_PRESETS, type LayoutPreset } from '../constants/styles';
 import { DeviceRenderer } from './DeviceRenderer';
-import { ANIMATION_PRESETS, createLayoutAnimation, DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
+import {
+  ANIMATION_PRESETS,
+  createLayoutAnimation,
+  DURATIONS,
+  EASINGS,
+  STAGGER_DEFAULTS,
+} from '../constants/animations';
 import { useFavorites } from '../store/favoritesStore';
-import { TEXT_DEVICE_PRESETS, TEXT_ANIMATIONS, type TextDevicePreset, type TextAnimationType } from '../constants/textAnimations';
+import {
+  TEXT_DEVICE_PRESETS,
+  TEXT_ANIMATIONS,
+  type TextDevicePreset,
+  type TextAnimationType,
+} from '../constants/textAnimations';
+import { TextEditor } from './TextEditor';
 
 const AnimatedLayoutCard = ({
   preset,
@@ -50,8 +62,8 @@ const AnimatedLayoutCard = ({
   const animationsRef = useRef<Animation[]>([]);
   const [isHovered, setIsHovered] = useState(false);
 
-  const hasAnimation = preset.animations.some(a => a.type !== 'none');
-  const isCombo = preset.animations.filter(a => a.type !== 'none').length > 1;
+  const hasAnimation = preset.animations.some((a) => a.type !== 'none');
+  const isCombo = preset.animations.filter((a) => a.type !== 'none').length > 1;
 
   useEffect(() => {
     if (!cardRef.current || !deviceRef.current) return;
@@ -61,7 +73,7 @@ const AnimatedLayoutCard = ({
 
     const runAnimation = () => {
       // Cancel previous animations
-      animationsRef.current.forEach(anim => anim.cancel());
+      animationsRef.current.forEach((anim) => anim.cancel());
       animationsRef.current = [];
 
       preset.animations.forEach((anim) => {
@@ -86,10 +98,11 @@ const AnimatedLayoutCard = ({
       if (hasAnimation) {
         runAnimation();
       } else {
-        device.animate(
-          [{ transform: 'scale(0.9)' }],
-          { duration: DURATIONS.medium, easing: EASINGS.easeOut, fill: 'forwards' }
-        );
+        device.animate([{ transform: 'scale(0.9)' }], {
+          duration: DURATIONS.medium,
+          easing: EASINGS.easeOut,
+          fill: 'forwards',
+        });
       }
     };
 
@@ -102,7 +115,7 @@ const AnimatedLayoutCard = ({
       );
 
       // Cancel running animations
-      animationsRef.current.forEach(anim => anim.cancel());
+      animationsRef.current.forEach((anim) => anim.cancel());
       animationsRef.current = [];
 
       // Reset device
@@ -118,7 +131,7 @@ const AnimatedLayoutCard = ({
     return () => {
       card.removeEventListener('mouseenter', handleMouseEnter);
       card.removeEventListener('mouseleave', handleMouseLeave);
-      animationsRef.current.forEach(anim => anim.cancel());
+      animationsRef.current.forEach((anim) => anim.cancel());
     };
   }, [preset, hasAnimation]);
 
@@ -134,13 +147,21 @@ const AnimatedLayoutCard = ({
     >
       {/* Background */}
       {backgroundType === 'gradient' && (
-        <div className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient} opacity-80 transition-opacity group-hover:opacity-100`} />
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient} opacity-80 transition-opacity group-hover:opacity-100`}
+        />
       )}
       {backgroundType === 'solid' && (
-        <div className="absolute inset-0 opacity-80 transition-opacity group-hover:opacity-100" style={{ backgroundColor }} />
+        <div
+          className="absolute inset-0 opacity-80 transition-opacity group-hover:opacity-100"
+          style={{ backgroundColor }}
+        />
       )}
       {backgroundType === 'image' && backgroundImage && (
-        <div className="absolute inset-0 bg-cover bg-center opacity-80 transition-opacity group-hover:opacity-100" style={{ backgroundImage: `url(${backgroundImage})` }} />
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-80 transition-opacity group-hover:opacity-100"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        />
       )}
 
       {/* Device Preview */}
@@ -186,8 +207,8 @@ const AnimatedLayoutCard = ({
             onToggleFavorite(preset.id);
           }}
           className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm ${
-            isFavorite 
-              ? 'bg-rose-500/90 text-white scale-110' 
+            isFavorite
+              ? 'bg-rose-500/90 text-white scale-110'
               : 'bg-black/30 text-white/60 hover:bg-black/50 hover:text-white hover:scale-110'
           }`}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
@@ -203,7 +224,6 @@ const AnimatedLayoutCard = ({
           <span className="text-[8px] text-white/60">{preset.durationMs / 1000}s</span>
         </div>
       </div>
-
     </div>
   );
 };
@@ -220,6 +240,60 @@ const TextAnimationCard = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Layout visual preview based on layout type
+  const getLayoutPreview = () => {
+    switch (preset.layout) {
+      case 'text-top-device-bottom':
+        return (
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-[8px] font-bold text-white/80">Aa</div>
+            <div className="w-3 h-4 rounded-sm bg-white/60" />
+          </div>
+        );
+      case 'text-bottom-device-top':
+        return (
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-3 h-4 rounded-sm bg-white/60" />
+            <div className="text-[8px] font-bold text-white/80">Aa</div>
+          </div>
+        );
+      case 'text-left-device-right':
+        return (
+          <div className="flex items-center gap-1">
+            <div className="text-[8px] font-bold text-white/80">Aa</div>
+            <div className="w-3 h-4 rounded-sm bg-white/60" />
+          </div>
+        );
+      case 'text-right-device-left':
+        return (
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-4 rounded-sm bg-white/60" />
+            <div className="text-[8px] font-bold text-white/80">Aa</div>
+          </div>
+        );
+      case 'text-overlay':
+      case 'text-center-device-behind':
+        return (
+          <div className="relative w-5 h-6">
+            <div className="absolute inset-0 rounded-sm bg-white/40" />
+            <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white">
+              Aa
+            </div>
+          </div>
+        );
+      case 'text-split-device-center':
+        return (
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="text-[6px] font-bold text-white/80">Aa</div>
+            <div className="w-2.5 h-3 rounded-sm bg-white/60" />
+            <div className="text-[6px] font-bold text-white/80">Aa</div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div
       onClick={onApply}
@@ -230,24 +304,30 @@ const TextAnimationCard = ({
       }`}
     >
       {/* Gradient Background */}
-      <div 
+      <div
         className="absolute inset-0 opacity-80 group-hover:opacity-100"
         style={{ background: `linear-gradient(135deg, ${preset.color}20, ${preset.color}40)` }}
       />
-      
+
+      {/* Layout Preview - Small box showing positioning */}
+      <div className="absolute top-2 right-2 w-8 h-8 rounded-md bg-black/30 flex items-center justify-center backdrop-blur-sm">
+        {getLayoutPreview()}
+      </div>
+
       {/* Text Animation Preview */}
       <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
         <span className="text-2xl mb-1">{preset.icon}</span>
-        <span 
-          className={`text-sm font-bold text-white transition-all duration-500 ${
+        <span
+          className={`text-sm font-bold text-center leading-tight transition-all duration-500 ${
             isHovered ? 'opacity-100 transform-none' : 'opacity-60'
           }`}
-          style={{ 
+          style={{
             color: preset.color,
-            textShadow: isHovered ? `0 0 20px ${preset.color}80` : 'none'
+            textShadow: isHovered ? `0 0 20px ${preset.color}80` : 'none',
+            whiteSpace: 'pre-line',
           }}
         >
-          {preset.defaultText}
+          {preset.defaultText.split('\\n').join('\n')}
         </span>
       </div>
 
@@ -257,7 +337,7 @@ const TextAnimationCard = ({
           className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase"
           style={{ backgroundColor: preset.color }}
         >
-          {preset.textAnimation}
+          {preset.textAnimation.replace('-', ' ')}
         </span>
       </div>
 
@@ -288,14 +368,16 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     backgroundGradient,
     backgroundColor,
     backgroundImage,
+    setTextOverlay,
   } = useRenderStore();
 
   const { addClip, clearTrack, setPlayhead, setIsPlaying } = useTimelineStore();
-  
+
   // Favorites hook
   const { favorites, toggle: toggleFavorite, isFavorite } = useFavorites();
 
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
+  const [textMode, setTextMode] = useState<'presets' | 'edit'>('presets');
   const presetsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -312,7 +394,10 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     }
   }, []);
 
-  const handleApplyPreset = (preset: LayoutPreset, layout: import('../store/renderStore').ImageLayout) => {
+  const handleApplyPreset = (
+    preset: LayoutPreset,
+    layout: import('../store/renderStore').ImageLayout
+  ) => {
     setActivePresetId(preset.id);
 
     // Apply layout to canvas (keep current background, only apply rotation)
@@ -324,7 +409,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     });
 
     // Add to timeline if it has animations (replace existing)
-    const hasAnimation = preset.animations.some(a => a.type !== 'none');
+    const hasAnimation = preset.animations.some((a) => a.type !== 'none');
     if (hasAnimation) {
       // IMPORTANT: Stop playback first to ensure clean restart
       setIsPlaying(false);
@@ -346,7 +431,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
           animationPreset: {
             id: preset.id,
             name: preset.name,
-            animations: preset.animations.map(a => a.type).filter(t => t !== 'none') as any[],
+            animations: preset.animations.map((a) => a.type).filter((t) => t !== 'none') as any[],
             icon: preset.icon,
             color: preset.color,
             duration: preset.durationMs,
@@ -382,14 +467,14 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
   };
 
   // Categorize presets (all have animations now)
-  const singleAnimations = LAYOUT_PRESETS.filter(p =>
-    !p.id.startsWith('duo-') && !p.id.startsWith('trio-')
+  const singleAnimations = LAYOUT_PRESETS.filter(
+    (p) => !p.id.startsWith('duo-') && !p.id.startsWith('trio-')
   );
-  const dualAnimations = LAYOUT_PRESETS.filter(p => p.id.startsWith('duo-'));
-  const trioAnimations = LAYOUT_PRESETS.filter(p => p.id.startsWith('trio-'));
-  
+  const dualAnimations = LAYOUT_PRESETS.filter((p) => p.id.startsWith('duo-'));
+  const trioAnimations = LAYOUT_PRESETS.filter((p) => p.id.startsWith('trio-'));
+
   // Favorites - get all presets that are in favorites set
-  const favoritePresets = LAYOUT_PRESETS.filter(p => isFavorite(p.id));
+  const favoritePresets = LAYOUT_PRESETS.filter((p) => isFavorite(p.id));
 
   const showSingle = filter === 'single';
   const showDuo = filter === 'duo';
@@ -500,7 +585,11 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                 onApply={() => handleApplyPreset(preset, 'trio-row')}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
-                mediaAssets={[mediaAssets[0] || null, mediaAssets[1] || null, mediaAssets[2] || null]}
+                mediaAssets={[
+                  mediaAssets[0] || null,
+                  mediaAssets[1] || null,
+                  mediaAssets[2] || null,
+                ]}
                 stylePreset={stylePreset}
                 shadowType={shadowType}
                 shadowOpacity={shadowOpacity}
@@ -527,9 +616,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
               Grid Layout
             </h3>
           </div>
-          <p className="text-[9px] text-ui-muted/70 mb-3">
-            2x2 grid with synchronized effects
-          </p>
+          <p className="text-[9px] text-ui-muted/70 mb-3">2x2 grid with synchronized effects</p>
           <div className="space-y-3">
             {singleAnimations.slice(0, 6).map((preset) => (
               <AnimatedLayoutCard
@@ -539,7 +626,12 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                 onApply={() => handleApplyPreset(preset, 'grid')}
                 onDragStart={(e) => handlePresetDragStart(e, preset)}
                 cornerRadius={cornerRadius}
-                mediaAssets={[mediaAssets[0] || null, mediaAssets[1] || null, mediaAssets[2] || null, mediaAssets[3] || null]}
+                mediaAssets={[
+                  mediaAssets[0] || null,
+                  mediaAssets[1] || null,
+                  mediaAssets[2] || null,
+                  mediaAssets[3] || null,
+                ]}
                 stylePreset={stylePreset}
                 shadowType={shadowType}
                 shadowOpacity={shadowOpacity}
@@ -629,7 +721,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
           </div>
 
           {/* Film Strip */}
-           <div>
+          <div>
             <div className="flex items-center gap-2 mb-3">
               <LayoutGrid className="w-4 h-4 text-indigo-400" />
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
@@ -673,9 +765,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
               Your Favorites
             </h3>
           </div>
-          <p className="text-[9px] text-ui-muted/70 mb-3">
-            Quick access to your saved animations
-          </p>
+          <p className="text-[9px] text-ui-muted/70 mb-3">Quick access to your saved animations</p>
           {favoritePresets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Heart className="w-8 h-8 text-ui-muted/30 mb-3" />
@@ -688,10 +778,10 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
             <div className="space-y-3">
               {favoritePresets.map((preset) => {
                 // Determine layout based on preset id
-                const layout = preset.id.startsWith('duo-') 
-                  ? 'side-by-side' 
-                  : preset.id.startsWith('trio-') 
-                    ? 'trio-row' 
+                const layout = preset.id.startsWith('duo-')
+                  ? 'side-by-side'
+                  : preset.id.startsWith('trio-')
+                    ? 'trio-row'
                     : 'single';
                 return (
                   <AnimatedLayoutCard
@@ -724,82 +814,146 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
       {/* Text Animations Section */}
       {showText && (
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Type className="w-4 h-4 text-violet-400" />
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
-              Text Animations
-            </h3>
-          </div>
-          <p className="text-[9px] text-ui-muted/70 mb-4">
-            Combine dynamic text with device mockups
-          </p>
-          
-          {/* Text + Device Presets */}
-          <div className="space-y-3">
-            {TEXT_DEVICE_PRESETS.map((preset) => (
-              <TextAnimationCard
-                key={preset.id}
-                preset={preset}
-                isActive={activePresetId === preset.id}
-                onApply={() => {
-                  setActivePresetId(preset.id);
-                  // TODO: Apply text animation preset to canvas
-                  setIsPlaying(false);
-                  setDurationMs(preset.durationMs);
-                  setPlayhead(0);
-                  clearTrack('track-animation');
-                  addClip('track-animation', {
-                    trackId: 'track-animation',
-                    type: 'animation',
-                    name: preset.name,
-                    startMs: 0,
-                    durationMs: preset.durationMs,
-                    color: preset.color,
-                    icon: preset.icon,
-                    data: {
-                      animationPreset: {
-                        id: preset.id,
-                        name: preset.name,
-                        animations: [preset.textAnimation as any],
-                        icon: preset.icon,
-                        color: preset.color,
-                        duration: preset.durationMs,
-                        easing: 'ease-out',
-                        textOverlay: {
-                          text: preset.defaultText,
-                          animation: preset.textAnimation,
-                          position: preset.textPosition,
-                        },
-                      },
-                    },
-                  });
-                  setTimeout(() => setIsPlaying(true), 100);
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Available Text Effects */}
-          <div className="mt-6">
-            <h4 className="text-[9px] font-bold uppercase tracking-widest text-ui-muted/60 mb-3">
-              Available Effects
-            </h4>
-            <div className="grid grid-cols-3 gap-2">
-              {TEXT_ANIMATIONS.map((anim) => (
-                <div
-                  key={anim.id}
-                  className="flex flex-col items-center p-2 rounded-lg bg-ui-bg/50 border border-ui-border/50 hover:border-accent/50 transition-colors cursor-pointer"
-                  title={anim.description}
-                >
-                  <span className="text-lg mb-1">{anim.icon}</span>
-                  <span className="text-[8px] text-ui-muted text-center">{anim.name}</span>
-                </div>
-              ))}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Type className="w-4 h-4 text-violet-400" />
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">
+                Text Animations
+              </h3>
             </div>
           </div>
+
+          {/* Sub-Tabs: Presets vs Edit */}
+          <div className="flex bg-ui-panel/40 p-1 rounded-lg mb-4 border border-ui-border/50">
+            <button
+              onClick={() => setTextMode('presets')}
+              className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
+                textMode === 'presets'
+                  ? 'bg-accent text-black shadow-lg shadow-accent/20'
+                  : 'text-ui-muted hover:text-white'
+              }`}
+            >
+              <Sparkles className="w-3 h-3" />
+              Presets
+            </button>
+            <button
+              onClick={() => setTextMode('edit')}
+              className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
+                textMode === 'edit'
+                  ? 'bg-accent text-black shadow-lg shadow-accent/20'
+                  : 'text-ui-muted hover:text-white'
+              }`}
+            >
+              <Type className="w-3 h-3" />
+              Edit Text
+            </button>
+          </div>
+
+          {textMode === 'edit' ? (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <TextEditor />
+            </div>
+          ) : (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <p className="text-[9px] text-ui-muted/70 mb-4 px-1">
+                Select a layout style to get started
+              </p>
+
+              {/* Text + Device Presets */}
+              <div className="space-y-3">
+                {TEXT_DEVICE_PRESETS.map((preset) => (
+                  <TextAnimationCard
+                    key={preset.id}
+                    preset={preset}
+                    isActive={activePresetId === preset.id}
+                    onApply={() => {
+                      setActivePresetId(preset.id);
+
+                      // Enable text overlay with preset values
+                      setTextOverlay({
+                        enabled: true,
+                        text: preset.defaultText.replace(/\\n/g, '\n'),
+                        animation: preset.textAnimation,
+                        position: preset.textPosition,
+                        layout: preset.layout,
+                        fontSize:
+                          preset.fontSize === 'xlarge'
+                            ? 64
+                            : preset.fontSize === 'large'
+                              ? 48
+                              : preset.fontSize === 'medium'
+                                ? 36
+                                : 32,
+                        color: preset.color,
+                      });
+
+                      // Setup timeline
+                      setIsPlaying(false);
+                      setDurationMs(preset.durationMs);
+                      setPlayhead(0);
+                      clearTrack('track-animation');
+                      addClip('track-animation', {
+                        trackId: 'track-animation',
+                        type: 'animation',
+                        name: preset.name,
+                        startMs: 0,
+                        durationMs: preset.durationMs,
+                        color: preset.color,
+                        icon: preset.icon,
+                        data: {
+                          animationPreset: {
+                            id: preset.id,
+                            name: preset.name,
+                            animations: [preset.textAnimation as any],
+                            icon: preset.icon,
+                            color: preset.color,
+                            duration: preset.durationMs,
+                            easing: 'ease-out',
+                            textOverlay: {
+                              text: preset.defaultText,
+                              animation: preset.textAnimation,
+                              position: preset.textPosition,
+                            },
+                          },
+                        },
+                      });
+                      setTimeout(() => setIsPlaying(true), 100);
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Available Text Effects */}
+              <div className="mt-8 pt-6 border-t border-ui-border/30">
+                <h4 className="text-[9px] font-bold uppercase tracking-widest text-ui-muted/60 mb-4 px-1 flex items-center gap-2">
+                  <Sparkles className="w-3 h-3" />
+                  Text Effects
+                </h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {TEXT_ANIMATIONS.map((anim) => (
+                    <div
+                      key={anim.id}
+                      onClick={() => {
+                        setTextOverlay({ animation: anim.id, enabled: true });
+                        setTextMode('edit');
+                      }}
+                      className="flex flex-col items-center p-3 rounded-xl bg-ui-panel/20 border border-ui-border/40 hover:border-accent/40 hover:bg-ui-panel/40 transition-all cursor-pointer group"
+                      title={anim.description}
+                    >
+                      <span className="text-xl mb-2 group-hover:scale-110 transition-transform">
+                        {anim.icon}
+                      </span>
+                      <span className="text-[8px] font-bold text-ui-muted group-hover:text-white text-center uppercase tracking-tighter">
+                        {anim.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
-
     </div>
   );
 };

@@ -116,17 +116,29 @@ export const TEXT_ANIMATIONS: TextAnimationConfig[] = [
 ];
 
 // Text + Device Combination Presets
+export type TextDeviceLayout = 
+  | 'text-top-device-bottom'     // Text at top, device at bottom
+  | 'text-bottom-device-top'     // Text at bottom, device at top
+  | 'text-left-device-right'     // Text on left, device on right
+  | 'text-right-device-left'     // Text on right, device on left
+  | 'text-center-device-behind'  // Text centered over device
+  | 'text-overlay'               // Text overlaid on device screen
+  | 'text-split-device-center';  // Text split across top/bottom, device in middle
+
 export type TextDevicePreset = {
   id: string;
   name: string;
   description: string;
   textAnimation: TextAnimationType;
   textPosition: TextPosition;
-  devicePosition: 'bottom' | 'center' | 'side';
+  devicePosition: 'bottom' | 'center' | 'side' | 'top';
+  layout: TextDeviceLayout;
   defaultText: string;
   durationMs: number;
   color: string;
   icon: string;
+  fontSize?: 'small' | 'medium' | 'large' | 'xlarge';
+  deviceScale?: number; // 0.5-1.0
 };
 
 export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
@@ -137,10 +149,13 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     textAnimation: 'scale-pop',
     textPosition: 'top',
     devicePosition: 'bottom',
+    layout: 'text-top-device-bottom',
     defaultText: 'Introducing the Future',
     durationMs: 3000,
     color: '#6366f1',
     icon: '📱',
+    fontSize: 'xlarge',
+    deviceScale: 0.7,
   },
   {
     id: 'typewriter-showcase',
@@ -149,10 +164,13 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     textAnimation: 'typewriter',
     textPosition: 'top',
     devicePosition: 'center',
+    layout: 'text-top-device-bottom',
     defaultText: 'Built for creators.',
     durationMs: 4000,
     color: '#8b5cf6',
     icon: '⌨️',
+    fontSize: 'large',
+    deviceScale: 0.65,
   },
   {
     id: 'fade-words-reveal',
@@ -161,10 +179,13 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     textAnimation: 'word-fade-in',
     textPosition: 'top',
     devicePosition: 'bottom',
+    layout: 'text-top-device-bottom',
     defaultText: 'Simple. Powerful. Yours.',
     durationMs: 3500,
     color: '#ec4899',
     icon: '✨',
+    fontSize: 'large',
+    deviceScale: 0.7,
   },
   {
     id: 'bounce-intro',
@@ -173,10 +194,13 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     textAnimation: 'bounce-letters',
     textPosition: 'top',
     devicePosition: 'bottom',
+    layout: 'text-top-device-bottom',
     defaultText: 'Let\'s Go!',
     durationMs: 2500,
     color: '#f59e0b',
     icon: '🎉',
+    fontSize: 'xlarge',
+    deviceScale: 0.65,
   },
   {
     id: 'elegant-reveal',
@@ -185,10 +209,13 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     textAnimation: 'blur-in',
     textPosition: 'center',
     devicePosition: 'bottom',
+    layout: 'text-center-device-behind',
     defaultText: 'Experience Perfection',
     durationMs: 3000,
     color: '#14b8a6',
     icon: '💎',
+    fontSize: 'xlarge',
+    deviceScale: 0.8,
   },
   {
     id: 'slide-feature',
@@ -197,10 +224,108 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     textAnimation: 'word-slide-up',
     textPosition: 'top',
     devicePosition: 'bottom',
+    layout: 'text-top-device-bottom',
     defaultText: 'Fast. Reliable. Secure.',
     durationMs: 3500,
     color: '#3b82f6',
     icon: '⚡',
+    fontSize: 'large',
+    deviceScale: 0.7,
+  },
+  // NEW: Side layouts
+  {
+    id: 'side-by-side-text-left',
+    name: 'Text Left',
+    description: 'Text on left, device on right side',
+    textAnimation: 'word-fade-in',
+    textPosition: 'center',
+    devicePosition: 'side',
+    layout: 'text-left-device-right',
+    defaultText: 'Designed\nfor\nCreativity',
+    durationMs: 3500,
+    color: '#8b5cf6',
+    icon: '◀️',
+    fontSize: 'large',
+    deviceScale: 0.6,
+  },
+  {
+    id: 'side-by-side-text-right',
+    name: 'Text Right',
+    description: 'Device on left, text on right side',
+    textAnimation: 'letter-cascade',
+    textPosition: 'center',
+    devicePosition: 'side',
+    layout: 'text-right-device-left',
+    defaultText: 'Your Story\nYour Way',
+    durationMs: 3000,
+    color: '#10b981',
+    icon: '▶️',
+    fontSize: 'large',
+    deviceScale: 0.6,
+  },
+  // NEW: Inverted layouts
+  {
+    id: 'device-top-text-bottom',
+    name: 'Device Top',
+    description: 'Device at top, text reveals below',
+    textAnimation: 'word-slide-up',
+    textPosition: 'bottom',
+    devicePosition: 'top',
+    layout: 'text-bottom-device-top',
+    defaultText: 'Download Now',
+    durationMs: 2500,
+    color: '#ef4444',
+    icon: '⬆️',
+    fontSize: 'xlarge',
+    deviceScale: 0.65,
+  },
+  // NEW: Overlay style
+  {
+    id: 'text-overlay-glow',
+    name: 'Overlay Glow',
+    description: 'Glowing text over the device',
+    textAnimation: 'glow-reveal',
+    textPosition: 'center',
+    devicePosition: 'center',
+    layout: 'text-overlay',
+    defaultText: 'NEW',
+    durationMs: 2000,
+    color: '#fbbf24',
+    icon: '🌟',
+    fontSize: 'xlarge',
+    deviceScale: 0.75,
+  },
+  // NEW: Split layout
+  {
+    id: 'split-headline',
+    name: 'Split Headline',
+    description: 'Text splits around centered device',
+    textAnimation: 'split-reveal',
+    textPosition: 'center',
+    devicePosition: 'center',
+    layout: 'text-split-device-center',
+    defaultText: 'POWER & STYLE',
+    durationMs: 3000,
+    color: '#a855f7',
+    icon: '↔️',
+    fontSize: 'xlarge',
+    deviceScale: 0.6,
+  },
+  // NEW: App promo style
+  {
+    id: 'app-promo',
+    name: 'App Promo',
+    description: 'Classic app store promo style',
+    textAnimation: 'scale-pop',
+    textPosition: 'bottom',
+    devicePosition: 'top',
+    layout: 'text-bottom-device-top',
+    defaultText: 'Available on App Store',
+    durationMs: 2500,
+    color: '#0ea5e9',
+    icon: '📲',
+    fontSize: 'medium',
+    deviceScale: 0.7,
   },
 ];
 
