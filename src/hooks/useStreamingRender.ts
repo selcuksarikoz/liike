@@ -283,8 +283,15 @@ export const useStreamingRender = () => {
       });
 
       try {
+        // Get audio file from timeline if available (skip if muted)
+        const { tracks } = useTimelineStore.getState();
+        const audioTrack = tracks.find((t) => t.type === 'audio');
+        const audioClip = audioTrack?.clips[0];
+        const isAudioMuted = audioTrack?.muted ?? false;
+        const audioPath = (!isAudioMuted && audioClip?.data?.mediaUrl) || null;
+
         // Start the streaming encoder in Rust
-        console.log('[StreamRender] Starting streaming encoder...');
+        console.log('[StreamRender] Starting streaming encoder...', { audioPath });
         const encoderId = await invoke<string>('start_streaming_encode', {
           outputPath,
           width: outputWidth,
@@ -293,6 +300,7 @@ export const useStreamingRender = () => {
           totalFrames,
           format,
           useHw: true,
+          audioPath,
         });
         encoderIdRef.current = encoderId;
         console.log('[StreamRender] Encoder started:', encoderId);

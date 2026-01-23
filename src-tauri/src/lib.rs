@@ -22,6 +22,7 @@ struct StreamingEncoder {
     height: u32,
     total_frames: u32,
     current_frame: u32,
+    has_audio: bool,
 }
 
 // Global encoder registry for managing multiple concurrent encoders
@@ -402,7 +403,7 @@ fn get_ffmpeg_path() -> Result<PathBuf, String> {
 }
 
 // Get encoder arguments for rawvideo input (streaming mode)
-fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, use_hw: bool) -> Vec<String> {
+fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, use_hw: bool, audio_path: Option<&str>) -> Vec<String> {
     let scale_w = if width % 2 == 0 { width } else { width + 1 };
     let scale_h = if height % 2 == 0 { height } else { height + 1 };
     // Use lanczos for highest quality scaling
@@ -425,6 +426,14 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
         "-i".to_string(),
         "pipe:0".to_string(), // Read from stdin
     ];
+
+    // Add audio input if provided
+    if let Some(audio) = audio_path {
+        args.extend(vec![
+            "-i".to_string(),
+            audio.to_string(),
+        ]);
+    }
 
     // Output encoding args based on format
     match format {
@@ -524,6 +533,34 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
         }
     }
 
+    // Add audio encoding if audio input is provided
+    if audio_path.is_some() {
+        match format {
+            "gif" => {
+                // GIF doesn't support audio, skip
+            }
+            "webm" => {
+                args.extend(vec![
+                    "-c:a".to_string(),
+                    "libopus".to_string(),
+                    "-b:a".to_string(),
+                    "128k".to_string(),
+                    "-shortest".to_string(),
+                ]);
+            }
+            _ => {
+                // MP4/MOV - AAC audio
+                args.extend(vec![
+                    "-c:a".to_string(),
+                    "aac".to_string(),
+                    "-b:a".to_string(),
+                    "192k".to_string(),
+                    "-shortest".to_string(),
+                ]);
+            }
+        }
+    }
+
     args
 }
 
@@ -537,15 +574,16 @@ fn start_streaming_encode(
     total_frames: u32,
     format: Option<String>,
     use_hw: Option<bool>,
+    audio_path: Option<String>,
 ) -> Result<String, String> {
     let format = format.unwrap_or_else(|| "mp4".to_string());
     let use_hw = use_hw.unwrap_or(true);
 
     let ffmpeg_path = get_ffmpeg_path()?;
-    let mut args = get_streaming_encoder_args(&format, width, height, fps, use_hw);
+    let mut args = get_streaming_encoder_args(&format, width, height, fps, use_hw, audio_path.as_deref());
     args.push(output_path.clone());
 
-    log::info!("[StreamEncode] Starting ffmpeg: {:?} {:?}", ffmpeg_path, args);
+    log::info!("[StreamEncode] Starting ffmpeg with audio={:?}: {:?} {:?}", audio_path, ffmpeg_path, args);
 
     let mut process = Command::new(&ffmpeg_path)
         .args(&args)
@@ -572,6 +610,7 @@ fn start_streaming_encode(
         height,
         total_frames,
         current_frame: 0,
+        has_audio: audio_path.is_some(),
     };
 
     ENCODERS

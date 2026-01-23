@@ -21,7 +21,11 @@ import {
   ArrowUpFromLine,
   Component,
   Maximize,
+  Music,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
+import { open } from '@tauri-apps/plugin-dialog';
 import { useTimelineStore, ANIMATION_PRESETS } from '../store/timelineStore';
 import type { TimelineClip, AnimationPreset } from '../store/timelineStore';
 import { useRenderStore } from '../store/renderStore';
@@ -70,6 +74,10 @@ const getPresetIcon = (iconName: string, className?: string) => {
       return <Component {...props} />;
     case '360':
       return <Maximize {...props} />;
+    case 'music':
+      return <Music {...props} />;
+    case 'volume':
+      return <Volume2 {...props} />;
     default:
       return <Clapperboard {...props} />;
   }
@@ -250,11 +258,57 @@ export const Timeline = () => {
     setPlayhead,
     setIsPlaying,
     setZoom,
+    toggleTrackMute,
   } = useTimelineStore();
 
   const timelineRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [showPresets, setShowPresets] = useState(true);
+
+  // Get current audio clip
+  const audioTrack = tracks.find((t) => t.type === 'audio');
+  const audioClip = audioTrack?.clips[0];
+  const audioUrl = audioClip?.data?.mediaUrl;
+
+  // Audio playback sync
+  const isAudioMuted = audioTrack?.muted ?? false;
+
+  useEffect(() => {
+    if (!audioUrl || isAudioMuted) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      return;
+    }
+
+    // Create or update audio element
+    if (!audioRef.current || audioRef.current.src !== `file://${audioUrl}`) {
+      audioRef.current = new Audio(`file://${audioUrl}`);
+    }
+
+    const audio = audioRef.current;
+    const audioStartMs = audioClip?.startMs || 0;
+    const audioDurationMs = audioClip?.durationMs || 0;
+
+    // Check if playhead is within audio clip range
+    const isInRange = playheadMs >= audioStartMs && playheadMs <= audioStartMs + audioDurationMs;
+
+    if (isPlaying && isInRange) {
+      const audioTime = (playheadMs - audioStartMs) / 1000;
+      if (Math.abs(audio.currentTime - audioTime) > 0.1) {
+        audio.currentTime = audioTime;
+      }
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+
+    return () => {
+      if (!isPlaying) audio.pause();
+    };
+  }, [isPlaying, playheadMs, audioUrl, audioClip?.startMs, audioClip?.durationMs, isAudioMuted]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -496,6 +550,39 @@ export const Timeline = () => {
     e.dataTransfer.dropEffect = 'copy';
   };
 
+  // Handle audio file import
+  const handleAudioImport = async () => {
+    const file = await open({
+      multiple: false,
+      filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'aac', 'm4a', 'ogg'] }],
+    });
+
+    if (!file) return;
+
+    const audioTrack = tracks.find((t) => t.type === 'audio');
+    if (!audioTrack) return;
+
+    // Get audio duration
+    const audio = new Audio(`file://${file}`);
+    await new Promise<void>((resolve) => {
+      audio.onloadedmetadata = () => resolve();
+      audio.onerror = () => resolve();
+    });
+
+    const audioDurationMs = audio.duration ? audio.duration * 1000 : durationMs;
+
+    addClip(audioTrack.id, {
+      trackId: audioTrack.id,
+      type: 'audio',
+      name: file.split('/').pop() || 'Audio',
+      startMs: 0,
+      durationMs: audioDurationMs,
+      color: '#22c55e',
+      icon: 'music',
+      data: { mediaUrl: file, volume: 1 },
+    });
+  };
+
   const playheadPosition = (playheadMs / MS_PER_SECOND) * PIXELS_PER_SECOND * zoom;
 
   const formatTime = (seconds: number) => {
@@ -623,9 +710,27 @@ export const Timeline = () => {
             {tracks.map((track) => (
               <div
                 key={track.id}
-                className="flex h-14 items-center border-b border-ui-border px-3 hover:bg-ui-highlight/10 truncate"
+                className={`flex h-14 items-center border-b border-ui-border px-3 hover:bg-ui-highlight/10 truncate gap-2 ${
+                  track.type === 'audio' ? 'cursor-pointer' : ''
+                }`}
+                onClick={track.type === 'audio' && track.clips.length === 0 ? handleAudioImport : undefined}
               >
-                <span className="text-[10px] truncate">{track.name}</span>
+                {track.type === 'audio' && <Music className="w-3 h-3 text-green-400" />}
+                <span className="text-[10px] truncate flex-1">{track.name}</span>
+                {track.type === 'audio' && track.clips.length === 0 && (
+                  <span className="text-[8px] text-ui-muted">+ Add</span>
+                )}
+                {track.type === 'audio' && track.clips.length > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTrackMute(track.id);
+                    }}
+                    className={`p-1 rounded hover:bg-ui-highlight/30 ${track.muted ? 'text-red-400' : 'text-green-400'}`}
+                  >
+                    {track.muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                  </button>
+                )}
               </div>
             ))}
           </div>
