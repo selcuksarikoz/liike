@@ -113,7 +113,10 @@ export const AnimatedLayoutCard = ({
 
     const handleMouseEnter = () => {
       setIsHovered(true);
-      card.animate([...ANIMATION_PRESETS.cardHoverIn.keyframes], ANIMATION_PRESETS.cardHoverIn.options);
+      card.animate(
+        [...ANIMATION_PRESETS.cardHoverIn.keyframes],
+        ANIMATION_PRESETS.cardHoverIn.options
+      );
 
       if (hasAnimation) {
         runProgressAnimation();
@@ -133,11 +136,17 @@ export const AnimatedLayoutCard = ({
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
       }
-      card.animate([...ANIMATION_PRESETS.cardHoverOut.keyframes], ANIMATION_PRESETS.cardHoverOut.options);
+      card.animate(
+        [...ANIMATION_PRESETS.cardHoverOut.keyframes],
+        ANIMATION_PRESETS.cardHoverOut.options
+      );
       // Reset device transform
       device.style.transform = '';
       device.style.opacity = '1';
-      device.animate([...ANIMATION_PRESETS.deviceReset.keyframes], ANIMATION_PRESETS.deviceReset.options);
+      device.animate(
+        [...ANIMATION_PRESETS.deviceReset.keyframes],
+        ANIMATION_PRESETS.deviceReset.options
+      );
     };
 
     card.addEventListener('mouseenter', handleMouseEnter);
@@ -165,10 +174,15 @@ export const AnimatedLayoutCard = ({
     >
       {/* Background */}
       {backgroundType === 'gradient' && (
-        <div className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient} opacity-80 transition-opacity group-hover:opacity-100`} />
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${backgroundGradient} opacity-80 transition-opacity group-hover:opacity-100`}
+        />
       )}
       {backgroundType === 'solid' && (
-        <div className="absolute inset-0 opacity-80 transition-opacity group-hover:opacity-100" style={{ backgroundColor }} />
+        <div
+          className="absolute inset-0 opacity-80 transition-opacity group-hover:opacity-100"
+          style={{ backgroundColor }}
+        />
       )}
       {backgroundType === 'image' && backgroundImage && (
         <div

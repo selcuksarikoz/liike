@@ -8,6 +8,15 @@ export type LayoutAnimation = {
 
 export type DevicePosition = 'center' | 'top' | 'bottom' | 'left' | 'right' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
+export type TextPosition =
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'center-left' | 'center' | 'center-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
+export type TextAnimationType =
+  | 'none' | 'fade' | 'blur' | 'zoom-blur' | 'slide-up' | 'slide-down'
+  | 'bounce' | 'elastic' | 'typewriter' | 'wave' | 'glitch' | 'flip' | 'scale';
+
 export type DeviceConfig = {
   position: DevicePosition;
   scale: number;
@@ -17,22 +26,40 @@ export type DeviceConfig = {
   animateIn: boolean;
 };
 
+export type TextConfig = {
+  enabled: boolean;
+  headline: string;
+  tagline: string;
+  animation: TextAnimationType;
+  position: TextPosition;
+  headlineFontSize: number;
+  taglineFontSize: number;
+  fontFamily: string;
+  color: string;
+};
+
 export type LayoutPreset = {
   id: string;
   name: string;
+  icon: string;
+  color: string;
+  durationMs: number;
+  // Layout animation
+  animations: LayoutAnimation[];
+  // 3D rotation
   rotationX: number;
   rotationY: number;
   rotationZ: number;
   backgroundGradient: string;
-  icon: string;
-  color: string;
-  animations: LayoutAnimation[];
-  durationMs: number;
-  // Device positioning & animation config
+  // Device positioning & animation
   device?: Partial<DeviceConfig>;
+  // Text overlay (if present, this is a "text animation" preset)
+  text?: Partial<TextConfig>;
+  // Category for filtering
+  category?: 'layout' | 'text' | 'creative';
 };
 
-// Default device config
+// Default configs
 export const DEFAULT_DEVICE_CONFIG: DeviceConfig = {
   position: 'center',
   scale: 1,
@@ -40,6 +67,18 @@ export const DEFAULT_DEVICE_CONFIG: DeviceConfig = {
   offsetY: 0,
   animation: 'none',
   animateIn: false,
+};
+
+export const DEFAULT_TEXT_CONFIG: TextConfig = {
+  enabled: false,
+  headline: '',
+  tagline: '',
+  animation: 'none',
+  position: 'top-center',
+  headlineFontSize: 64,
+  taglineFontSize: 24,
+  fontFamily: 'Manrope',
+  color: '#ffffff',
 };
 
 export const LAYOUT_PRESETS: LayoutPreset[] = [
@@ -584,5 +623,275 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     color: '#d8b4fe',
     animations: [{ type: 'skew-slide', duration: 1200, easing: 'ease-out', intensity: 30 }],
     durationMs: 2000,
+  },
+
+  // =============================================================================
+  // TEXT ANIMATION PRESETS
+  // =============================================================================
+  // Apple-Style Hero Intros
+  {
+    id: 'text-apple-intro',
+    name: 'Apple Intro',
+    icon: '',
+    color: '#ffffff',
+    durationMs: 4000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-black via-zinc-900 to-black',
+    animations: [{ type: 'zoom-in', duration: 2000, easing: 'ease-out', intensity: 1.1 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.75, offsetX: 0, offsetY: 20, animation: 'rise', animateIn: true },
+    text: { enabled: true, headline: 'iPhone 16 Pro', tagline: 'Built for Apple Intelligence.', animation: 'blur', position: 'top-center', headlineFontSize: 64, taglineFontSize: 24, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  {
+    id: 'text-keynote',
+    name: 'Keynote',
+    icon: '🎤',
+    color: '#ffffff',
+    durationMs: 4500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-black via-zinc-900 to-black',
+    animations: [{ type: 'zoom-in', duration: 2500, easing: 'ease-out', intensity: 1.15 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.7, offsetX: 0, offsetY: 25, animation: 'rise', animateIn: true },
+    text: { enabled: true, headline: 'This is iPhone', tagline: 'The best iPhone ever made.', animation: 'zoom-blur', position: 'top-center', headlineFontSize: 72, taglineFontSize: 28, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  {
+    id: 'text-pro-reveal',
+    name: 'Pro Reveal',
+    icon: '⚡',
+    color: '#ffffff',
+    durationMs: 3500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-slate-950 via-slate-900 to-black',
+    animations: [{ type: 'zoom-out', duration: 1500, easing: 'ease-out', intensity: 1.3 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.75, offsetX: 0, offsetY: 20, animation: 'bounce-in', animateIn: true },
+    text: { enabled: true, headline: 'Pro', tagline: 'Beyond professional.', animation: 'elastic', position: 'top-center', headlineFontSize: 96, taglineFontSize: 24, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // App Store Style
+  {
+    id: 'text-app-feature',
+    name: 'App Feature',
+    icon: '📱',
+    color: '#ffffff',
+    durationMs: 3500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-violet-600 via-purple-600 to-indigo-600',
+    animations: [{ type: 'bounce', duration: 800, easing: 'ease-out', intensity: 15 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.8, offsetX: 0, offsetY: 15, animation: 'bounce-in', animateIn: true },
+    text: { enabled: true, headline: 'App of the Day', tagline: 'Discover something new.', animation: 'bounce', position: 'top-center', headlineFontSize: 48, taglineFontSize: 20, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  {
+    id: 'text-launch-day',
+    name: 'Launch Day',
+    icon: '🚀',
+    color: '#ffffff',
+    durationMs: 3000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-emerald-500 via-green-500 to-teal-500',
+    animations: [{ type: 'slide-up', duration: 800, easing: 'ease-out', intensity: 80 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.75, offsetX: 0, offsetY: 20, animation: 'rise', animateIn: true },
+    text: { enabled: true, headline: 'Available Now', tagline: 'Download on the App Store.', animation: 'elastic', position: 'top-center', headlineFontSize: 60, taglineFontSize: 22, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Dramatic Reveals
+  {
+    id: 'text-one-more-thing',
+    name: 'One More Thing',
+    icon: '✨',
+    color: '#ffffff',
+    durationMs: 5000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-black via-zinc-900 to-black',
+    animations: [{ type: 'zoom-in', duration: 3000, easing: 'ease-out', intensity: 1.2 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.65, offsetX: 0, offsetY: 30, animation: 'fade', animateIn: true },
+    text: { enabled: true, headline: 'One more thing...', tagline: '', animation: 'typewriter', position: 'top-center', headlineFontSize: 56, taglineFontSize: 0, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Split Layouts
+  {
+    id: 'text-split-left',
+    name: 'Split Left',
+    icon: '◀️',
+    color: '#ffffff',
+    durationMs: 3500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-blue-700 via-blue-600 to-cyan-500',
+    animations: [{ type: 'slide-right', duration: 900, easing: 'ease-out', intensity: 120 }],
+    category: 'text',
+    device: { position: 'right', scale: 0.8, offsetX: 25, offsetY: 0, animation: 'slide-left', animateIn: true },
+    text: { enabled: true, headline: 'Beautiful Design', tagline: 'Crafted with care.', animation: 'slide-up', position: 'center-left', headlineFontSize: 48, taglineFontSize: 20, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  {
+    id: 'text-split-right',
+    name: 'Split Right',
+    icon: '▶️',
+    color: '#ffffff',
+    durationMs: 3500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-rose-700 via-red-600 to-orange-500',
+    animations: [{ type: 'slide-left', duration: 900, easing: 'ease-out', intensity: 120 }],
+    category: 'text',
+    device: { position: 'left', scale: 0.8, offsetX: -25, offsetY: 0, animation: 'slide-right', animateIn: true },
+    text: { enabled: true, headline: 'Next Level', tagline: 'Experience the difference.', animation: 'slide-up', position: 'center-right', headlineFontSize: 48, taglineFontSize: 20, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Minimal & Clean
+  {
+    id: 'text-minimal',
+    name: 'Minimal',
+    icon: '🎯',
+    color: '#ffffff',
+    durationMs: 3000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-slate-900 via-zinc-800 to-slate-900',
+    animations: [{ type: 'zoom-up', duration: 1000, easing: 'ease-out', intensity: 1.1 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.8, offsetX: 0, offsetY: 15, animation: 'fade', animateIn: true },
+    text: { enabled: true, headline: 'Think', tagline: 'Different.', animation: 'fade', position: 'top-center', headlineFontSize: 80, taglineFontSize: 32, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  {
+    id: 'text-hello-again',
+    name: 'Hello Again',
+    icon: '👋',
+    color: '#ffffff',
+    durationMs: 4000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-sky-400 via-indigo-400 to-purple-500',
+    animations: [{ type: 'float', duration: 3000, easing: 'ease-in-out', intensity: 15 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.7, offsetX: 0, offsetY: 25, animation: 'rise', animateIn: true },
+    text: { enabled: true, headline: 'Hello', tagline: "It's nice to meet you.", animation: 'wave', position: 'top-center', headlineFontSize: 72, taglineFontSize: 24, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Cinematic
+  {
+    id: 'text-cinema-rise',
+    name: 'Cinema Rise',
+    icon: '🎬',
+    color: '#ffffff',
+    durationMs: 4500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-black via-zinc-900 to-black',
+    animations: [{ type: 'zoom-in', duration: 3000, easing: 'ease-out', intensity: 1.1 }],
+    category: 'text',
+    device: { position: 'top', scale: 0.75, offsetX: 0, offsetY: -20, animation: 'drop', animateIn: true },
+    text: { enabled: true, headline: 'Coming Soon', tagline: 'A new era begins.', animation: 'slide-up', position: 'bottom-center', headlineFontSize: 56, taglineFontSize: 22, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Playful
+  {
+    id: 'text-bounce-pop',
+    name: 'Bounce Pop',
+    icon: '💥',
+    color: '#ffffff',
+    durationMs: 2500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-fuchsia-600 via-pink-500 to-rose-500',
+    animations: [{ type: 'zoom-out', duration: 600, easing: 'ease-out', intensity: 1.5 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.8, offsetX: 0, offsetY: 15, animation: 'bounce-in', animateIn: true },
+    text: { enabled: true, headline: 'POW!', tagline: 'That just happened.', animation: 'bounce', position: 'top-center', headlineFontSize: 96, taglineFontSize: 24, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Tech / Futuristic
+  {
+    id: 'text-glitch-fx',
+    name: 'Glitch FX',
+    icon: '🖥️',
+    color: '#22d3ee',
+    durationMs: 3500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-gray-900 via-gray-800 to-black',
+    animations: [{ type: 'glitch', duration: 400, easing: 'linear', intensity: 5 }],
+    category: 'text',
+    device: { position: 'center', scale: 0.9, offsetX: 0, offsetY: 0, animation: 'zoom-in', animateIn: true },
+    text: { enabled: true, headline: 'SYSTEM_READY', tagline: '> Initializing...', animation: 'glitch', position: 'center', headlineFontSize: 64, taglineFontSize: 20, fontFamily: 'Manrope', color: '#22d3ee' },
+  },
+  {
+    id: 'text-ai-powered',
+    name: 'AI Powered',
+    icon: '🤖',
+    color: '#ffffff',
+    durationMs: 4000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-violet-700 via-purple-600 to-indigo-600',
+    animations: [{ type: 'zoom-in', duration: 2000, easing: 'ease-out', intensity: 1.15 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.75, offsetX: 0, offsetY: 20, animation: 'rise', animateIn: true },
+    text: { enabled: true, headline: 'AI Inside', tagline: 'Intelligent by design.', animation: 'zoom-blur', position: 'top-center', headlineFontSize: 60, taglineFontSize: 22, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Professional
+  {
+    id: 'text-saas-hero',
+    name: 'SaaS Hero',
+    icon: '🚀',
+    color: '#ffffff',
+    durationMs: 3500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-blue-700 via-blue-600 to-cyan-500',
+    animations: [{ type: 'slide-right', duration: 900, easing: 'ease-out', intensity: 100 }],
+    category: 'text',
+    device: { position: 'right', scale: 0.8, offsetX: 25, offsetY: 0, animation: 'slide-left', animateIn: true },
+    text: { enabled: true, headline: '10x Faster', tagline: 'Your workflow, supercharged.', animation: 'slide-up', position: 'center-left', headlineFontSize: 56, taglineFontSize: 20, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Social Media
+  {
+    id: 'text-story-style',
+    name: 'Story Style',
+    icon: '📱',
+    color: '#ffffff',
+    durationMs: 3000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-pink-600 via-rose-500 to-red-500',
+    animations: [{ type: 'bounce', duration: 700, easing: 'ease-out', intensity: 20 }],
+    category: 'text',
+    device: { position: 'top', scale: 0.75, offsetX: 0, offsetY: -20, animation: 'drop', animateIn: true },
+    text: { enabled: true, headline: 'Swipe Up', tagline: 'Get yours now →', animation: 'elastic', position: 'bottom-center', headlineFontSize: 52, taglineFontSize: 20, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+  // Countdown / Urgency
+  {
+    id: 'text-flash-sale',
+    name: 'Flash Sale',
+    icon: '🏷️',
+    color: '#ffffff',
+    durationMs: 2500,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-red-600 via-orange-600 to-yellow-500',
+    animations: [{ type: 'shake', duration: 600, easing: 'ease-in-out', intensity: 10 }],
+    category: 'text',
+    device: { position: 'bottom', scale: 0.75, offsetX: 0, offsetY: 20, animation: 'bounce-in', animateIn: true },
+    text: { enabled: true, headline: '50% OFF', tagline: 'Today only!', animation: 'bounce', position: 'top-center', headlineFontSize: 88, taglineFontSize: 28, fontFamily: 'Manrope', color: '#ffffff' },
   },
 ];

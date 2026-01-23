@@ -32,7 +32,7 @@ export const PresetCard = ({
   shadowType,
   shadowOpacity,
   aspectRatio,
-  layout
+  layout,
 }: PresetCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const deviceRef = useRef<HTMLDivElement>(null);
@@ -46,32 +46,33 @@ export const PresetCard = ({
       card.animate(
         [
           { transform: 'scale(1)', filter: 'drop-shadow(0 0 0 rgba(0, 0, 0, 0))' },
-          { transform: 'scale(1.02)', filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4))' }
+          { transform: 'scale(1.02)', filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4))' },
         ],
         { duration: DURATIONS.normal, easing: EASINGS.easeOut, fill: 'forwards' }
       );
 
       if (deviceRef.current) {
-        deviceRef.current.animate(
-          [{ transform: 'scale(0.95)' }],
-          { duration: DURATIONS.entrance, easing: EASINGS.bounce, fill: 'forwards' }
-        );
+        deviceRef.current.animate([{ transform: 'scale(0.95)' }], {
+          duration: DURATIONS.entrance,
+          easing: EASINGS.bounce,
+          fill: 'forwards',
+        });
       }
     };
 
     const handleMouseLeave = () => {
-      card.animate(
-        [
-          { transform: 'scale(1)', filter: 'drop-shadow(0 0 0 rgba(0, 0, 0, 0))' }
-        ],
-        { duration: DURATIONS.normal, easing: EASINGS.easeOut, fill: 'forwards' }
-      );
+      card.animate([{ transform: 'scale(1)', filter: 'drop-shadow(0 0 0 rgba(0, 0, 0, 0))' }], {
+        duration: DURATIONS.normal,
+        easing: EASINGS.easeOut,
+        fill: 'forwards',
+      });
 
       if (deviceRef.current) {
-        deviceRef.current.animate(
-          [{ transform: 'scale(0.85)' }],
-          { duration: DURATIONS.standard, easing: EASINGS.easeOut, fill: 'forwards' }
-        );
+        deviceRef.current.animate([{ transform: 'scale(0.85)' }], {
+          duration: DURATIONS.standard,
+          easing: EASINGS.easeOut,
+          fill: 'forwards',
+        });
       }
     };
 
@@ -92,11 +93,7 @@ export const PresetCard = ({
 
     // Click animation
     const anim = cardRef.current.animate(
-      [
-        { transform: 'scale(1)' },
-        { transform: 'scale(0.95)' },
-        { transform: 'scale(1)' }
-      ],
+      [{ transform: 'scale(1)' }, { transform: 'scale(0.95)' }, { transform: 'scale(1)' }],
       { duration: DURATIONS.fast, easing: EASINGS.easeInOut }
     );
 
@@ -108,13 +105,13 @@ export const PresetCard = ({
       ref={cardRef}
       onClick={handleClick}
       className={`group relative w-full aspect-[16/10] cursor-pointer rounded-xl border overflow-hidden transition-colors ${
-        isActive
-          ? 'border-accent'
-          : 'border-ui-border hover:border-accent/50'
+        isActive ? 'border-accent' : 'border-ui-border hover:border-accent/50'
       }`}
     >
       {/* Background Gradient */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${preset.backgroundGradient} opacity-80 transition-opacity group-hover:opacity-100`} />
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${preset.backgroundGradient} opacity-80 transition-opacity group-hover:opacity-100`}
+      />
 
       {/* Device Preview */}
       <div
@@ -143,9 +140,7 @@ export const PresetCard = ({
       </div>
 
       {/* Active Indicator */}
-      {isActive && (
-        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-accent" />
-      )}
+      {isActive && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-accent" />}
     </div>
   );
 };

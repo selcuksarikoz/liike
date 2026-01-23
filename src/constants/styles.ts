@@ -21,6 +21,10 @@ export {
   type LayoutPreset,
   type DevicePosition,
   type DeviceConfig,
+  type TextPosition,
+  type TextAnimationType,
+  type TextConfig,
   LAYOUT_PRESETS,
   DEFAULT_DEVICE_CONFIG,
+  DEFAULT_TEXT_CONFIG,
 } from './layoutAnimationPresets';

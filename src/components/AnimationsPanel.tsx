@@ -2,13 +2,12 @@ import { Columns2, Heart, LayoutGrid, Sparkles, Type, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { LayoutPreset } from '../constants/styles';
 import { LAYOUT_PRESETS } from '../constants/styles';
-import { TEXT_DEVICE_PRESETS, type AnimationSpeed } from '../constants/textAnimations';
+import type { AnimationSpeed } from '../constants/textAnimations';
 import { useAnimationManager } from '../hooks/useAnimationManager';
 import { useFavorites } from '../store/favoritesStore';
 import type { ImageLayout } from '../store/renderStore';
 import { useRenderStore } from '../store/renderStore';
 import { AnimatedLayoutCard } from './animations/AnimatedLayoutCard';
-import { TextAnimationCard } from './animations/TextAnimationCard';
 import { TextEditor } from './TextEditor';
 
 const SPEED_OPTIONS: { value: AnimationSpeed; label: string; icon: string }[] = [
@@ -53,7 +52,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     setAnimationSpeed,
   } = useRenderStore();
 
-  const { applyLayoutAnimation, applyTextAnimation } = useAnimationManager();
+  const { applyAnimation } = useAnimationManager();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
 
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -61,12 +60,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
 
   const handleApplyPreset = (preset: LayoutPreset, layout: ImageLayout) => {
     setActivePresetId(preset.id);
-    applyLayoutAnimation(preset, layout);
-  };
-
-  const handleApplyTextPreset = (preset: (typeof TEXT_DEVICE_PRESETS)[number]) => {
-    setActivePresetId(preset.id);
-    applyTextAnimation(preset);
+    applyAnimation(preset, layout);
   };
 
   const handleDragStart = (e: React.DragEvent, preset: LayoutPreset) => {
@@ -121,12 +115,15 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     />
   );
 
-  // Filter presets
-  const singlePresets = LAYOUT_PRESETS.filter(
+  // Filter presets by category/type
+  const layoutPresets = LAYOUT_PRESETS.filter((p) => p.category !== 'text');
+  const textPresets = LAYOUT_PRESETS.filter((p) => p.category === 'text');
+
+  const singlePresets = layoutPresets.filter(
     (p) => !p.id.startsWith('duo-') && !p.id.startsWith('trio-')
   );
-  const dualPresets = LAYOUT_PRESETS.filter((p) => p.id.startsWith('duo-'));
-  const trioPresets = LAYOUT_PRESETS.filter((p) => p.id.startsWith('trio-'));
+  const dualPresets = layoutPresets.filter((p) => p.id.startsWith('duo-'));
+  const trioPresets = layoutPresets.filter((p) => p.id.startsWith('trio-'));
   const favoritePresets = LAYOUT_PRESETS.filter((p) => isFavorite(p.id));
 
   return (
@@ -291,17 +288,10 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
           ) : (
             <>
               <p className="text-[9px] text-ui-muted/70 mb-4">
-                Select a layout style to get started
+                Text + device animation presets
               </p>
-              <div className="space-y-2">
-                {TEXT_DEVICE_PRESETS.map((preset) => (
-                  <TextAnimationCard
-                    key={preset.id}
-                    preset={preset}
-                    isActive={activePresetId === preset.id}
-                    onApply={() => handleApplyTextPreset(preset)}
-                  />
-                ))}
+              <div className="space-y-3">
+                {textPresets.map((preset) => renderCard(preset, 'single', [mediaAssets[0] || null]))}
               </div>
             </>
           )}
