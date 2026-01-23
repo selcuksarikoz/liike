@@ -23,7 +23,16 @@ export const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
   for (const animation of animations) {
     animation.pause();
     animation.currentTime = timeMs;
+    // Commit computed styles to inline - ensures transforms are captured correctly
+    try {
+      animation.commitStyles();
+    } catch {
+      // commitStyles() can throw if animation is not in a valid state
+    }
   }
+  // Force style recalculation - ensures transform/opacity are computed
+  // before frame capture (fixes animation stuttering in export)
+  void node.offsetHeight;
 };
 
 // Pause/seek HTML5 Video elements and wait for seek to complete

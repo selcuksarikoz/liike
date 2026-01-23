@@ -314,8 +314,10 @@ export const useStreamingRender = () => {
 
           // Wait for React to re-render and browser to compute styles
           // Videos need more time to decode frames after seeking
+          // Animations also need time for transforms to settle
           const hasVideos = mediaAssets.some(a => a?.type === 'video');
-          const waitTime = frameIndex === 0 ? 50 : (hasVideos ? 32 : 8);
+          const hasAnimations = node.getAnimations({ subtree: true }).length > 0;
+          const waitTime = frameIndex === 0 ? 50 : (hasVideos ? 32 : (hasAnimations ? 16 : 8));
           await waitForRender(waitTime);
 
           if (abortController.signal.aborted) return;
