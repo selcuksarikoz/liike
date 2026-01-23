@@ -338,12 +338,26 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                       setActivePresetId(preset.id);
                       // Preload the font
                       loadGoogleFont('Manrope');
-                      // Map layout to devicePosition
+                      // Map layout to devicePosition and deviceAnimation
                       let devicePosition: 'center' | 'top' | 'bottom' | 'left' | 'right' = 'center';
-                      if (preset.layout === 'text-top-device-bottom') devicePosition = 'bottom';
-                      else if (preset.layout === 'text-bottom-device-top') devicePosition = 'top';
-                      else if (preset.layout === 'text-left-device-right') devicePosition = 'right';
-                      else if (preset.layout === 'text-right-device-left') devicePosition = 'left';
+                      let deviceAnimation = 'slide-up';
+
+                      if (preset.layout === 'text-top-device-bottom') {
+                        devicePosition = 'bottom';
+                        deviceAnimation = 'slide-up';
+                      } else if (preset.layout === 'text-bottom-device-top') {
+                        devicePosition = 'top';
+                        deviceAnimation = 'slide-down';
+                      } else if (preset.layout === 'text-left-device-right') {
+                        devicePosition = 'right';
+                        deviceAnimation = 'slide-left';
+                      } else if (preset.layout === 'text-right-device-left') {
+                        devicePosition = 'left';
+                        deviceAnimation = 'slide-right';
+                      } else if (preset.layout === 'text-center-device-behind') {
+                        devicePosition = 'center';
+                        deviceAnimation = 'zoom-in';
+                      }
 
                       setTextOverlay({
                         enabled: true,
@@ -360,6 +374,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
                         deviceOffset: preset.deviceOffset ?? -20,
                         devicePosition,
                         deviceAnimateIn: true,
+                        deviceAnimation,
                       });
 
                       setIsPlaying(false);

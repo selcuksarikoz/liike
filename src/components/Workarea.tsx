@@ -6,7 +6,12 @@ import { TextOverlayRenderer } from './TextOverlay';
 import { useTimelinePlayback } from '../hooks/useTimelinePlayback';
 import { combineAnimations, ANIMATION_PRESETS } from '../constants/animations';
 import { LAYOUT_PRESETS } from '../constants/styles';
-import { ANIMATION_SPEED_DURATIONS } from '../constants/textAnimations';
+import {
+  ANIMATION_SPEED_MULTIPLIERS,
+  ANIMATION_SPEED_DURATIONS,
+  generateDeviceKeyframes,
+  type DeviceAnimationType,
+} from '../constants/textAnimations';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
   const {
@@ -46,9 +51,35 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
 
   // Get CSS transition duration based on animation speed
   const transitionDuration = ANIMATION_SPEED_DURATIONS[animationSpeed];
+  const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed];
 
   const { tracks, playheadMs } = useTimelineStore();
   const { activeClips, isPlaying } = useTimelinePlayback();
+
+  // Calculate device animation progress (similar to text animation)
+  const deviceAnimationStyle = useMemo(() => {
+    const deviceAnim = textOverlay.deviceAnimation as DeviceAnimationType;
+    if (!deviceAnim || deviceAnim === 'none' || !textOverlay.enabled) {
+      return { opacity: 1, transform: 'none' };
+    }
+
+    // Check if we're in export mode
+    const isExporting = renderStatus.isRendering;
+
+    // Show device fully visible in editor when paused at start (NOT during export)
+    if (!isPlaying && playheadMs === 0 && !isExporting) {
+      return { opacity: 1, transform: 'none' };
+    }
+
+    // Device animation starts after a delay (synced with text animation)
+    const startDelay = 400 / speedMultiplier;
+    const animDuration = 800 / speedMultiplier;
+
+    const delayedPlayhead = Math.max(0, playheadMs - startDelay);
+    const progress = Math.min(1, delayedPlayhead / animDuration);
+
+    return generateDeviceKeyframes(deviceAnim, progress);
+  }, [textOverlay.deviceAnimation, textOverlay.enabled, playheadMs, isPlaying, speedMultiplier, renderStatus.isRendering]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
@@ -354,13 +385,21 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                     }
                   }
 
-                  // Combine transforms
-                  if (baseTransform === 'none' && !posTransform) return 'none';
-                  if (baseTransform === 'none') return posTransform;
-                  if (!posTransform) return baseTransform;
-                  return `${baseTransform} ${posTransform}`;
+                  // Add device entry animation transform
+                  const deviceAnimTransform = deviceAnimationStyle.transform;
+
+                  // Combine all transforms
+                  const transforms = [baseTransform, posTransform, deviceAnimTransform]
+                    .filter(t => t && t !== 'none')
+                    .join(' ');
+
+                  return transforms || 'none';
                 })(),
-                opacity: imageLayout === 'single' ? (animationStyle.opacity ?? 1) : 1,
+                opacity: (() => {
+                  const baseOpacity = imageLayout === 'single' ? (animationStyle.opacity ?? 1) : 1;
+                  const deviceOpacity = deviceAnimationStyle.opacity;
+                  return baseOpacity * deviceOpacity;
+                })(),
               }}
             >
               <DeviceRenderer

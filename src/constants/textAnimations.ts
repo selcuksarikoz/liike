@@ -710,3 +710,155 @@ export const generateTextKeyframes = (
 
 // For backwards compatibility
 export type { TextDevicePreset as TextPreset };
+
+// =============================================================================
+// DEVICE/MEDIA ANIMATION SYSTEM
+// =============================================================================
+
+export type DeviceAnimationType =
+  | 'none'
+  | 'fade'
+  | 'slide-up'
+  | 'slide-down'
+  | 'slide-left'
+  | 'slide-right'
+  | 'zoom-in'
+  | 'zoom-out'
+  | 'rise'
+  | 'drop'
+  | 'peek-bottom'
+  | 'peek-right'
+  | 'rotate-in'
+  | 'flip-up'
+  | 'bounce-in';
+
+export const DEVICE_ANIMATIONS: { id: DeviceAnimationType; name: string; icon: string }[] = [
+  { id: 'none', name: 'None', icon: '⏹️' },
+  { id: 'fade', name: 'Fade In', icon: '✨' },
+  { id: 'slide-up', name: 'Slide Up', icon: '⬆️' },
+  { id: 'slide-down', name: 'Slide Down', icon: '⬇️' },
+  { id: 'slide-left', name: 'Slide Left', icon: '⬅️' },
+  { id: 'slide-right', name: 'Slide Right', icon: '➡️' },
+  { id: 'zoom-in', name: 'Zoom In', icon: '🔍' },
+  { id: 'zoom-out', name: 'Zoom Out', icon: '🔎' },
+  { id: 'rise', name: 'Rise', icon: '🌅' },
+  { id: 'drop', name: 'Drop', icon: '⬇️' },
+  { id: 'peek-bottom', name: 'Peek Bottom', icon: '👀' },
+  { id: 'peek-right', name: 'Peek Right', icon: '👁️' },
+  { id: 'rotate-in', name: 'Rotate In', icon: '🔄' },
+  { id: 'flip-up', name: 'Flip Up', icon: '🔃' },
+  { id: 'bounce-in', name: 'Bounce In', icon: '🏀' },
+];
+
+/**
+ * Generate CSS transform/opacity for device entry animations
+ * @param type - Animation type
+ * @param progress - Animation progress (0 to 1)
+ * @returns CSS properties for transform and opacity
+ */
+export const generateDeviceKeyframes = (
+  type: DeviceAnimationType,
+  progress: number
+): { opacity: number; transform: string } => {
+  const p = Math.min(1, Math.max(0, progress));
+  const ease = easeOutCubic(p);
+
+  switch (type) {
+    case 'none':
+      return { opacity: 1, transform: 'none' };
+
+    case 'fade':
+      return {
+        opacity: ease,
+        transform: 'none',
+      };
+
+    case 'slide-up':
+      return {
+        opacity: ease,
+        transform: `translateY(${(1 - ease) * 100}%)`,
+      };
+
+    case 'slide-down':
+      return {
+        opacity: ease,
+        transform: `translateY(${(1 - ease) * -100}%)`,
+      };
+
+    case 'slide-left':
+      return {
+        opacity: ease,
+        transform: `translateX(${(1 - ease) * 100}%)`,
+      };
+
+    case 'slide-right':
+      return {
+        opacity: ease,
+        transform: `translateX(${(1 - ease) * -100}%)`,
+      };
+
+    case 'zoom-in':
+      return {
+        opacity: ease,
+        transform: `scale(${0.5 + ease * 0.5})`,
+      };
+
+    case 'zoom-out':
+      return {
+        opacity: ease,
+        transform: `scale(${1.5 - ease * 0.5})`,
+      };
+
+    case 'rise':
+      // Rises from below with slight zoom
+      return {
+        opacity: ease,
+        transform: `translateY(${(1 - ease) * 50}%) scale(${0.9 + ease * 0.1})`,
+      };
+
+    case 'drop':
+      // Drops from above with overshoot
+      const dropBounce = easeOutBounce(p);
+      return {
+        opacity: Math.min(1, p * 3),
+        transform: `translateY(${(1 - dropBounce) * -80}%)`,
+      };
+
+    case 'peek-bottom':
+      // Device peeks in from bottom, stays partially visible
+      return {
+        opacity: 1,
+        transform: `translateY(${(1 - ease) * 60 + 20}%)`,
+      };
+
+    case 'peek-right':
+      // Device peeks in from right, stays partially visible
+      return {
+        opacity: 1,
+        transform: `translateX(${(1 - ease) * 60 + 20}%)`,
+      };
+
+    case 'rotate-in':
+      return {
+        opacity: ease,
+        transform: `rotate(${(1 - ease) * -15}deg) scale(${0.8 + ease * 0.2})`,
+      };
+
+    case 'flip-up':
+      return {
+        opacity: p > 0.3 ? 1 : p * 3,
+        transform: `perspective(1000px) rotateX(${(1 - ease) * 90}deg)`,
+      };
+
+    case 'bounce-in': {
+      const bounceEase = easeOutElastic(p);
+      return {
+        opacity: Math.min(1, p * 2),
+        transform: `scale(${bounceEase})`,
+      };
+    }
+
+    default:
+      return { opacity: 1, transform: 'none' };
+  }
+};

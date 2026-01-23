@@ -63,6 +63,7 @@ export type TextOverlay = {
   deviceOffset: number; // negative = overflow bottom
   devicePosition: DevicePosition; // where the device sits
   deviceAnimateIn: boolean; // whether device animates in
+  deviceAnimation: string; // device entry animation type (slide-up, slide-right, etc.)
 };
 
 type RenderStore = RenderSettings & {
@@ -202,6 +203,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
     deviceOffset: -20,
     devicePosition: 'center',
     deviceAnimateIn: false,
+    deviceAnimation: 'slide-up',
   },
 
   // Setters
@@ -244,6 +246,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
     textOverlay: { ...state.textOverlay, ...overlay } 
   })),
   clearTextOverlay: () => set((state) => ({
-    textOverlay: { ...state.textOverlay, enabled: false, text: 'Your Text Here', deviceAnimateIn: false }
+    textOverlay: { ...state.textOverlay, enabled: false, text: 'Your Text Here', deviceAnimateIn: false, deviceAnimation: 'none' }
   })),
 }));
