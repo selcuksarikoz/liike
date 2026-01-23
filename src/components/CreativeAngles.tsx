@@ -9,6 +9,7 @@ import {
   Sparkles,
   Square,
   Smartphone,
+  RotateCcw,
 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { SidebarHeader, GridButton } from './ui/SidebarPrimitives';
@@ -95,6 +96,7 @@ export const CreativeAngles = () => {
   const [selectedCreativeAngle, setSelectedCreativeAngle] = useState<
     (typeof CREATIVE_PRESETS)[0] | null
   >(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handlePresetClick = (preset: (typeof CREATIVE_PRESETS)[0]) => {
     setRotationX(preset.rotationX);
@@ -104,9 +106,36 @@ export const CreativeAngles = () => {
     setSelectedCreativeAngle(preset);
   };
 
+  const handleReset = () => {
+    setRotationX(0);
+    setRotationY(0);
+    setRotationZ(0);
+    setDeviceScale(1);
+    setSelectedCreativeAngle(null);
+  };
+
   return (
-    <div className="style-section">
-      <SidebarHeader icon={<Sparkles className="w-4 h-4" />}>Creative Angles</SidebarHeader>
+    <div
+      className="style-section"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <SidebarHeader
+        icon={<Sparkles className="w-4 h-4" />}
+        action={
+          isHovered && selectedCreativeAngle ? (
+            <button
+              onClick={handleReset}
+              className="text-[9px] text-ui-muted hover:text-accent transition-colors flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset
+            </button>
+          ) : null
+        }
+      >
+        Creative Angles
+      </SidebarHeader>
       <div className="grid grid-cols-3 gap-2">
         {CREATIVE_PRESETS.map((preset) => {
           const Icon = preset.icon;

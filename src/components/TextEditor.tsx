@@ -1,36 +1,11 @@
 import { useEffect } from 'react';
-import { Type, Palette, X, Move, Monitor } from 'lucide-react';
-import { useRenderStore, type TextPosition, type DevicePosition } from '../store/renderStore';
+import { Type, Palette, X, Move } from 'lucide-react';
+import { useRenderStore, type TextPosition } from '../store/renderStore';
 import { loadGoogleFont } from '../hooks/useFontLoader';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
 import { SliderControl } from './ui/SliderControl';
+import { PositionPicker } from './ui/PositionPicker';
 import { FONT_OPTIONS } from '../constants/ui';
-
-// 9-position grid for text placement
-const POSITION_GRID: { position: TextPosition; label: string }[] = [
-  { position: 'top-left', label: 'TL' },
-  { position: 'top-center', label: 'TC' },
-  { position: 'top-right', label: 'TR' },
-  { position: 'center-left', label: 'CL' },
-  { position: 'center', label: 'C' },
-  { position: 'center-right', label: 'CR' },
-  { position: 'bottom-left', label: 'BL' },
-  { position: 'bottom-center', label: 'BC' },
-  { position: 'bottom-right', label: 'BR' },
-];
-
-// 9-position grid for device placement
-const DEVICE_POSITION_GRID: { position: DevicePosition; label: string }[] = [
-  { position: 'top-left', label: 'TL' },
-  { position: 'top', label: 'T' },
-  { position: 'top-right', label: 'TR' },
-  { position: 'left', label: 'L' },
-  { position: 'center', label: 'C' },
-  { position: 'right', label: 'R' },
-  { position: 'bottom-left', label: 'BL' },
-  { position: 'bottom', label: 'B' },
-  { position: 'bottom-right', label: 'BR' },
-];
 
 export const TextEditor = () => {
   const { textOverlay, setTextOverlay, clearTextOverlay } = useRenderStore();
@@ -202,79 +177,15 @@ export const TextEditor = () => {
         </ControlGroup>
       </div>
 
-      {/* Text Position Grid */}
+      {/* Text Position */}
       <div>
         <SidebarHeader icon={<Move className="w-4 h-4" />}>Text Position</SidebarHeader>
-        <div className="grid grid-cols-3 gap-1.5 p-3 bg-ui-panel/30 rounded-lg border border-ui-border/50">
-          {POSITION_GRID.map(({ position, label }) => {
-            const isActive = textOverlay.position === position;
-            return (
-              <button
-                key={position}
-                onClick={() => setTextOverlay({ position })}
-                className={`relative aspect-square rounded-md border transition-all duration-200 flex items-center justify-center ${
-                  isActive
-                    ? 'bg-accent border-accent'
-                    : 'bg-ui-panel/50 border-ui-border hover:border-accent/50 hover:bg-ui-panel'
-                }`}
-                title={position}
-              >
-                <div
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                    isActive ? 'bg-black scale-110' : 'bg-ui-muted/40'
-                  }`}
-                />
-                <span className="sr-only">{label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Device Position Grid */}
-      <div>
-        <SidebarHeader icon={<Monitor className="w-4 h-4" />}>Device Position</SidebarHeader>
-        <div className="grid grid-cols-3 gap-1.5 p-3 bg-ui-panel/30 rounded-lg border border-ui-border/50">
-          {DEVICE_POSITION_GRID.map(({ position, label }) => {
-            const isActive = textOverlay.devicePosition === position;
-            return (
-              <button
-                key={position}
-                onClick={() => setTextOverlay({ devicePosition: position })}
-                className={`relative aspect-square rounded-md border transition-all duration-200 flex items-center justify-center ${
-                  isActive
-                    ? 'bg-violet-500 border-violet-500'
-                    : 'bg-ui-panel/50 border-ui-border hover:border-violet-500/50 hover:bg-ui-panel'
-                }`}
-                title={position}
-              >
-                <Monitor
-                  className={`w-3 h-3 transition-all duration-200 ${
-                    isActive ? 'text-white scale-110' : 'text-ui-muted/40'
-                  }`}
-                />
-                <span className="sr-only">{label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Animate In Toggle */}
-        <div className="flex items-center justify-between mt-3 px-1">
-          <span className="text-[10px] text-ui-muted">Animate device in</span>
-          <button
-            onClick={() => setTextOverlay({ deviceAnimateIn: !textOverlay.deviceAnimateIn })}
-            className={`w-10 h-5 rounded-full transition-all duration-200 ${
-              textOverlay.deviceAnimateIn ? 'bg-violet-500' : 'bg-ui-panel/50 border border-ui-border'
-            }`}
-          >
-            <div
-              className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                textOverlay.deviceAnimateIn ? 'translate-x-5' : 'translate-x-0.5'
-              }`}
-            />
-          </button>
-        </div>
+        <PositionPicker
+          value={textOverlay.position}
+          onChange={(pos) => setTextOverlay({ position: pos as TextPosition })}
+          type="text"
+          size="sm"
+        />
       </div>
     </div>
   );

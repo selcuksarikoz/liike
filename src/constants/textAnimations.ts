@@ -23,6 +23,13 @@ export const ANIMATION_SPEED_MULTIPLIERS: Record<AnimationSpeed, number> = {
   fast: 2,
 };
 
+// CSS transition durations based on speed
+export const ANIMATION_SPEED_DURATIONS: Record<AnimationSpeed, number> = {
+  slow: 3000,
+  normal: 2000,
+  fast: 1000,
+};
+
 export type TextPosition =
   | 'top-left' | 'top-center' | 'top-right'
   | 'center-left' | 'center' | 'center-right'
@@ -382,7 +389,7 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     headline: 'ELECTRIC',
     tagline: 'Feel the energy.',
     durationMs: 3500,
-    color: '#00ffff',
+    color: '#ffffff',
     icon: '⚡',
     headlineFontSize: 80,
     taglineFontSize: 24,
@@ -398,7 +405,7 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     headline: 'Golden Hour',
     tagline: 'Catch the moment.',
     durationMs: 4000,
-    color: '#ffb347',
+    color: '#ffffff',
     icon: '🌅',
     headlineFontSize: 56,
     taglineFontSize: 22,
@@ -415,7 +422,7 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     headline: 'POW!',
     tagline: 'That just happened.',
     durationMs: 2500,
-    color: '#ff6b6b',
+    color: '#ffffff',
     icon: '💥',
     headlineFontSize: 96,
     taglineFontSize: 24,
@@ -431,7 +438,7 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     headline: 'LET\'S GO!',
     tagline: 'Turn it up.',
     durationMs: 3000,
-    color: '#c084fc',
+    color: '#ffffff',
     icon: '🎉',
     headlineFontSize: 72,
     taglineFontSize: 26,
@@ -498,7 +505,7 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     headline: '24:00:00',
     tagline: 'Limited time offer.',
     durationMs: 3000,
-    color: '#ef4444',
+    color: '#ffffff',
     icon: '⏰',
     headlineFontSize: 80,
     taglineFontSize: 22,
@@ -514,7 +521,7 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     headline: '50% OFF',
     tagline: 'Today only!',
     durationMs: 2500,
-    color: '#fbbf24',
+    color: '#ffffff',
     icon: '🏷️',
     headlineFontSize: 88,
     taglineFontSize: 28,
@@ -531,7 +538,7 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     headline: 'SYSTEM_READY',
     tagline: '> Initializing...',
     durationMs: 3500,
-    color: '#22c55e',
+    color: '#ffffff',
     icon: '🖥️',
     headlineFontSize: 64,
     taglineFontSize: 20,
@@ -547,7 +554,7 @@ export const TEXT_DEVICE_PRESETS: TextDevicePreset[] = [
     headline: 'AI Inside',
     tagline: 'Intelligent by design.',
     durationMs: 4000,
-    color: '#a855f7',
+    color: '#ffffff',
     icon: '🤖',
     headlineFontSize: 60,
     taglineFontSize: 22,

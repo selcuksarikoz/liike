@@ -6,6 +6,7 @@ import { TextOverlayRenderer } from './TextOverlay';
 import { useTimelinePlayback } from '../hooks/useTimelinePlayback';
 import { combineAnimations, ANIMATION_PRESETS } from '../constants/animations';
 import { LAYOUT_PRESETS } from '../constants/styles';
+import { ANIMATION_SPEED_DURATIONS } from '../constants/textAnimations';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
   const {
@@ -40,7 +41,11 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     frameMode,
     deviceType,
     textOverlay,
+    animationSpeed,
   } = useRenderStore();
+
+  // Get CSS transition duration based on animation speed
+  const transitionDuration = ANIMATION_SPEED_DURATIONS[animationSpeed];
 
   const { tracks, playheadMs } = useTimelineStore();
   const { activeClips, isPlaying } = useTimelinePlayback();
@@ -318,8 +323,9 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             {/* Animation wrapper - only apply outer animation for single layout */}
             <div
               ref={animatedDeviceRef}
-              className="transition-all duration-500 ease-out w-full h-full"
+              className="transition-all ease-out w-full h-full"
               style={{
+                transitionDuration: `${transitionDuration}ms`,
                 transform: (() => {
                   const baseTransform =
                     imageLayout === 'single' ? animationStyle.transform : 'none';
@@ -328,16 +334,14 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   const devicePos = textOverlay.devicePosition || 'center';
                   let posTransform = '';
 
-                  // Position-based transforms (applied when text is enabled)
-                  if (textOverlay.enabled) {
-                    const offset = textOverlay.deviceOffset || -20;
-
+                  // Position-based transforms (always applied based on devicePosition)
+                  if (devicePos !== 'center') {
                     switch (devicePos) {
                       case 'top':
-                        posTransform = `translateY(calc(-20% + ${offset}px)) scale(0.75)`;
+                        posTransform = 'translateY(-20%) scale(0.75)';
                         break;
                       case 'bottom':
-                        posTransform = `translateY(calc(20% - ${offset}px)) scale(0.75)`;
+                        posTransform = 'translateY(20%) scale(0.75)';
                         break;
                       case 'left':
                         posTransform = 'translateX(-25%) scale(0.8)';
@@ -352,28 +356,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                         posTransform = 'translate(20%, -15%) scale(0.7)';
                         break;
                       case 'bottom-left':
-                        posTransform = `translate(-20%, calc(15% - ${offset}px)) scale(0.7)`;
+                        posTransform = 'translate(-20%, 15%) scale(0.7)';
                         break;
                       case 'bottom-right':
-                        posTransform = `translate(20%, calc(15% - ${offset}px)) scale(0.7)`;
-                        break;
-                      case 'center':
-                      default:
-                        // Check legacy layout for backwards compatibility
-                        const layout = textOverlay.layout;
-                        if (layout === 'text-top-device-bottom') {
-                          posTransform = `translateY(calc(20% - ${offset}px)) scale(0.75)`;
-                        } else if (layout === 'text-bottom-device-top') {
-                          posTransform = `translateY(calc(-20% + ${offset}px)) scale(0.75)`;
-                        } else if (layout === 'text-left-device-right') {
-                          posTransform = 'translateX(25%) scale(0.8)';
-                        } else if (layout === 'text-right-device-left') {
-                          posTransform = 'translateX(-25%) scale(0.8)';
-                        } else if (layout === 'text-center-device-behind') {
-                          posTransform = 'scale(0.85)';
-                        } else if (layout === 'text-overlay') {
-                          posTransform = 'scale(0.9)';
-                        }
+                        posTransform = 'translate(20%, 15%) scale(0.7)';
                         break;
                     }
                   }

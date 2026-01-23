@@ -76,6 +76,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     const hasAnimation = preset.animations.some((a) => a.type !== 'none');
     if (hasAnimation) {
       setIsPlaying(false);
+      // Set duration to match the animation preset duration
       setDurationMs(preset.durationMs);
       setPlayhead(0);
       clearTrack('track-animation');

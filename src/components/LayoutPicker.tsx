@@ -8,7 +8,9 @@ import {
   Film,
   Layers,
   CircleDot,
+  RotateCcw,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useRenderStore } from '../store/renderStore';
 import type { ImageLayout } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
@@ -30,6 +32,7 @@ const LAYOUTS: { value: ImageLayout; label: string; icon: React.ReactNode }[] = 
 export const LayoutPicker = () => {
   const { imageLayout, setImageLayout } = useRenderStore();
   const { setIsPlaying, setPlayhead, clearTrack } = useTimelineStore();
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleLayoutChange = (layout: ImageLayout) => {
     setImageLayout(layout);
@@ -39,9 +42,28 @@ export const LayoutPicker = () => {
     clearTrack('track-animation');
   };
 
+  const handleReset = () => {
+    handleLayoutChange('single');
+  };
+
   return (
-    <div>
-      <SidebarHeader icon={<LayoutGrid className="w-4 h-4" />}>Layout</SidebarHeader>
+    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      <SidebarHeader
+        icon={<LayoutGrid className="w-4 h-4" />}
+        action={
+          isHovered && imageLayout !== 'single' ? (
+            <button
+              onClick={handleReset}
+              className="text-[9px] text-ui-muted hover:text-accent transition-colors flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset
+            </button>
+          ) : null
+        }
+      >
+        Layout
+      </SidebarHeader>
       <div className="grid grid-cols-3 gap-2">
         {LAYOUTS.map(({ value, label, icon }) => (
           <GridButton

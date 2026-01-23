@@ -20,8 +20,10 @@ import { FrameStyleModal } from './modals/FrameStyleModal';
 import { DropdownTrigger } from './ui/Dropdown';
 import { SliderControl } from './ui/SliderControl';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
+import { PositionPicker } from './ui/PositionPicker';
 import { LayoutPicker } from './LayoutPicker';
 import { CreativeAngles } from './CreativeAngles';
+import { Move } from 'lucide-react';
 
 export const CameraStylePanel = () => {
   const {
@@ -50,6 +52,8 @@ export const CameraStylePanel = () => {
 
     frameMode,
     deviceType,
+    textOverlay,
+    setTextOverlay,
   } = useRenderStore();
 
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
@@ -140,6 +144,17 @@ export const CameraStylePanel = () => {
       </div>
 
       <FrameStyleModal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} />
+
+      {/* Media Position */}
+      <div className="style-section">
+        <SidebarHeader icon={<Move className="w-4 h-4" />}>Media Position</SidebarHeader>
+        <PositionPicker
+          value={textOverlay.devicePosition}
+          onChange={(pos) => setTextOverlay({ devicePosition: pos as any })}
+          type="media"
+          size="sm"
+        />
+      </div>
 
       {/* 3D Rotation */}
       <div className="style-section group">
