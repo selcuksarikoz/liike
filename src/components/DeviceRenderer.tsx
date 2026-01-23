@@ -7,6 +7,7 @@ import { getAspectRatioValue } from '../constants/ui';
 import type { ImageLayout } from '../constants/layouts';
 import type { AnimationInfo } from '../utils/animationHelpers';
 import { MediaContainer } from './MediaContainer';
+import type { ShadowType } from './layouts/types';
 
 // Layout components
 import {
@@ -45,12 +46,13 @@ type ImageRendererProps = {
   isPreview?: boolean;
   onScreenClick?: (index: number) => void;
   stylePreset?: string;
-  shadowType?: string;
+  shadowType?: ShadowType;
   shadowColor?: string;
   shadowOpacity?: number;
   shadowBlur?: number;
   shadowX?: number;
   shadowY?: number;
+  shadowSpread?: number;
   layout?: ImageLayout;
   animationInfo?: AnimationInfo;
   playing?: boolean;
@@ -69,12 +71,13 @@ const DeviceRendererComponent = ({
   onScreenClick,
   scale = 1,
   stylePreset = 'default',
-  shadowType = 'spread',
+  shadowType = 'soft',
   shadowOpacity = 40,
   shadowColor = '#000000',
   shadowBlur = 30,
   shadowX = 0,
   shadowY = 20,
+  shadowSpread = 0,
   layout = 'single',
   animationInfo,
   playing = true,
@@ -183,6 +186,14 @@ const DeviceRendererComponent = ({
     sizePercent,
     renderWithMockup,
     cornerRadius,
+    // New shadow props
+    shadowType: frameMode === 'device' ? 'none' : shadowType,
+    shadowColor,
+    shadowOpacity,
+    shadowBlur,
+    shadowX,
+    shadowY,
+    shadowSpread,
   };
 
   // Layout routing

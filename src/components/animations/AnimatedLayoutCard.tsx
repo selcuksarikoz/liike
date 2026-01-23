@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Heart } from 'lucide-react';
 import type { MediaAsset, AspectRatio, ImageLayout, BackgroundType } from '../../store/renderStore';
 import type { LayoutPreset } from '../../constants/styles';
+import type { ShadowType } from '../layouts/types';
 import {
   ANIMATION_PRESETS,
   combineAnimations,
@@ -25,7 +26,7 @@ type Props = {
   cornerRadius: number;
   mediaAssets: (MediaAsset | null)[];
   stylePreset?: string;
-  shadowType?: string;
+  shadowType?: ShadowType;
   shadowOpacity?: number;
   aspectRatio?: AspectRatio;
   layout?: ImageLayout;

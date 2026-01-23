@@ -1,6 +1,7 @@
 import { memo, useRef, useEffect, useCallback } from 'react';
 import { ImagePlus } from 'lucide-react';
 import type { MediaAsset } from '../store/renderStore';
+import { ShadowGlow, parseLegacyDropShadow, type ShadowType } from './ShadowGlow';
 
 export type MediaContainerProps = {
   index: number;
@@ -9,8 +10,16 @@ export type MediaContainerProps = {
   isPreview: boolean;
   onScreenClick?: (index: number) => void;
   styleCSS: React.CSSProperties & { dropShadow?: string };
-  dropShadowFilter?: string; // Combined shadow filter for img/video
+  dropShadowFilter?: string;
   playing?: boolean;
+  // New shadow props (optional, falls back to dropShadowFilter parsing)
+  shadowType?: ShadowType;
+  shadowColor?: string;
+  shadowOpacity?: number;
+  shadowBlur?: number;
+  shadowX?: number;
+  shadowY?: number;
+  shadowSpread?: number;
 };
 
 export const MediaContainer = memo(
@@ -23,6 +32,13 @@ export const MediaContainer = memo(
     styleCSS,
     dropShadowFilter,
     playing = true,
+    shadowType,
+    shadowColor,
+    shadowOpacity,
+    shadowBlur,
+    shadowX,
+    shadowY,
+    shadowSpread,
   }: MediaContainerProps) => {
     const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -40,22 +56,33 @@ export const MediaContainer = memo(
       if (!isPreview) onScreenClick?.(index);
     }, [isPreview, onScreenClick, index]);
 
-    // Shadow applied to outer wrapper, clip to inner wrapper
-    const hasShadow = dropShadowFilter && dropShadowFilter !== 'none';
+    // Determine shadow settings - prefer explicit props, fallback to legacy parsing
+    const legacyShadow = parseLegacyDropShadow(dropShadowFilter);
+    const finalShadowType = shadowType ?? legacyShadow?.type ?? 'none';
+    const finalShadowColor = shadowColor ?? legacyShadow?.color ?? '#000000';
+    const finalShadowOpacity = shadowOpacity ?? legacyShadow?.opacity ?? 40;
+    const finalShadowBlur = shadowBlur ?? legacyShadow?.blur ?? 30;
+    const finalShadowX = shadowX ?? legacyShadow?.offsetX ?? 0;
+    const finalShadowY = shadowY ?? legacyShadow?.offsetY ?? 20;
+    const finalShadowSpread = shadowSpread ?? 0;
+
+    const disableShadow = isPreview || finalShadowType === 'none';
 
     return (
       <div
-        className={`relative flex h-full w-full items-center justify-center ${isPreview ? '' : 'cursor-pointer group'}`}
+        className={`relative w-full h-full ${isPreview ? '' : 'cursor-pointer group'}`}
         onClick={handleClick}
-        style={{
-          borderRadius: `${cornerRadius}px`,
-        }}
       >
-        <div
-          className="relative w-full h-full overflow-hidden"
-          style={{
-            borderRadius: `${cornerRadius}px`,
-          }}
+        <ShadowGlow
+          type={finalShadowType}
+          color={finalShadowColor}
+          opacity={finalShadowOpacity}
+          blur={finalShadowBlur}
+          offsetX={finalShadowX}
+          offsetY={finalShadowY}
+          spread={finalShadowSpread}
+          cornerRadius={cornerRadius}
+          disabled={disableShadow}
         >
           {media ? (
             media.type === 'video' ? (
@@ -63,10 +90,6 @@ export const MediaContainer = memo(
                 ref={videoRef}
                 src={media.url}
                 className="w-full h-full object-cover block"
-                style={{
-                  borderRadius: `${cornerRadius}px`,
-                  filter: hasShadow ? dropShadowFilter : undefined,
-                }}
                 autoPlay={playing}
                 loop
                 muted
@@ -76,10 +99,6 @@ export const MediaContainer = memo(
               <img
                 src={media.url}
                 className="w-full h-full object-cover block"
-                style={{
-                  borderRadius: `${cornerRadius}px`,
-                  filter: hasShadow ? dropShadowFilter : undefined,
-                }}
                 alt="Media"
                 loading="eager"
                 decoding="sync"
@@ -89,7 +108,6 @@ export const MediaContainer = memo(
             <div
               className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-8'} ${!isPreview && 'group-hover:brightness-110'}`}
               style={{
-                borderRadius: 'inherit',
                 background: styleCSS.background || 'rgba(24, 24, 27, 0.8)',
                 border: styleCSS.border || '2px dashed rgba(255, 255, 255, 0.2)',
                 backdropFilter: styleCSS.backdropFilter,
@@ -109,12 +127,13 @@ export const MediaContainer = memo(
               </div>
             </div>
           )}
+
           {/* Hover overlay */}
           {media && !isPreview && (
             <div
               className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center pointer-events-none"
               style={{
-                borderRadius: 'inherit',
+                borderRadius: `${cornerRadius}px`,
                 transition: 'opacity 0.3s ease',
               }}
             >
@@ -123,7 +142,7 @@ export const MediaContainer = memo(
               </span>
             </div>
           )}
-        </div>
+        </ShadowGlow>
       </div>
     );
   }
