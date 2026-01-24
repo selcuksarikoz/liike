@@ -321,6 +321,24 @@ export const Header = ({ onRender }: HeaderProps) => {
               </button>
             )}
           </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href="https://www.buymeacoffee.com/funnyturkishdude"
+              target="_blank"
+              className="w-28"
+            >
+              <img
+                alt="Buy Me A Beer"
+                src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                style={{
+                  height: '60px !important',
+                  width: '217px !important',
+                }}
+              />
+            </a>
+          </div>
+
           {/* <nav className="flex items-center gap-4 border-l border-ui-border pl-6">
           <div className="flex gap-1">
             <button className="p-1 rounded text-ui-muted hover:bg-ui-highlight/30 transition-all">
