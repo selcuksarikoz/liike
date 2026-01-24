@@ -85,6 +85,7 @@ export const Header = ({ onRender }: HeaderProps) => {
   const [updateAvailable, setUpdateAvailable] = useState<VersionInfo | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateProgress, setUpdateProgress] = useState(0);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -110,7 +111,12 @@ export const Header = ({ onRender }: HeaderProps) => {
         setAppVersion(ver);
 
         const response = await fetch(
-          'https://tavggalbjqwdfobiaoec.supabase.co/storage/v1/object/public/liike-release/version.json'
+          'https://tavggalbjqwdfobiaoec.supabase.co/storage/v1/object/public/liike-release/version.json',
+          {
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          }
         );
         if (response.ok) {
           const data = (await response.json()) as RemoteVersionInfo;
@@ -170,32 +176,26 @@ export const Header = ({ onRender }: HeaderProps) => {
     if (!updateAvailable) return;
 
     setIsUpdating(true);
-    setUpdateProgress(10);
+    setUpdateProgress(5);
+    setUpdateError(null);
 
     try {
       // 1. Download the file
       const response = await fetch(updateAvailable.url);
       if (!response.ok) throw new Error('Download failed');
 
-      const contentLength = Number(response.headers.get('content-length')) || 0;
-      let receivedLength = 0;
-
-      // Simulate progress if content length is missing or for better UX during stream
-      // Since fetch streaming in Tauri might be tricky with standard Response in some versions,
-      // we'll use arrayBuffer() but simulate progress with an interval if needed.
-      // Actually standard fetch supports arrayBuffer.
-
+      setUpdateProgress(20);
       const blob = await response.blob();
       const buffer = await blob.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);
 
-      setUpdateProgress(50);
+      setUpdateProgress(45);
 
       // 2. Write to downloads folder (safe bet)
       const fileName = 'liike-update.zip';
       await writeFile(fileName, uint8Array, { baseDir: BaseDirectory.Download });
 
-      setUpdateProgress(80);
+      setUpdateProgress(75);
 
       // 3. Unzip
       const downloadPath = await downloadDir();
@@ -204,25 +204,40 @@ export const Header = ({ onRender }: HeaderProps) => {
 
       console.log('Unzipping:', filePath, 'to', extractPath);
 
-      const unzip = Command.create('unzip', ['-o', filePath, '-d', extractPath]);
+      const currentOS = osType();
 
-      const output = await unzip.execute();
-      console.log('Unzip output:', output);
+      // Cross-platform unzip
+      if (currentOS === 'windows') {
+        const unzip = Command.create('powershell', [
+          '-Command',
+          `Expand-Archive -Path "${filePath}" -DestinationPath "${extractPath}" -Force`,
+        ]);
+        await unzip.execute();
+      } else {
+        const unzip = Command.create('unzip', ['-o', filePath, '-d', extractPath]);
+        await unzip.execute();
+      }
 
-      // Open the folder (optional, or we could try to verify/swap)
-      // For now just open it so user sees the update
-      // const openCmd = Command.create('open', [extractPath]);
-      // await openCmd.execute();
+      setUpdateProgress(96);
+
+      // Open folder so user can install manually
+      if (currentOS === 'macos') {
+        await Command.create('open', [extractPath]).execute();
+      } else if (currentOS === 'windows') {
+        await Command.create('cmd', ['/c', 'start', extractPath]).execute();
+      } else {
+        await Command.create('xdg-open', [extractPath]).execute();
+      }
 
       setUpdateProgress(100);
 
       setTimeout(() => {
         setIsUpdating(false);
-        // Reload app
-        window.location.reload();
-      }, 1000);
+        setUpdateAvailable(null);
+      }, 1500);
     } catch (error) {
       console.error('Update failed:', error);
+      setUpdateError(error instanceof Error ? error.message : 'Update failed');
       setIsUpdating(false);
     }
   };
@@ -252,6 +267,48 @@ export const Header = ({ onRender }: HeaderProps) => {
 
   return (
     <>
+      {/* Update Error Toast */}
+      {updateError && (
+        <div className="fixed top-4 right-4 z-101 bg-red-500/90 text-white px-4 py-3 rounded-lg shadow-lg animate-in slide-in-from-top-2 duration-200 flex items-center gap-3">
+          <span className="text-sm">{updateError}</span>
+          <button onClick={() => setUpdateError(null)} className="text-white/80 hover:text-white">
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Full Screen Update Overlay */}
+      {isUpdating && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md p-8 flex flex-col items-center gap-6">
+            <div className="relative flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold text-white font-mono">{updateProgress}%</span>
+              </div>
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-bold text-white">Updating Liike</h2>
+              <p className="text-sm text-ui-muted">
+                {updateProgress < 40
+                  ? 'Downloading update...'
+                  : updateProgress < 70
+                    ? 'Saving file...'
+                    : updateProgress < 95
+                      ? 'Extracting...'
+                      : 'Opening folder...'}
+              </p>
+            </div>
+            <div className="w-full bg-ui-highlight/30 rounded-full h-2">
+              <div
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${updateProgress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Full Screen Render Overlay */}
       {renderStatus.isRendering && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/100 backdrop-blur-md animate-in fade-in duration-300">

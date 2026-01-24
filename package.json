@@ -1,6 +1,6 @@
 {
   "name": "liike",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,8 +17,8 @@
     "@tauri-apps/cli-linux-x64-gnu": "^2.9.6",
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
-    "@tauri-apps/plugin-http": "~2",
-    "@tauri-apps/plugin-os": "~2",
+    "@tauri-apps/plugin-http": "~2.5.6",
+    "@tauri-apps/plugin-os": "~2.3.2",
     "@tauri-apps/plugin-shell": "^2.3.4",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
@@ -34,7 +34,7 @@
     "autoprefixer": "^10.4.23",
     "javascript-obfuscator": "^5.1.0",
     "postcss": "^8.5.6",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.1",
     "rollup-plugin-obfuscator": "^1.1.0",
     "tailwindcss": "^4.1.18",
     "terser": "^5.46.0",
