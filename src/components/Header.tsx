@@ -99,13 +99,6 @@ export const Header = ({ onRender }: HeaderProps) => {
 
   useEffect(() => {
     const checkVersion = async () => {
-      // Guard against running in browser (non-Tauri) environment
-      if (typeof window !== 'undefined' && !('__TAURI__' in window)) {
-        console.log('Running in browser mode, skipping update check');
-        setAppVersion('1.0.0-dev');
-        return;
-      }
-
       try {
         const ver = await getVersion();
         setAppVersion(ver);
@@ -165,7 +158,9 @@ export const Header = ({ onRender }: HeaderProps) => {
           }
         }
       } catch (error) {
+        // Running in browser mode or Tauri API failed
         console.error('Failed to check for updates:', error);
+        setAppVersion('dev');
       }
     };
 

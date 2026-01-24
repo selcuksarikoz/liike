@@ -2,9 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import obfuscatorPlugin from 'rollup-plugin-obfuscator';
 
-const isProduction = process.env.NODE_ENV === 'production';
-
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   clearScreen: false,
   server: {
@@ -25,7 +23,7 @@ export default defineConfig({
       },
     },
     rollupOptions: {
-      plugins: isProduction
+      plugins: mode === 'production'
         ? [
             obfuscatorPlugin({
               global: true,
@@ -67,4 +65,4 @@ export default defineConfig({
         : [],
     },
   },
-});
+}));

@@ -21,10 +21,10 @@ importers:
         specifier: ^2.4.5
         version: 2.4.5
       '@tauri-apps/plugin-http':
-        specifier: ~2
+        specifier: ~2.5.6
         version: 2.5.6
       '@tauri-apps/plugin-os':
-        specifier: ~2
+        specifier: ~2.3.2
         version: 2.3.2
       '@tauri-apps/plugin-shell':
         specifier: ^2.3.4
@@ -67,8 +67,8 @@ importers:
         specifier: ^8.5.6
         version: 8.5.6
       prettier:
-        specifier: ^3.8.0
-        version: 3.8.0
+        specifier: ^3.8.1
+        version: 3.8.1
       rollup-plugin-obfuscator:
         specifier: ^1.1.0
         version: 1.1.0(javascript-obfuscator@5.1.0)(rollup@4.55.2)
@@ -1187,8 +1187,8 @@ packages:
     resolution: {integrity: sha512-ESF23V4SKG6lVSGZgYNpbsiaAkdab6ZgOxe52p7+Kid3W3u3bxR4Vfd/o21dmN7jSt0IwgZ4v5MUd26FEtXE9w==}
     engines: {node: '>= 0.8.0'}
 
-  prettier@3.8.0:
-    resolution: {integrity: sha512-yEPsovQfpxYfgWNhCfECjG5AQaO+K3dp6XERmOepyPDVqcJm+bjyCVO3pmU+nAPe0N5dDvekfGezt/EIiRe1TA==}
+  prettier@3.8.1:
+    resolution: {integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -2318,7 +2318,7 @@ snapshots:
 
   prelude-ls@1.1.2: {}
 
-  prettier@3.8.0: {}
+  prettier@3.8.1: {}
 
   process@0.11.10: {}
 
