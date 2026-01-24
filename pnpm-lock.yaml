@@ -11,6 +11,9 @@ importers:
       '@tauri-apps/api':
         specifier: ^2.9.1
         version: 2.9.1
+      '@tauri-apps/cli-linux-x64-gnu':
+        specifier: ^2.9.6
+        version: 2.9.6
       '@tauri-apps/plugin-dialog':
         specifier: ^2.6.0
         version: 2.6.0
@@ -1746,8 +1749,7 @@ snapshots:
   '@tauri-apps/cli-linux-riscv64-gnu@2.9.6':
     optional: true
 
-  '@tauri-apps/cli-linux-x64-gnu@2.9.6':
-    optional: true
+  '@tauri-apps/cli-linux-x64-gnu@2.9.6': {}
 
   '@tauri-apps/cli-linux-x64-musl@2.9.6':
     optional: true

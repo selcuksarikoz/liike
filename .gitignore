@@ -10,3 +10,5 @@ dist/
 liike-release
 
 scripts
+
+.pnpm-store
