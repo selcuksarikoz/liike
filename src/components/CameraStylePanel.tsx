@@ -8,14 +8,10 @@ import {
   Box,
   Square,
   Move,
-  Palette,
 } from 'lucide-react';
 import { ShadowGlowPanel } from './ShadowGlowPanel';
 import { useRenderStore } from '../store/renderStore';
 import { DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
-import { FrameStyleModal } from './modals/FrameStyleModal';
-
-import { DropdownTrigger } from './ui/Dropdown';
 import { SliderControl } from './ui/SliderControl';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
 import { PositionPicker } from './ui/PositionPicker';
@@ -34,30 +30,11 @@ export const CameraStylePanel = () => {
     setCornerRadius,
     deviceScale,
     setDeviceScale,
-    stylePreset,
-    frameMode,
-    deviceType,
     mediaPosition,
     setMediaPosition,
   } = useRenderStore();
 
-  const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Helper to format values
-  const getFormattedValue = () => {
-    if (frameMode === 'device') {
-      if (deviceType === 'imac') return 'iMac';
-      if (deviceType === 'iphone') return 'iPhone';
-      if (deviceType === 'ipad') return 'iPad';
-      return deviceType.charAt(0).toUpperCase() + deviceType.slice(1);
-    }
-    // Format style preset (e.g. soft-gradient -> Soft Gradient)
-    return stylePreset
-      .split('-')
-      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-      .join(' ');
-  };
 
   useEffect(() => {
     if (containerRef.current) {
@@ -114,20 +91,6 @@ export const CameraStylePanel = () => {
 
   return (
     <div ref={containerRef} className="space-y-6">
-      {/* Frame Style & Device Selection */}
-      <div className="style-section">
-        <SidebarHeader icon={<Palette className="w-4 h-4" />}>Frame Style</SidebarHeader>
-
-        <DropdownTrigger
-          icon={frameMode === 'device' ? 'smartphone' : 'palette'}
-          label={frameMode === 'device' ? 'Device Mockup' : 'Frame Style'}
-          value={getFormattedValue()}
-          onClick={() => setIsFrameModalOpen(true)}
-        />
-      </div>
-
-      <FrameStyleModal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} />
-
       {/* Media Position */}
       <div className="style-section">
         <SidebarHeader icon={<Move className="w-4 h-4" />}>Media Position</SidebarHeader>

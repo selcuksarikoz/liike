@@ -20,7 +20,7 @@ export type DeviceConfig = {
  */
 const PRESETS = {
   iphone: {
-    portrait: { top: '2.3%', left: '5.2%', width: '89.6%', height: '95.4%', radius: '45px' },
+    portrait: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' },
     landscape: { top: '5.2%', left: '2.3%', width: '95.4%', height: '89.6%', radius: '45px' },
   },
   ipad: {
@@ -94,7 +94,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone17pro,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '2.3%', left: '2.5%', width: '95%', height: '95.4%', radius: '45px' }
+    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
   },
    {
     id: 'iphone-17-pro-1',
@@ -103,7 +103,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone17pro1,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '2.3%', left: '2.5%', width: '95%', height: '95.4%', radius: '45px' }
+    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
   },
    {
     id: 'iphone-17-pro-2',
@@ -112,7 +112,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone17pro2,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '2.3%', left: '2.5%', width: '95%', height: '95.4%', radius: '45px' }
+    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
   },
 
   // --- iPhone 16 Pro ---
@@ -123,7 +123,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '2.3%', left: '2.5%', width: '95%', height: '95.4%', radius: '45px' }
+    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
   },
   {
     id: 'iphone-16-pro-1',
@@ -132,7 +132,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro1,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '2.3%', left: '2.5%', width: '95%', height: '95.4%', radius: '45px' }
+    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
   },
   {
     id: 'iphone-16-pro-2',
@@ -141,7 +141,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro2,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '2.3%', left: '2.5%', width: '95%', height: '95.4%', radius: '45px' }
+    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
   },
 
   // --- iPhone 14 ---
@@ -181,7 +181,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13proPortrait,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '2.3%', left: '2.5%', width: '95%', height: '95.4%', radius: '45px' }
+    screen: { top: '7%', left: '3.5%', width: '92%', height: '86%', radius: '40px' }
   },
   {
     id: 'iphone-13-pro-l',
@@ -190,7 +190,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13proLandscape,
     width: 800,
     aspectRatio: 800/370,
-    screen: { top: '2.5%', left: '2.3%', width: '95.4%', height: '95%', radius: '45px' }
+    screen: { top: '6%', left: '2.3%', width: '95.4%', height: '80%', radius: '60px' }
   },
 
   // --- iPhone 13 Mini ---
