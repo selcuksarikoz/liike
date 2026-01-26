@@ -13,7 +13,7 @@ type Props = {
 };
 
 export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
-  const [activeTab, setActiveTab] = useState<FrameTab>('styles');
+  const [activeTab, setActiveTab] = useState<FrameTab>('iphone');
   const { stylePreset, setStylePreset, frameMode, setFrameMode, deviceType, setDeviceType } =
     useRenderStore();
 
@@ -33,12 +33,12 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
   // and set store state immediately on click.
 
   const tabs = [
-    { id: 'styles', label: 'Styles', icon: <Palette className="w-4 h-4" /> },
     { id: 'iphone', label: 'iPhone', icon: <Smartphone className="w-4 h-4" /> },
     { id: 'macbook', label: 'MacBook', icon: <Laptop className="w-4 h-4" /> },
     { id: 'ipad', label: 'iPad', icon: <Tablet className="w-4 h-4" /> },
     { id: 'imac', label: 'iMac', icon: <Monitor className="w-4 h-4" /> },
     { id: 'watch', label: 'Watch', icon: <Watch className="w-4 h-4" /> },
+    { id: 'styles', label: 'Styles', icon: <Palette className="w-4 h-4" /> },
   ];
 
   return (
@@ -96,8 +96,10 @@ export const FrameStyleModal = ({ isOpen, onClose }: Props) => {
                       <div
                         className="w-full h-1/2 rounded bg-white/80"
                         style={{
-                          filter: preset.css.dropShadow ? `drop-shadow(${preset.css.dropShadow})` : undefined,
-                          border: preset.css.border
+                          filter: preset.css.dropShadow
+                            ? `drop-shadow(${preset.css.dropShadow})`
+                            : undefined,
+                          border: preset.css.border,
                         }}
                       />
                     </div>

@@ -49,7 +49,7 @@ export const MediaContainer = memo(
             <video
               ref={videoRef}
               src={media.url}
-              className="w-full h-full object-cover block"
+              className="w-full h-full object-contain block"
               autoPlay={playing}
               loop
               muted
@@ -58,7 +58,7 @@ export const MediaContainer = memo(
           ) : (
             <img
               src={media.url}
-              className="w-full h-full object-cover block"
+              className="w-full h-full object-contain block"
               alt="Media"
               loading="eager"
               decoding="sync"

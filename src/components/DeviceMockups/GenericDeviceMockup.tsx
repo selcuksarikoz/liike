@@ -21,10 +21,12 @@ export const GenericDeviceMockup = ({ children, scale = 1, config }: DeviceMocku
 
   return (
     <div
-      className="relative select-none"
+      className="relative select-none flex items-center justify-center overflow-hidden"
       style={{
         width: `${config.width * scale}px`,
-        aspectRatio: `${config.aspectRatio}`
+        aspectRatio: `${config.aspectRatio}`,
+        maxWidth: '100%',
+        maxHeight: '100%',
       }}
     >
       {/* Device Frame - Z-Index 20 to sit ON TOP of content */}
@@ -38,25 +40,21 @@ export const GenericDeviceMockup = ({ children, scale = 1, config }: DeviceMocku
           imageLoaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
-      
-      {/* Screen Content Area - Z-Index 10 to sit BEHIND frame transparent hole (if hole exists)
-          OR Z-Index 30 if frame has no hole (but user says they have holes/transparency).
-          User said: "transparan alanlari algila ve ... konur".
-          Usually transparent device frames (like 'clay' mockups) have a hole.
-          If I put content *behind* (z-10), the frame (z-20) covers the edges. This is cleaner.
-          So, Z-index 10.
-      */}
-      <div 
+
+      {/* Screen Content Area - Z-Index 10 to sit BEHIND frame transparent hole (if hole exists) */}
+      <div
         className="absolute z-10 overflow-hidden bg-black"
         style={{
           top: config.screen.top,
           left: config.screen.left,
           width: config.screen.width,
           height: config.screen.height,
-          borderRadius: config.screen.radius.includes('%') ? config.screen.radius : `calc(${config.screen.radius} * ${scale})`,
+          borderRadius: config.screen.radius.includes('%')
+            ? config.screen.radius
+            : `calc(${config.screen.radius} * ${scale})`,
         }}
       >
-        {children}
+        <div className="w-full h-full flex items-center justify-center">{children}</div>
       </div>
     </div>
   );

@@ -23,16 +23,3 @@ export {
   SpotlightLayout,
   AsymmetricLayout,
 } from './TrioLayouts';
-
-// Quad layouts (4 images)
-export {
-  GridLayout,
-  OverlapLayout,
-  CreativeLayout,
-  CrossLayout,
-  MagazineLayout,
-  ShowcaseLayout,
-  ScatteredLayout,
-  CascadeLayout,
-  BrickLayout,
-} from './QuadLayouts';

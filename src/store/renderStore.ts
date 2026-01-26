@@ -108,7 +108,6 @@ type RenderStore = RenderSettings & {
   shadowBlur: number;
   shadowX: number;
   shadowY: number;
-  imageAspectRatio: AspectRatio;
   imageLayout: ImageLayout;
   // Media positioning (image/video)
   mediaPosition: MediaPosition;
@@ -145,7 +144,6 @@ type RenderStore = RenderSettings & {
   setShadowBlur: (px: number) => void;
   setShadowX: (px: number) => void;
   setShadowY: (px: number) => void;
-  setImageAspectRatio: (ratio: AspectRatio) => void;
   setImageLayout: (layout: ImageLayout) => void;
   setMediaPosition: (position: MediaPosition) => void;
   setAnimationSpeed: (speed: AnimationSpeed) => void;
@@ -198,7 +196,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
   shadowBlur: 6,
   shadowX: 0,
   shadowY: 0,
-  imageAspectRatio: 'free',
   imageLayout: 'single',
   mediaPosition: 'center',
   mediaOffsetX: 0,
@@ -207,7 +204,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   renderStatus: initialRenderStatus,
   renderQuality: '1080p',
   
-  frameMode: 'basic',
+  frameMode: 'device',
   deviceType: 'iphone',
   
   // Text Overlay defaults
@@ -221,10 +218,10 @@ export const useRenderStore = create<RenderStore>((set) => ({
     taglineFontSize: 24,
     fontWeight: 700,
     color: '#ffffff',
-    position: 'top-center',
+    position: 'center',
     animation: 'blur',
     layout: 'text-top-device-bottom',
-    deviceOffset: -20,
+    deviceOffset: 0,
     deviceAnimateIn: false,
     deviceAnimation: 'none',
     // Text shadow defaults
@@ -272,7 +269,6 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setShadowBlur: (shadowBlur) => set({ shadowBlur }),
   setShadowX: (shadowX) => set({ shadowX }),
   setShadowY: (shadowY) => set({ shadowY }),
-  setImageAspectRatio: (imageAspectRatio) => set({ imageAspectRatio }),
   setImageLayout: (imageLayout) => set({ imageLayout }),
   setMediaPosition: (position) => {
     const offsets = MEDIA_POSITION_OFFSETS[position];

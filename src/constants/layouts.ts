@@ -13,20 +13,10 @@ export type ImageLayout =
   | 'masonry'
   | 'mosaic'
   | 'film-strip'
-  // 4 Images
-  | 'grid'
-  | 'overlap'
-  | 'creative'
   // New layouts
   | 'diagonal'
   | 'polaroid'
   | 'spotlight'
-  | 'cross'
-  | 'magazine'
-  | 'showcase'
-  | 'scattered'
-  | 'cascade'
-  | 'brick'
   | 'asymmetric';
 
 export type LayoutConfig = {
@@ -54,17 +44,6 @@ export const LAYOUT_CONFIGS: LayoutConfig[] = [
   { value: 'mosaic', label: 'Mosaic', imageCount: 3 },
   { value: 'film-strip', label: 'Film Strip', imageCount: 3 },
   { value: 'spotlight', label: 'Spotlight', imageCount: 3 },
-
-  // 4 Images
-  { value: 'grid', label: 'Grid', imageCount: 4 },
-  { value: 'overlap', label: 'Overlap', imageCount: 4 },
-  { value: 'creative', label: 'Creative', imageCount: 4 },
-  { value: 'cross', label: 'Cross', imageCount: 4 },
-  { value: 'magazine', label: 'Magazine', imageCount: 4 },
-  { value: 'showcase', label: 'Showcase', imageCount: 4 },
-  { value: 'scattered', label: 'Scattered', imageCount: 4 },
-  { value: 'cascade', label: 'Cascade', imageCount: 4 },
-  { value: 'brick', label: 'Brick', imageCount: 4 },
   { value: 'asymmetric', label: 'Asymmetric', imageCount: 3 },
 ];
 

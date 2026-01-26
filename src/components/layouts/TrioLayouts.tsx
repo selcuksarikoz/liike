@@ -19,7 +19,9 @@ export const TrioRowLayout = ({
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative flex gap-3 transition-transform duration-300 ease-out"
@@ -82,7 +84,9 @@ export const TrioColumnLayout = ({
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative flex flex-col gap-3 transition-transform duration-300 ease-out"
@@ -144,7 +148,9 @@ export const FanLayout = ({
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative flex gap-2 transition-transform duration-300 ease-out"
@@ -200,10 +206,13 @@ export const MasonryLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  renderWithMockup,
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 gap-2 transition-transform duration-300 ease-out"
@@ -219,56 +228,65 @@ export const MasonryLayout = ({
         <div
           className="relative row-span-2"
           style={{
-            transform: getStaggeredAnimationStyle(animationInfo, 0, 4).transform,
-            opacity: getStaggeredAnimationStyle(animationInfo, 0, 4).opacity,
+            transform: getStaggeredAnimationStyle(animationInfo, 0, 3).transform,
+            opacity: getStaggeredAnimationStyle(animationInfo, 0, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
           }}
         >
-          <MediaContainer
-            index={0}
-            media={mediaAssets[0]}
-            cornerRadius={effectiveCornerRadius}
-            isPreview={isPreview}
-            onScreenClick={onScreenClick}
-            styleCSS={styleCSS}
-            playing={playing}
-          />
+          {renderWithMockup(
+            <MediaContainer
+              index={0}
+              media={mediaAssets[0]}
+              cornerRadius={effectiveCornerRadius}
+              isPreview={isPreview}
+              onScreenClick={onScreenClick}
+              styleCSS={styleCSS}
+              playing={playing}
+            />,
+            0
+          )}
         </div>
         <div
           className="relative"
           style={{
-            transform: getStaggeredAnimationStyle(animationInfo, 1, 4).transform,
-            opacity: getStaggeredAnimationStyle(animationInfo, 1, 4).opacity,
+            transform: getStaggeredAnimationStyle(animationInfo, 1, 3).transform,
+            opacity: getStaggeredAnimationStyle(animationInfo, 1, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
           }}
         >
-          <MediaContainer
-            index={1}
-            media={mediaAssets[1]}
-            cornerRadius={effectiveCornerRadius}
-            isPreview={isPreview}
-            onScreenClick={onScreenClick}
-            styleCSS={styleCSS}
-            playing={playing}
-          />
+          {renderWithMockup(
+            <MediaContainer
+              index={1}
+              media={mediaAssets[1]}
+              cornerRadius={effectiveCornerRadius}
+              isPreview={isPreview}
+              onScreenClick={onScreenClick}
+              styleCSS={styleCSS}
+              playing={playing}
+            />,
+            1
+          )}
         </div>
         <div
           className="relative"
           style={{
-            transform: getStaggeredAnimationStyle(animationInfo, 2, 4).transform,
-            opacity: getStaggeredAnimationStyle(animationInfo, 2, 4).opacity,
+            transform: getStaggeredAnimationStyle(animationInfo, 2, 3).transform,
+            opacity: getStaggeredAnimationStyle(animationInfo, 2, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
           }}
         >
-          <MediaContainer
-            index={2}
-            media={mediaAssets[2]}
-            cornerRadius={effectiveCornerRadius}
-            isPreview={isPreview}
-            onScreenClick={onScreenClick}
-            styleCSS={styleCSS}
-            playing={playing}
-          />
+          {renderWithMockup(
+            <MediaContainer
+              index={2}
+              media={mediaAssets[2]}
+              cornerRadius={effectiveCornerRadius}
+              isPreview={isPreview}
+              onScreenClick={onScreenClick}
+              styleCSS={styleCSS}
+              playing={playing}
+            />,
+            2
+          )}
         </div>
       </div>
     </div>
@@ -291,7 +309,9 @@ export const MosaicLayout = ({
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 grid-rows-2 gap-3 transition-transform duration-300 ease-out"
@@ -349,12 +369,15 @@ export const FilmStripLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  renderWithMockup,
   hasMockup,
 }: LayoutBaseProps & { cornerRadius: number }) => {
   const containerCSS = getContainerCSS(styleCSS);
 
   return (
-    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative flex flex-col gap-4 transition-transform duration-300 ease-out"
@@ -394,15 +417,18 @@ export const FilmStripLayout = ({
               </div>
 
               <div className="absolute inset-0 px-8 py-1">
-                <MediaContainer
-                  index={index}
-                  media={mediaAssets[index]}
-                  cornerRadius={Math.max(2, effectiveCornerRadius - 4)}
-                  isPreview={isPreview}
-                  onScreenClick={onScreenClick}
-                  styleCSS={styleCSS}
-                  playing={playing}
-                />
+                {renderWithMockup(
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={Math.max(2, effectiveCornerRadius - 4)}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />,
+                  index
+                )}
               </div>
             </div>
           );
@@ -424,10 +450,13 @@ export const SpotlightLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  renderWithMockup,
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative flex gap-3 transition-transform duration-300 ease-out"
@@ -447,15 +476,18 @@ export const SpotlightLayout = ({
             transition: getLayoutTransition(!!animationInfo),
           }}
         >
-          <MediaContainer
-            index={0}
-            media={mediaAssets[0]}
-            cornerRadius={effectiveCornerRadius}
-            isPreview={isPreview}
-            onScreenClick={onScreenClick}
-            styleCSS={styleCSS}
-            playing={playing}
-          />
+          {renderWithMockup(
+            <MediaContainer
+              index={0}
+              media={mediaAssets[0]}
+              cornerRadius={effectiveCornerRadius}
+              isPreview={isPreview}
+              onScreenClick={onScreenClick}
+              styleCSS={styleCSS}
+              playing={playing}
+            />,
+            0
+          )}
         </div>
         <div className="flex-1 flex flex-col gap-3">
           {[1, 2].map((index) => {
@@ -470,15 +502,18 @@ export const SpotlightLayout = ({
                   transition: getLayoutTransition(!!animationInfo),
                 }}
               >
-                <MediaContainer
-                  index={index}
-                  media={mediaAssets[index]}
-                  cornerRadius={effectiveCornerRadius}
-                  isPreview={isPreview}
-                  onScreenClick={onScreenClick}
-                  styleCSS={styleCSS}
-                  playing={playing}
-                />
+                {renderWithMockup(
+                  <MediaContainer
+                    index={index}
+                    media={mediaAssets[index]}
+                    cornerRadius={effectiveCornerRadius}
+                    isPreview={isPreview}
+                    onScreenClick={onScreenClick}
+                    styleCSS={styleCSS}
+                    playing={playing}
+                  />,
+                  index
+                )}
               </div>
             );
           })}
@@ -500,10 +535,13 @@ export const AsymmetricLayout = ({
   playing,
   animationInfo,
   sizePercent,
+  renderWithMockup,
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative grid gap-2 transition-transform duration-300 ease-out"
@@ -520,23 +558,26 @@ export const AsymmetricLayout = ({
         <div
           className="row-span-2"
           style={{
-            transform: getStaggeredAnimationStyle(animationInfo, 0, 4).transform,
-            opacity: getStaggeredAnimationStyle(animationInfo, 0, 4).opacity,
+            transform: getStaggeredAnimationStyle(animationInfo, 0, 3).transform,
+            opacity: getStaggeredAnimationStyle(animationInfo, 0, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
           }}
         >
-          <MediaContainer
-            index={0}
-            media={mediaAssets[0]}
-            cornerRadius={effectiveCornerRadius}
-            isPreview={isPreview}
-            onScreenClick={onScreenClick}
-            styleCSS={styleCSS}
-            playing={playing}
-          />
+          {renderWithMockup(
+            <MediaContainer
+              index={0}
+              media={mediaAssets[0]}
+              cornerRadius={effectiveCornerRadius}
+              isPreview={isPreview}
+              onScreenClick={onScreenClick}
+              styleCSS={styleCSS}
+              playing={playing}
+            />,
+            0
+          )}
         </div>
         {[1, 2].map((index) => {
-          const animStyle = getStaggeredAnimationStyle(animationInfo, index, 4);
+          const animStyle = getStaggeredAnimationStyle(animationInfo, index, 3);
           return (
             <div
               key={index}
@@ -546,15 +587,18 @@ export const AsymmetricLayout = ({
                 transition: getLayoutTransition(!!animationInfo),
               }}
             >
-              <MediaContainer
-                index={index}
-                media={mediaAssets[index]}
-                cornerRadius={effectiveCornerRadius}
-                isPreview={isPreview}
-                onScreenClick={onScreenClick}
-                styleCSS={styleCSS}
-                playing={playing}
-              />
+              {renderWithMockup(
+                <MediaContainer
+                  index={index}
+                  media={mediaAssets[index]}
+                  cornerRadius={effectiveCornerRadius}
+                  isPreview={isPreview}
+                  onScreenClick={onScreenClick}
+                  styleCSS={styleCSS}
+                  playing={playing}
+                />,
+                index
+              )}
             </div>
           );
         })}

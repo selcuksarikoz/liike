@@ -16,7 +16,7 @@ const SPEED_OPTIONS: { value: AnimationSpeed; label: string; icon: string }[] = 
   { value: 'fast', label: 'Fast', icon: '⚡' },
 ];
 
-export type LayoutFilter = 'single' | 'duo' | 'trio' | 'quad' | 'creative' | 'favorites' | 'text';
+export type LayoutFilter = 'single' | 'duo' | 'trio' | 'favorites' | 'text';
 
 type SectionProps = {
   icon: React.ReactNode;
@@ -104,7 +104,6 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     shadowType,
     shadowOpacity,
     stylePreset,
-    imageAspectRatio,
     backgroundType,
     backgroundGradient,
     backgroundColor,
@@ -150,7 +149,6 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     stylePreset,
     shadowType,
     shadowOpacity,
-    aspectRatio: imageAspectRatio,
     backgroundType,
     backgroundGradient,
     backgroundColor,
@@ -251,39 +249,6 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
             ])
           )}
         </Section>
-      )}
-
-      {filter === 'quad' && (
-        <Section
-          icon={<LayoutGrid className="w-4 h-4 text-sky-400" />}
-          title="Grid Layout"
-          description="2x2 grid with synchronized effects"
-        >
-          {singlePresets
-            .slice(0, 6)
-            .map((p) =>
-              renderCard(p, 'grid', [
-                mediaAssets[0] || null,
-                mediaAssets[1] || null,
-                mediaAssets[2] || null,
-                mediaAssets[3] || null,
-              ])
-            )}
-        </Section>
-      )}
-
-      {filter === 'creative' && (
-        <div className="mb-6 space-y-8">
-          <Section icon={<LayoutGrid className="w-4 h-4 text-pink-400" />} title="Masonry">
-            {singlePresets.slice(0, 3).map((p) => renderCard(p, 'masonry', mediaAssets))}
-          </Section>
-          <Section icon={<LayoutGrid className="w-4 h-4 text-orange-400" />} title="Mosaic">
-            {singlePresets.slice(3, 6).map((p) => renderCard(p, 'mosaic', mediaAssets))}
-          </Section>
-          <Section icon={<LayoutGrid className="w-4 h-4 text-indigo-400" />} title="Film Strip">
-            {singlePresets.slice(6, 9).map((p) => renderCard(p, 'film-strip', mediaAssets))}
-          </Section>
-        </div>
       )}
 
       {filter === 'favorites' && (

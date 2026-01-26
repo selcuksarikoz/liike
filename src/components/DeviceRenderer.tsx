@@ -24,15 +24,6 @@ import {
   FilmStripLayout,
   SpotlightLayout,
   AsymmetricLayout,
-  GridLayout,
-  OverlapLayout,
-  CreativeLayout,
-  CrossLayout,
-  MagazineLayout,
-  ShowcaseLayout,
-  ScatteredLayout,
-  CascadeLayout,
-  BrickLayout,
 } from './layouts';
 
 type ImageRendererProps = {
@@ -226,26 +217,6 @@ const DeviceRendererComponent = ({
         return <SpotlightLayout {...layoutProps} />;
       case 'asymmetric':
         return <AsymmetricLayout {...layoutProps} />;
-
-      // Quad layouts
-      case 'grid':
-        return <GridLayout {...layoutProps} />;
-      case 'overlap':
-        return <OverlapLayout {...layoutProps} />;
-      case 'creative':
-        return <CreativeLayout {...layoutProps} />;
-      case 'cross':
-        return <CrossLayout {...layoutProps} />;
-      case 'magazine':
-        return <MagazineLayout {...layoutProps} />;
-      case 'showcase':
-        return <ShowcaseLayout {...layoutProps} />;
-      case 'scattered':
-        return <ScatteredLayout {...layoutProps} />;
-      case 'cascade':
-        return <CascadeLayout {...layoutProps} />;
-      case 'brick':
-        return <BrickLayout {...layoutProps} />;
 
       // Default fallback (single)
       default:

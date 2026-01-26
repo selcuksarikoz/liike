@@ -10,9 +10,7 @@ type CanvasTabProps = {
   canvasCornerRadius: number;
   canvasBorderWidth: number;
   canvasBorderColor: string;
-  imageAspectRatio: string;
   onFrameClick: () => void;
-  onAspectRatioClick: () => void;
   onCornerRadiusChange: (v: number) => void;
   onBorderWidthChange: (v: number) => void;
   onBorderColorChange: (v: string) => void;
@@ -24,9 +22,7 @@ export const CanvasTab = ({
   canvasCornerRadius,
   canvasBorderWidth,
   canvasBorderColor,
-  imageAspectRatio,
   onFrameClick,
-  onAspectRatioClick,
   onCornerRadiusChange,
   onBorderWidthChange,
   onBorderColorChange,
@@ -82,20 +78,6 @@ export const CanvasTab = ({
           </div>
         )}
       </ControlGroup>
-    </SidebarSection>
-
-    <div className="h-px bg-ui-border mx-4" />
-
-    <SidebarSection padded>
-      <SidebarHeader icon={<TabletSmartphone className="w-4 h-4" />}>
-        Media Aspect Ratio
-      </SidebarHeader>
-      <DropdownTrigger
-        icon="aspect_ratio"
-        label={imageAspectRatio === 'free' ? 'Free' : imageAspectRatio}
-        value={imageAspectRatio === 'free' ? 'No constraint' : `${imageAspectRatio} ratio`}
-        onClick={onAspectRatioClick}
-      />
     </SidebarSection>
   </div>
 );

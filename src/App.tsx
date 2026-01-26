@@ -4,7 +4,6 @@ import { useRenderStore } from './store/renderStore';
 import type { ExportFormat } from './store/renderStore';
 import { Header } from './components/Header';
 import { SidebarLeft } from './components/SidebarLeft';
-import { SidebarRight } from './components/SidebarRight';
 import { Workarea } from './components/Workarea';
 import { Timeline } from './components/Timeline';
 import { initializeFonts } from './services/fontService';
@@ -20,7 +19,7 @@ const App = () => {
       initializeFonts((progress, fontName) => {
         console.log(`[Fonts] ${Math.round(progress * 100)}% - ${fontName}`);
       }),
-      preloadDeviceImages()
+      preloadDeviceImages(),
     ]).catch(console.error);
   }, []);
 
@@ -49,14 +48,13 @@ const App = () => {
   };
 
   return (
-    <div className="h-screen bg-ui-bg text-white grid grid-rows-[auto_1fr_auto] grid-cols-[320px_1fr_320px]">
+    <div className="h-screen bg-ui-bg text-white grid grid-rows-[auto_1fr_auto] grid-cols-[320px_1fr]">
       {/* Header - spans all columns */}
       <Header onRender={handleRender} />
 
       {/* Main content row */}
       <SidebarLeft />
       <Workarea stageRef={stageRef} />
-      <SidebarRight />
 
       {/* Timeline - spans all columns */}
       <Timeline />

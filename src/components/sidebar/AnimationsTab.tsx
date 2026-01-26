@@ -8,8 +8,6 @@ const FILTER_OPTIONS: { id: LayoutFilter; label: string }[] = [
   { id: 'single', label: 'Single' },
   { id: 'duo', label: 'Duo' },
   { id: 'trio', label: 'Trio' },
-  { id: 'quad', label: 'Quad' },
-  { id: 'creative', label: 'Mix' },
 ];
 
 type AnimationsTabProps = {

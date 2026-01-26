@@ -38,7 +38,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     shadowY,
     stylePreset,
     deviceScale,
-    imageAspectRatio,
     imageLayout,
     cornerRadius,
     applyPreset,
@@ -348,9 +347,17 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             <div
               ref={animatedDeviceRef}
               data-device-animation={textOverlay.deviceAnimation || 'none'}
-              data-base-transform={imageLayout === 'single' ? (animationStyle.transform || 'none') : 'none'}
-              data-pos-transform={mediaOffsetX !== 0 || mediaOffsetY !== 0 ? `translate(${mediaOffsetX}%, ${mediaOffsetY}%)` : 'none'}
-              data-base-opacity={imageLayout === 'single' ? String(animationStyle.opacity ?? 1) : '1'}
+              data-base-transform={
+                imageLayout === 'single' ? animationStyle.transform || 'none' : 'none'
+              }
+              data-pos-transform={
+                mediaOffsetX !== 0 || mediaOffsetY !== 0
+                  ? `translate(${mediaOffsetX}%, ${mediaOffsetY}%)`
+                  : 'none'
+              }
+              data-base-opacity={
+                imageLayout === 'single' ? String(animationStyle.opacity ?? 1) : '1'
+              }
               className="transition-all ease-out w-full h-full"
               style={{
                 transitionDuration: `${transitionDuration}ms`,
@@ -396,7 +403,6 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 shadowY={shadowY}
                 stylePreset={stylePreset}
                 scale={deviceScale}
-                aspectRatio={imageAspectRatio}
                 layout={imageLayout}
                 animationInfo={imageLayout !== 'single' ? animationInfo : undefined}
                 frameMode={frameMode}
