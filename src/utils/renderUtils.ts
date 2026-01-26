@@ -559,16 +559,6 @@ export const loadImage = async (src: string): Promise<HTMLImageElement> => {
   return img;
 };
 
-// Helper: Convert Uint8ClampedArray to base64 string
-export const arrayToBase64 = (data: Uint8ClampedArray): string => {
-  let binary = '';
-  const bytes = new Uint8Array(data.buffer);
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-};
-
 // Helper: Render text overlay directly on canvas using Canvas 2D API
 // This bypasses SVG foreignObject font issues
 export const renderTextOverlay = (

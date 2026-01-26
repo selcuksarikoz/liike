@@ -30,7 +30,6 @@ import {
   preloadResources,
   preloadFonts,
   captureFrame,
-  arrayToBase64,
   nodeToSvgDataUrl,
   loadImage,
   renderTextOverlay,
@@ -354,10 +353,9 @@ export const useStreamingRender = () => {
           if (abortController.signal.aborted) return;
           
           // Send to Rust encoder
-          const frameBase64 = arrayToBase64(rgbaData);
           const progress = await invoke<number>('send_frame', {
             encoderId,
-            frameData: frameBase64,
+            frameData: rgbaData,
           });
 
           // Update progress

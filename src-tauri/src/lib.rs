@@ -417,6 +417,8 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
         "-y".to_string(),
         "-f".to_string(),
         "rawvideo".to_string(),
+        "-vcodec".to_string(),
+        "rawvideo".to_string(),
         "-pix_fmt".to_string(),
         "rgba".to_string(),
         "-s".to_string(),
@@ -432,6 +434,14 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
         args.extend(vec![
             "-i".to_string(),
             audio.to_string(),
+        ]);
+    }
+
+    // Explicitly map streams if audio is present
+    if audio_path.is_some() {
+        args.extend(vec![
+            "-map".to_string(), "0:v:0".to_string(),
+            "-map".to_string(), "1:a:0".to_string(),
         ]);
     }
 
@@ -598,6 +608,19 @@ fn start_streaming_encode(
         .take()
         .ok_or("Failed to get ffmpeg stdin")?;
 
+    let stderr = process.stderr.take().ok_or("Failed to get ffmpeg stderr")?;
+
+    // Spawn a thread to drain stderr and prevent deadlock, and log messages
+    std::thread::spawn(move || {
+        use std::io::{BufRead, BufReader};
+        let reader = BufReader::new(stderr);
+        for line in reader.lines() {
+            if let Ok(l) = line {
+                log::info!("[FFmpeg] {}", l);
+            }
+        }
+    });
+
     let encoder_id = format!("encoder_{}", std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
@@ -625,13 +648,7 @@ fn start_streaming_encode(
 /// Send a single frame to the streaming encoder
 /// frame_data: Base64-encoded RGBA pixel data
 #[tauri::command]
-fn send_frame(encoder_id: String, frame_data: String) -> Result<f32, String> {
-    use base64::Engine;
-    
-    let rgba_bytes = base64::engine::general_purpose::STANDARD
-        .decode(&frame_data)
-        .map_err(|e| format!("Failed to decode base64: {e}"))?;
-
+fn send_frame(encoder_id: String, frame_data: Vec<u8>) -> Result<f32, String> {
     let mut encoders = ENCODERS
         .lock()
         .map_err(|e| format!("Failed to lock encoders: {e}"))?;
@@ -640,10 +657,16 @@ fn send_frame(encoder_id: String, frame_data: String) -> Result<f32, String> {
         .get_mut(&encoder_id)
         .ok_or_else(|| format!("Encoder not found: {}", encoder_id))?;
 
+    // Check frame data size to ensure it matches width*height*4
+    let expected_size = (encoder.width * encoder.height * 4) as usize;
+    if frame_data.len() != expected_size {
+        return Err(format!("Invalid frame data size: expected {}, got {}", expected_size, frame_data.len()));
+    }
+
     // Write raw RGBA bytes directly to ffmpeg stdin
     encoder
         .stdin
-        .write_all(&rgba_bytes)
+        .write_all(&frame_data)
         .map_err(|e| format!("Failed to write frame: {e}"))?;
 
     encoder.current_frame += 1;
