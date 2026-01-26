@@ -183,43 +183,34 @@ export const generateTextKeyframes = (
 export type DeviceAnimationType =
   | 'none'
   | 'fade'
-  | 'slide-up'
-  | 'slide-down'
-  | 'slide-left'
-  | 'slide-right'
   | 'zoom-in'
   | 'zoom-out'
+  | 'tilt-reveal'
+  | 'swing-in'
+  | 'spiral-in'
+  | 'bounce-in'
   | 'rise'
   | 'drop'
-  | 'peek-bottom'
-  | 'peek-right'
-  | 'rotate-in'
   | 'flip-up'
-  | 'bounce-in';
+  | 'rotate-in'
+  | 'wobble-3d';
 
 export const DEVICE_ANIMATIONS: { id: DeviceAnimationType; name: string; icon: string }[] = [
   { id: 'none', name: 'None', icon: '⏹️' },
-  { id: 'fade', name: 'Fade In', icon: '✨' },
-  { id: 'slide-up', name: 'Slide Up', icon: '⬆️' },
-  { id: 'slide-down', name: 'Slide Down', icon: '⬇️' },
-  { id: 'slide-left', name: 'Slide Left', icon: '⬅️' },
-  { id: 'slide-right', name: 'Slide Right', icon: '➡️' },
+  { id: 'tilt-reveal', name: 'Tilt Reveal', icon: '📐' },
+  { id: 'swing-in', name: 'Swing In', icon: '🪀' },
+  { id: 'spiral-in', name: 'Spiral In', icon: '🌀' },
   { id: 'zoom-in', name: 'Zoom In', icon: '🔍' },
-  { id: 'zoom-out', name: 'Zoom Out', icon: '🔎' },
+  { id: 'bounce-in', name: 'Bounce In', icon: '🏀' },
   { id: 'rise', name: 'Rise', icon: '🌅' },
   { id: 'drop', name: 'Drop', icon: '⬇️' },
-  { id: 'peek-bottom', name: 'Peek Bottom', icon: '👀' },
-  { id: 'peek-right', name: 'Peek Right', icon: '👁️' },
-  { id: 'rotate-in', name: 'Rotate In', icon: '🔄' },
   { id: 'flip-up', name: 'Flip Up', icon: '🔃' },
-  { id: 'bounce-in', name: 'Bounce In', icon: '🏀' },
+  { id: 'rotate-in', name: 'Rotate In', icon: '🔄' },
+  { id: 'wobble-3d', name: '3D Wobble', icon: '🧊' },
 ];
 
 /**
  * Generate CSS transform/opacity for device entry animations
- * @param type - Animation type
- * @param progress - Animation progress (0 to 1)
- * @returns CSS properties for transform and opacity
  */
 export const generateDeviceKeyframes = (
   type: DeviceAnimationType,
@@ -233,33 +224,24 @@ export const generateDeviceKeyframes = (
       return { opacity: 1, transform: 'none' };
 
     case 'fade':
+      return { opacity: ease, transform: 'none' };
+
+    case 'tilt-reveal':
       return {
         opacity: ease,
-        transform: 'none',
+        transform: `perspective(1000px) rotateX(${(1 - ease) * 45}deg) rotateY(${(1 - ease) * -45}deg) scale(${0.8 + ease * 0.2}) translateY(${(1 - ease) * 100}px)`,
       };
 
-    case 'slide-up':
+    case 'swing-in':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * 100}%)`,
+        transform: `perspective(1000px) rotateY(${(1 - Math.sin(p * Math.PI)) * 30}deg) translateX(${(1 - ease) * -100}px)`,
       };
 
-    case 'slide-down':
+    case 'spiral-in':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * -100}%)`,
-      };
-
-    case 'slide-left':
-      return {
-        opacity: ease,
-        transform: `translateX(${(1 - ease) * 100}%)`,
-      };
-
-    case 'slide-right':
-      return {
-        opacity: ease,
-        transform: `translateX(${(1 - ease) * -100}%)`,
+        transform: `scale(${0.2 + ease * 0.8}) rotate(${(1 - ease) * 720}deg) translateY(${(1 - ease) * 200}px)`,
       };
 
     case 'zoom-in':
@@ -275,32 +257,23 @@ export const generateDeviceKeyframes = (
       };
 
     case 'rise':
-      // Rises from below with slight zoom
       return {
         opacity: ease,
         transform: `translateY(${(1 - ease) * 50}%) scale(${0.9 + ease * 0.1})`,
       };
 
-    case 'drop':
-      // Drops from above with overshoot
+    case 'drop': {
       const dropBounce = easeOutBounce(p);
       return {
         opacity: Math.min(1, p * 3),
         transform: `translateY(${(1 - dropBounce) * -80}%)`,
       };
+    }
 
-    case 'peek-bottom':
-      // Device peeks in from bottom, stays partially visible
+    case 'flip-up':
       return {
-        opacity: 1,
-        transform: `translateY(${(1 - ease) * 60 + 20}%)`,
-      };
-
-    case 'peek-right':
-      // Device peeks in from right, stays partially visible
-      return {
-        opacity: 1,
-        transform: `translateX(${(1 - ease) * 60 + 20}%)`,
+        opacity: p > 0.3 ? 1 : p * 3,
+        transform: `perspective(1000px) rotateX(${(1 - ease) * 90}deg)`,
       };
 
     case 'rotate-in':
@@ -309,17 +282,19 @@ export const generateDeviceKeyframes = (
         transform: `rotate(${(1 - ease) * -15}deg) scale(${0.8 + ease * 0.2})`,
       };
 
-    case 'flip-up':
-      return {
-        opacity: p > 0.3 ? 1 : p * 3,
-        transform: `perspective(1000px) rotateX(${(1 - ease) * 90}deg)`,
-      };
-
     case 'bounce-in': {
       const bounceEase = easeOutElastic(p);
       return {
         opacity: Math.min(1, p * 2),
         transform: `scale(${bounceEase})`,
+      };
+    }
+
+    case 'wobble-3d': {
+      const wobble = Math.sin(p * Math.PI * 4) * (1 - p) * 15;
+      return {
+        opacity: ease,
+        transform: `perspective(1000px) rotateX(${wobble}deg) rotateY(${wobble}deg)`,
       };
     }
 

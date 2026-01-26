@@ -343,71 +343,59 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
               // padding: '3%',
             }}
           >
-            {/* Animation wrapper - only apply outer animation for single layout */}
+            {/* Position Wrapper - Moves the base point */}
             <div
-              ref={animatedDeviceRef}
-              data-device-animation={textOverlay.deviceAnimation || 'none'}
-              data-base-transform={
-                imageLayout === 'single' ? animationStyle.transform || 'none' : 'none'
-              }
-              data-pos-transform={
-                mediaOffsetX !== 0 || mediaOffsetY !== 0
-                  ? `translate(${mediaOffsetX}%, ${mediaOffsetY}%)`
-                  : 'none'
-              }
-              data-base-opacity={
-                imageLayout === 'single' ? String(animationStyle.opacity ?? 1) : '1'
-              }
-              className="transition-all ease-out w-full h-full"
+              className="w-full h-full flex items-center justify-center transition-all duration-500 ease-out"
               style={{
-                transitionDuration: `${transitionDuration}ms`,
-                transform: (() => {
-                  const baseTransform =
-                    imageLayout === 'single' ? animationStyle.transform : 'none';
-
-                  // Get media transform from store
-                  const posTransform =
-                    mediaOffsetX !== 0 || mediaOffsetY !== 0
-                      ? `translate(${mediaOffsetX}%, ${mediaOffsetY}%)`
-                      : '';
-
-                  // Add device entry animation transform
-                  const deviceAnimTransform = deviceAnimationStyle.transform;
-
-                  // Combine all transforms
-                  const transforms = [baseTransform, posTransform, deviceAnimTransform]
-                    .filter((t) => t && t !== 'none')
-                    .join(' ');
-
-                  return transforms || 'none';
-                })(),
-                opacity: (() => {
-                  const baseOpacity = imageLayout === 'single' ? (animationStyle.opacity ?? 1) : 1;
-                  const deviceOpacity = deviceAnimationStyle.opacity;
-                  return baseOpacity * deviceOpacity;
-                })(),
+                transform:
+                  mediaOffsetX !== 0 || mediaOffsetY !== 0
+                    ? `translate(${mediaOffsetX}%, ${mediaOffsetY}%)`
+                    : 'none',
               }}
             >
-              <DeviceRenderer
-                rotationX={rotationX}
-                rotationY={rotationY}
-                rotationZ={rotationZ}
-                cornerRadius={cornerRadius}
-                mediaAssets={mediaAssets}
-                onScreenClick={handleScreenClick}
-                shadowType={shadowType}
-                shadowOpacity={shadowOpacity}
-                shadowBlur={shadowBlur}
-                shadowColor={shadowColor}
-                shadowX={shadowX}
-                shadowY={shadowY}
-                stylePreset={stylePreset}
-                scale={deviceScale}
-                layout={imageLayout}
-                animationInfo={imageLayout !== 'single' ? animationInfo : undefined}
-                frameMode={frameMode}
-                deviceType={deviceType}
-              />
+              {/* Animation wrapper - handles entry and layout animations */}
+              <div
+                ref={animatedDeviceRef}
+                className="w-full h-full flex items-center justify-center transition-all duration-300 ease-out"
+                style={{
+                  opacity: (() => {
+                    const baseOpacity = animationStyle.opacity ?? 1;
+                    const deviceOpacity = deviceAnimationStyle.opacity;
+                    return baseOpacity * deviceOpacity;
+                  })(),
+                  transform: (() => {
+                    const baseTransform = animationStyle.transform || 'none';
+                    const deviceAnimTransform = deviceAnimationStyle.transform;
+
+                    return (
+                      [baseTransform, deviceAnimTransform]
+                        .filter((t) => t && t !== 'none')
+                        .join(' ') || 'none'
+                    );
+                  })(),
+                }}
+              >
+                <DeviceRenderer
+                  rotationX={rotationX}
+                  rotationY={rotationY}
+                  rotationZ={rotationZ}
+                  cornerRadius={cornerRadius}
+                  mediaAssets={mediaAssets}
+                  onScreenClick={handleScreenClick}
+                  shadowType={shadowType}
+                  shadowOpacity={shadowOpacity}
+                  shadowBlur={shadowBlur}
+                  shadowColor={shadowColor}
+                  shadowX={shadowX}
+                  shadowY={shadowY}
+                  stylePreset={stylePreset}
+                  scale={deviceScale}
+                  layout={imageLayout}
+                  animationInfo={animationInfo}
+                  frameMode={frameMode}
+                  deviceType={deviceType}
+                />
+              </div>
             </div>
 
             {/* Text Overlay - renders on top of device */}

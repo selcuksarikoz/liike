@@ -38,7 +38,7 @@ export const TrioRowLayout = ({
           return (
             <div
               key={index}
-              className="flex-1 min-w-0 min-h-0 overflow-hidden"
+              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
                 transform: animStyle.transform,
@@ -103,7 +103,7 @@ export const TrioColumnLayout = ({
           return (
             <div
               key={index}
-              className="flex-1 min-w-0 min-h-0 overflow-hidden"
+              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
                 transform: animStyle.transform,
@@ -167,7 +167,7 @@ export const FanLayout = ({
           return (
             <div
               key={index}
-              className="flex-1 min-w-0 min-h-0 overflow-hidden"
+              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 transform: animStyle.transform,
                 opacity: animStyle.opacity,
@@ -226,11 +226,12 @@ export const MasonryLayout = ({
         }}
       >
         <div
-          className="relative row-span-2"
+          className={`relative row-span-2 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
           style={{
             transform: getStaggeredAnimationStyle(animationInfo, 0, 3).transform,
             opacity: getStaggeredAnimationStyle(animationInfo, 0, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
+            willChange: 'transform, opacity',
           }}
         >
           {renderWithMockup(
@@ -329,7 +330,7 @@ export const MosaicLayout = ({
           return (
             <div
               key={index}
-              className={`relative ${isHero ? 'col-span-2 row-span-1' : 'col-span-1 row-span-1'}`}
+              className={`relative flex items-center justify-center ${isHero ? 'col-span-2 row-span-1' : 'col-span-1 row-span-1'} ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 transform: animStyle.transform,
                 opacity: animStyle.opacity,
@@ -418,15 +419,17 @@ export const FilmStripLayout = ({
 
               <div className="absolute inset-0 px-8 py-1">
                 {renderWithMockup(
-                  <MediaContainer
-                    index={index}
-                    media={mediaAssets[index]}
-                    cornerRadius={Math.max(2, effectiveCornerRadius - 4)}
-                    isPreview={isPreview}
-                    onScreenClick={onScreenClick}
-                    styleCSS={styleCSS}
-                    playing={playing}
-                  />,
+                  <div className="w-full h-full flex items-center justify-center">
+                    <MediaContainer
+                      index={index}
+                      media={mediaAssets[index]}
+                      cornerRadius={Math.max(2, effectiveCornerRadius - 4)}
+                      isPreview={isPreview}
+                      onScreenClick={onScreenClick}
+                      styleCSS={styleCSS}
+                      playing={playing}
+                    />
+                  </div>,
                   index
                 )}
               </div>
@@ -495,11 +498,12 @@ export const SpotlightLayout = ({
             return (
               <div
                 key={index}
-                className="flex-1"
+                className={`flex-1 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
                 style={{
                   transform: animStyle.transform,
                   opacity: animStyle.opacity,
                   transition: getLayoutTransition(!!animationInfo),
+                  willChange: 'transform, opacity',
                 }}
               >
                 {renderWithMockup(
@@ -556,11 +560,12 @@ export const AsymmetricLayout = ({
         }}
       >
         <div
-          className="row-span-2"
+          className={`row-span-2 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
           style={{
             transform: getStaggeredAnimationStyle(animationInfo, 0, 3).transform,
             opacity: getStaggeredAnimationStyle(animationInfo, 0, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
+            willChange: 'transform, opacity',
           }}
         >
           {renderWithMockup(

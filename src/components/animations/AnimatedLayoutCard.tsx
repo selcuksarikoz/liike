@@ -365,6 +365,16 @@ export const AnimatedLayoutCard = ({
           isPreview={true}
           scale={isTextPreset && deviceConfig ? deviceConfig.scale * 0.9 : 0.9}
           playing={isHovered}
+          animationInfo={
+            hasAnimation
+              ? {
+                  animations: preset.animations,
+                  progress: animProgress,
+                  easing: preset.animations[0]?.easing || 'ease-out',
+                  stagger: preset.animations[0]?.stagger || 0.15,
+                }
+              : undefined
+          }
         />
       </div>
 

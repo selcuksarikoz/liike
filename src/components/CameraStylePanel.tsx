@@ -1,30 +1,16 @@
-import { useRef, useEffect, useState } from 'react';
-import {
-  ArrowUpDown,
-  ArrowLeftRight,
-  RotateCw,
-  Maximize2,
-  RotateCcw,
-  Box,
-  Square,
-  Move,
-} from 'lucide-react';
+import { useRef, useEffect } from 'react';
+import { Maximize2, RotateCcw, Box, Square, Move } from 'lucide-react';
 import { ShadowGlowPanel } from './ShadowGlowPanel';
 import { useRenderStore } from '../store/renderStore';
 import { DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
 import { SliderControl } from './ui/SliderControl';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
 import { PositionPicker } from './ui/PositionPicker';
-import { LayoutPicker } from './LayoutPicker';
-import { CreativeAngles } from './CreativeAngles';
 
 export const CameraStylePanel = () => {
   const {
-    rotationX,
     setRotationX,
-    rotationY,
     setRotationY,
-    rotationZ,
     setRotationZ,
     cornerRadius,
     setCornerRadius,
@@ -32,6 +18,10 @@ export const CameraStylePanel = () => {
     setDeviceScale,
     mediaPosition,
     setMediaPosition,
+    mediaOffsetX,
+    mediaOffsetY,
+    setMediaOffsetX,
+    setMediaOffsetY,
   } = useRenderStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,57 +84,46 @@ export const CameraStylePanel = () => {
       {/* Media Position */}
       <div className="style-section">
         <SidebarHeader icon={<Move className="w-4 h-4" />}>Media Position</SidebarHeader>
-        <PositionPicker
-          value={mediaPosition}
-          onChange={(pos) => setMediaPosition(pos as any)}
-          type="media"
-          size="sm"
-        />
+        <div className="space-y-4">
+          <PositionPicker
+            value={mediaPosition}
+            onChange={(pos) => setMediaPosition(pos as any)}
+            type="media"
+            size="sm"
+          />
+          <ControlGroup>
+            <SliderControl
+              label="X Offset"
+              value={mediaOffsetX}
+              min={-50}
+              max={50}
+              unit="%"
+              onChange={setMediaOffsetX}
+            />
+            <SliderControl
+              label="Y Offset"
+              value={mediaOffsetY}
+              min={-50}
+              max={50}
+              unit="%"
+              onChange={setMediaOffsetY}
+            />
+          </ControlGroup>
+        </div>
       </div>
 
-      {/* Creative Angles */}
-      <CreativeAngles />
+      {/* Shadow & Glow */}
+      <ShadowGlowPanel />
 
-      {/* Layout Picker */}
-      <LayoutPicker />
-
-      {/* 3D Rotation */}
+      {/* Device Scale & Corners */}
       <div className="style-section group">
         <SidebarHeader
           icon={<Box className="w-4 h-4" />}
-          action={<ResetButton section="rotation" />}
+          action={<ResetButton section="transform" />}
         >
-          3D Rotation
+          Mockup Constraints
         </SidebarHeader>
         <ControlGroup>
-          <SliderControl
-            label="Tilt X"
-            icon={<ArrowUpDown className="w-3.5 h-3.5" />}
-            value={rotationX}
-            min={-60}
-            max={60}
-            unit="°"
-            onChange={setRotationX}
-          />
-          <SliderControl
-            label="Tilt Y"
-            icon={<ArrowLeftRight className="w-3.5 h-3.5" />}
-            value={rotationY}
-            min={-60}
-            max={60}
-            unit="°"
-            onChange={setRotationY}
-          />
-          <SliderControl
-            label="Rotate Z"
-            icon={<RotateCw className="w-3.5 h-3.5" />}
-            value={rotationZ}
-            min={0}
-            max={360}
-            unit="°"
-            onChange={setRotationZ}
-          />
-
           <SliderControl
             label="Scale"
             icon={<Maximize2 className="w-3.5 h-3.5" />}
@@ -166,9 +145,6 @@ export const CameraStylePanel = () => {
           />
         </ControlGroup>
       </div>
-
-      {/* Shadow & Glow */}
-      <ShadowGlowPanel />
     </div>
   );
 };

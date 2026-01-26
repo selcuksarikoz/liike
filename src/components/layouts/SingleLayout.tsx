@@ -59,10 +59,12 @@ export const SingleLayout = ({
   };
 
   return (
-    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
-        className="relative transition-[transform,border-radius] duration-300 ease-out"
+        className="relative flex items-center justify-center transition-all duration-300 ease-out"
         style={getContainerStyle()}
       >
         {renderWithMockup(mediaContent)}

@@ -51,14 +51,14 @@ export type MediaPosition =
 // Convert semantic position to offset values (smaller values to stay in canvas)
 const MEDIA_POSITION_OFFSETS: Record<MediaPosition, { offsetX: number; offsetY: number }> = {
   'center': { offsetX: 0, offsetY: 0 },
-  'top': { offsetX: 0, offsetY: -8 },
-  'bottom': { offsetX: 0, offsetY: 8 },
-  'left': { offsetX: -10, offsetY: 0 },
-  'right': { offsetX: 10, offsetY: 0 },
-  'top-left': { offsetX: -8, offsetY: -6 },
-  'top-right': { offsetX: 8, offsetY: -6 },
-  'bottom-left': { offsetX: -8, offsetY: 6 },
-  'bottom-right': { offsetX: 8, offsetY: 6 },
+  'top': { offsetX: 0, offsetY: -25 },
+  'bottom': { offsetX: 0, offsetY: 25 },
+  'left': { offsetX: -30, offsetY: 0 },
+  'right': { offsetX: 30, offsetY: 0 },
+  'top-left': { offsetX: -25, offsetY: -20 },
+  'top-right': { offsetX: 25, offsetY: -20 },
+  'bottom-left': { offsetX: -25, offsetY: 20 },
+  'bottom-right': { offsetX: 25, offsetY: 20 },
 };
 
 export type TextOverlay = {
@@ -146,6 +146,8 @@ type RenderStore = RenderSettings & {
   setShadowY: (px: number) => void;
   setImageLayout: (layout: ImageLayout) => void;
   setMediaPosition: (position: MediaPosition) => void;
+  setMediaOffsetX: (x: number) => void;
+  setMediaOffsetY: (y: number) => void;
   setAnimationSpeed: (speed: AnimationSpeed) => void;
   applyPreset: (preset: Partial<RenderStore>) => void;
   setRenderStatus: (status: Partial<RenderStatus>) => void;
@@ -274,6 +276,8 @@ export const useRenderStore = create<RenderStore>((set) => ({
     const offsets = MEDIA_POSITION_OFFSETS[position];
     return set({ mediaPosition: position, mediaOffsetX: offsets.offsetX, mediaOffsetY: offsets.offsetY });
   },
+  setMediaOffsetX: (mediaOffsetX) => set({ mediaOffsetX }),
+  setMediaOffsetY: (mediaOffsetY) => set({ mediaOffsetY }),
   setAnimationSpeed: (animationSpeed) => set({ animationSpeed }),
   applyPreset: (preset) => set((state) => {
     // If preset has durationMs, respect video duration
