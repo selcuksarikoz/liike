@@ -1,11 +1,10 @@
 import { useRef, useEffect } from 'react';
-import { Maximize2, RotateCcw, Box, Square, Move } from 'lucide-react';
+import { Maximize2, RotateCcw, Box, Square } from 'lucide-react';
 import { ShadowGlowPanel } from './ShadowGlowPanel';
 import { useRenderStore } from '../store/renderStore';
 import { DURATIONS, EASINGS, STAGGER_DEFAULTS } from '../constants/animations';
 import { SliderControl } from './ui/SliderControl';
 import { SidebarHeader, ControlGroup } from './ui/SidebarPrimitives';
-import { PositionPicker } from './ui/PositionPicker';
 
 export const CameraStylePanel = () => {
   const {
@@ -16,12 +15,6 @@ export const CameraStylePanel = () => {
     setCornerRadius,
     deviceScale,
     setDeviceScale,
-    mediaPosition,
-    setMediaPosition,
-    mediaOffsetX,
-    mediaOffsetY,
-    setMediaOffsetX,
-    setMediaOffsetY,
   } = useRenderStore();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,37 +74,6 @@ export const CameraStylePanel = () => {
 
   return (
     <div ref={containerRef} className="space-y-6">
-      {/* Media Position */}
-      <div className="style-section">
-        <SidebarHeader icon={<Move className="w-4 h-4" />}>Media Position</SidebarHeader>
-        <div className="space-y-4">
-          <PositionPicker
-            value={mediaPosition}
-            onChange={(pos) => setMediaPosition(pos as any)}
-            type="media"
-            size="sm"
-          />
-          <ControlGroup>
-            <SliderControl
-              label="X Offset"
-              value={mediaOffsetX}
-              min={-50}
-              max={50}
-              unit="%"
-              onChange={setMediaOffsetX}
-            />
-            <SliderControl
-              label="Y Offset"
-              value={mediaOffsetY}
-              min={-50}
-              max={50}
-              unit="%"
-              onChange={setMediaOffsetY}
-            />
-          </ControlGroup>
-        </div>
-      </div>
-
       {/* Shadow & Glow */}
       <ShadowGlowPanel />
 

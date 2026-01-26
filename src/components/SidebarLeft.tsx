@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { useRenderStore, type MediaAsset, type MediaPosition } from '../store/renderStore';
+import { useRenderStore, type MediaAsset } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 import { CameraStylePanel } from './CameraStylePanel';
 import {
