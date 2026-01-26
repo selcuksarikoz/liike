@@ -135,7 +135,7 @@ export const SidebarRight = () => {
           Canvas
         </TabButton>
         <TabButton active={activeTab === 'animations'} onClick={() => setActiveTab('animations')}>
-          Animations
+          Presets
         </TabButton>
       </TabContainer>
 
@@ -159,9 +159,15 @@ export const SidebarRight = () => {
         )}
       </SidebarContent>
 
-      <BackgroundModal isOpen={isBackgroundModalOpen} onClose={() => setIsBackgroundModalOpen(false)} />
+      <BackgroundModal
+        isOpen={isBackgroundModalOpen}
+        onClose={() => setIsBackgroundModalOpen(false)}
+      />
       <FrameSelectorModal isOpen={isFrameModalOpen} onClose={() => setIsFrameModalOpen(false)} />
-      <AspectRatioModal isOpen={isAspectRatioModalOpen} onClose={() => setIsAspectRatioModalOpen(false)} />
+      <AspectRatioModal
+        isOpen={isAspectRatioModalOpen}
+        onClose={() => setIsAspectRatioModalOpen(false)}
+      />
     </SidebarContainer>
   );
 };
