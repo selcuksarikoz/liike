@@ -369,19 +369,30 @@ export const AnimatedLayoutCard = ({
       </div>
 
       {/* Badges */}
-      <div className="absolute top-2 left-2 flex gap-1">
-        {isTextPreset ? (
-          <span className="px-1.5 py-0.5 rounded text-[8px] font-bold text-black bg-white uppercase">
+      <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+        {preset.category === 'mockup' ? (
+          <span className="px-2 py-0.5 rounded-full text-[8px] font-bold text-white bg-indigo-500 shadow-lg shadow-indigo-500/30 uppercase tracking-tighter backdrop-blur-md">
+            Mockup
+          </span>
+        ) : isTextPreset ? (
+          <span className="px-2 py-0.5 rounded-full text-[8px] font-bold text-black bg-white/90 shadow-sm uppercase tracking-tighter backdrop-blur-md">
             Text
           </span>
         ) : hasAnimation ? (
           <span
-            className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase"
+            className="px-2 py-0.5 rounded-full text-[8px] font-bold text-white uppercase tracking-tighter backdrop-blur-md shadow-sm"
             style={{ backgroundColor: preset.color }}
           >
             {isCombo ? 'Combo' : preset.animations[0].type}
           </span>
         ) : null}
+
+        {/* New 'Pro' badge for certain presets */}
+        {preset.id.startsWith('mockup') && (
+          <span className="px-2 py-0.5 rounded-full text-[8px] font-bold text-white bg-gradient-to-r from-amber-400 to-orange-500 shadow-sm uppercase tracking-tighter">
+            Pro
+          </span>
+        )}
       </div>
 
       {/* Favorite Button */}

@@ -56,7 +56,7 @@ export type LayoutPreset = {
   // Text overlay (if present, this is a "text animation" preset)
   text?: Partial<TextConfig>;
   // Category for filtering
-  category?: 'layout' | 'text' | 'creative';
+  category?: 'layout' | 'text' | 'creative' | 'mockup';
 };
 
 // Default configs
@@ -801,7 +801,211 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     animations: [{ type: 'slide-left', duration: 900, easing: 'ease-out', intensity: 120 }],
     category: 'text',
     device: { position: 'left', scale: 0.8, offsetX: -25, offsetY: 0, animation: 'slide-right', animateIn: true },
-    text: { enabled: true, headline: 'Next Level', tagline: 'Experience the difference.', animation: 'slide-up', position: 'center-right', headlineFontSize: 48, taglineFontSize: 20, fontFamily: 'Manrope', color: '#ffffff' },
+    text: { enabled: true, headline: 'Pro Features', tagline: 'Unlocked for you.', animation: 'slide-down', position: 'center-right', headlineFontSize: 48, taglineFontSize: 20, fontFamily: 'Manrope', color: '#ffffff' },
+  },
+
+  // =============================================================================
+  // MOCKUP GENERATOR PRESETS
+  // =============================================================================
+  {
+    id: 'mockup-dribbble-dark',
+    name: 'Dribbble Dark',
+    icon: '🎨',
+    color: '#EA4C89',
+    durationMs: 4000,
+    rotationX: 15,
+    rotationY: -20,
+    rotationZ: 5,
+    backgroundGradient: 'from-zinc-900 via-zinc-950 to-black',
+    animations: [
+      { type: 'wobble-3d', duration: 4000, easing: 'ease-in-out', intensity: 8 },
+      { type: 'float', duration: 3000, easing: 'ease-in-out', intensity: 10 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.85, offsetX: 0, offsetY: 0, animation: 'none', animateIn: false },
+  },
+  {
+    id: 'mockup-apple-glass',
+    name: 'Apple Glass',
+    icon: '👓',
+    color: '#007AFF',
+    durationMs: 5000,
+    rotationX: 10,
+    rotationY: 10,
+    rotationZ: 0,
+    backgroundGradient: 'from-blue-500 via-indigo-500 to-purple-600',
+    animations: [
+      { type: 'rotate', duration: 10000, easing: 'linear', intensity: 360 },
+      { type: 'float', duration: 4000, easing: 'ease-in-out', intensity: 15 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.8, offsetX: 0, offsetY: 0, animation: 'rise', animateIn: true },
+  },
+  {
+    id: 'mockup-startup-hero',
+    name: 'Startup Hero',
+    icon: '🚀',
+    color: '#6366F1',
+    durationMs: 3500,
+    rotationX: 25,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-indigo-600 via-violet-600 to-purple-600',
+    animations: [
+      { type: 'zoom-out', duration: 1500, easing: 'ease-out', intensity: 1.2 },
+      { type: 'float', duration: 2500, easing: 'ease-in-out', intensity: 12 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.9, offsetX: 0, offsetY: 10, animation: 'none', animateIn: false },
+  },
+  {
+    id: 'mockup-minimal-shadow',
+    name: 'Minimal Clean',
+    icon: '✨',
+    color: '#F4F4F5',
+    durationMs: 3000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-slate-50 via-slate-100 to-slate-200',
+    animations: [
+      { type: 'zoom-in', duration: 3000, easing: 'ease-out', intensity: 1.05 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.8, offsetX: 0, offsetY: 0, animation: 'none', animateIn: false },
+  },
+  {
+    id: 'mockup-isometric-right',
+    name: 'Isometric Right',
+    icon: '📐',
+    color: '#10B981',
+    durationMs: 4500,
+    rotationX: 35,
+    rotationY: 45,
+    rotationZ: -10,
+    backgroundGradient: 'from-teal-500 via-emerald-500 to-green-500',
+    animations: [
+      { type: 'float', duration: 3500, easing: 'ease-in-out', intensity: 20 },
+      { type: 'wobble-3d', duration: 5000, easing: 'ease-in-out', intensity: 5 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.75, offsetX: 10, offsetY: 5, animation: 'none', animateIn: false },
+  },
+  {
+    id: 'mockup-floating-parallax',
+    name: 'Parallax Float',
+    icon: '☁️',
+    color: '#38BDF8',
+    durationMs: 6000,
+    rotationX: -10,
+    rotationY: 15,
+    rotationZ: 5,
+    backgroundGradient: 'from-sky-400 via-blue-500 to-indigo-600',
+    animations: [
+      { type: 'float', duration: 3000, easing: 'ease-in-out', intensity: 25 },
+      { type: 'rotate', duration: 12000, easing: 'linear', intensity: 360 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.85, offsetX: 0, offsetY: 0, animation: 'fade', animateIn: true },
+  },
+  {
+    id: 'mockup-angled-display',
+    name: 'Angled Studio',
+    icon: '📷',
+    color: '#64748B',
+    durationMs: 4000,
+    rotationX: 5,
+    rotationY: 35,
+    rotationZ: 0,
+    backgroundGradient: 'from-gray-100 via-gray-200 to-gray-300',
+    animations: [
+      { type: 'zoom-out', duration: 2000, easing: 'ease-out', intensity: 1.15 }
+    ],
+    category: 'mockup',
+    device: { position: 'right', scale: 0.9, offsetX: 15, offsetY: 0, animation: 'none', animateIn: false },
+  },
+  {
+    id: 'mockup-dual-depth',
+    name: 'Dual Depth',
+    icon: '📑',
+    color: '#F97316',
+    durationMs: 5000,
+    rotationX: 20,
+    rotationY: -25,
+    rotationZ: 10,
+    backgroundGradient: 'from-orange-500 via-red-500 to-rose-600',
+    animations: [
+      { type: 'wobble-3d', duration: 4500, easing: 'ease-in-out', intensity: 12 },
+      { type: 'float', duration: 3500, easing: 'ease-in-out', intensity: 15 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.8, offsetX: -10, offsetY: 0, animation: 'bounce-in', animateIn: true },
+  },
+  {
+    id: 'mockup-isometric-floating',
+    name: 'Perspective Floating',
+    icon: '🚀',
+    color: '#818cf8',
+    durationMs: 5000,
+    rotationX: 45,
+    rotationY: -35,
+    rotationZ: 15,
+    backgroundGradient: 'from-blue-600 via-indigo-600 to-purple-700',
+    animations: [
+      { type: 'float', duration: 3000, easing: 'ease-in-out', intensity: 20 },
+      { type: 'wobble-3d', duration: 6000, easing: 'ease-in-out', intensity: 10 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.7, offsetX: 0, offsetY: 0, animation: 'rise', animateIn: true },
+  },
+  {
+    id: 'mockup-studio-front',
+    name: 'Clean Studio',
+    icon: '🏢',
+    color: '#64748b',
+    durationMs: 3000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-slate-100 via-slate-200 to-slate-300',
+    animations: [
+      { type: 'zoom-out', duration: 1500, easing: 'ease-out', intensity: 1.1 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.85, offsetX: 0, offsetY: 0 },
+  },
+  {
+    id: 'mockup-social-grid',
+    name: 'Social Grid',
+    icon: '📱',
+    color: '#f43f5e',
+    durationMs: 4000,
+    rotationX: 10,
+    rotationY: -10,
+    rotationZ: 0,
+    backgroundGradient: 'from-rose-500 via-pink-500 to-orange-500',
+    animations: [
+      { type: 'bounce', duration: 1200, easing: 'ease-out', intensity: 15 }
+    ],
+    category: 'mockup',
+    device: { position: 'center', scale: 0.8, offsetX: 0, offsetY: 0 },
+  },
+  {
+    id: 'mockup-cinema-reveal',
+    name: 'Cinema Reveal',
+    icon: '🎬',
+    color: '#000000',
+    durationMs: 3500,
+    rotationX: 5,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'from-zinc-900 via-black to-zinc-900',
+    animations: [
+      { type: 'zoom-in', duration: 3000, easing: 'ease-out', intensity: 1.2 },
+      { type: 'float', duration: 4000, easing: 'ease-in-out', intensity: 5 }
+    ],
+    category: 'mockup',
+    device: { position: 'bottom', scale: 0.9, offsetX: 0, offsetY: 20, animation: 'fade' },
   },
   // Minimal & Clean
   {
