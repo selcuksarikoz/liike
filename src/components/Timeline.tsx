@@ -29,6 +29,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { useTimelineStore, ANIMATION_PRESETS } from '../store/timelineStore';
 import type { TimelineClip, AnimationPreset } from '../store/timelineStore';
 import { useRenderStore } from '../store/renderStore';
+import { ANIMATION_SPEED_MULTIPLIERS } from '../constants/textAnimations';
 
 const MS_PER_SECOND = 1000;
 const PIXELS_PER_SECOND = 200;
@@ -474,12 +475,16 @@ export const Timeline = () => {
   const handlePresetDoubleClick = (preset: AnimationPreset) => {
     const animationTrack = tracks.find((t) => t.type === 'animation');
     if (animationTrack) {
+      const speed = useRenderStore.getState().animationSpeed;
+      const multiplier = ANIMATION_SPEED_MULTIPLIERS[speed] || 1;
+      const effectiveDuration = preset.duration / multiplier;
+
       addClip(animationTrack.id, {
         trackId: animationTrack.id,
         type: 'animation',
         name: preset.name,
         startMs: playheadMs,
-        durationMs: preset.duration,
+        durationMs: effectiveDuration,
         color: preset.color,
         icon: preset.icon,
         data: { animationPreset: preset },
@@ -499,14 +504,18 @@ export const Timeline = () => {
       const scrollLeft = timelineRef.current.scrollLeft;
       const startMs = Math.max(0, ((x + scrollLeft) / (PIXELS_PER_SECOND * zoom)) * MS_PER_SECOND);
 
+      const speed = useRenderStore.getState().animationSpeed;
+      const multiplier = ANIMATION_SPEED_MULTIPLIERS[speed] || 1;
+
       if (parsed.type === 'animation-preset') {
         const preset = parsed.preset as AnimationPreset;
+        const effectiveDuration = preset.duration / multiplier;
         addClip(trackId, {
           trackId,
           type: 'animation',
           name: preset.name,
           startMs,
-          durationMs: preset.duration,
+          durationMs: effectiveDuration,
           color: preset.color,
           icon: preset.icon,
           data: { animationPreset: preset },
@@ -516,12 +525,13 @@ export const Timeline = () => {
         const hasAnimation = preset.animations?.some((a: { type: string }) => a.type !== 'none');
 
         if (hasAnimation) {
+          const effectiveDuration = preset.durationMs / multiplier;
           addClip(trackId, {
             trackId,
             type: 'animation',
             name: preset.name,
             startMs,
-            durationMs: preset.durationMs,
+            durationMs: effectiveDuration,
             color: preset.color,
             icon: preset.icon,
             data: {
@@ -533,7 +543,7 @@ export const Timeline = () => {
                   .filter((t: any) => t !== 'none') as any[],
                 icon: preset.icon,
                 color: preset.color,
-                duration: preset.durationMs,
+                duration: effectiveDuration,
                 easing: preset.animations[0]?.easing || 'ease-in-out',
               },
             },
@@ -713,7 +723,9 @@ export const Timeline = () => {
                 className={`flex h-14 items-center border-b border-ui-border px-3 hover:bg-ui-highlight/10 truncate gap-2 ${
                   track.type === 'audio' ? 'cursor-pointer' : ''
                 }`}
-                onClick={track.type === 'audio' && track.clips.length === 0 ? handleAudioImport : undefined}
+                onClick={
+                  track.type === 'audio' && track.clips.length === 0 ? handleAudioImport : undefined
+                }
               >
                 {track.type === 'audio' && <Music className="w-3 h-3 text-green-400" />}
                 <span className="text-[10px] truncate flex-1">{track.name}</span>
@@ -728,7 +740,11 @@ export const Timeline = () => {
                     }}
                     className={`p-1 rounded hover:bg-ui-highlight/30 ${track.muted ? 'text-red-400' : 'text-green-400'}`}
                   >
-                    {track.muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    {track.muted ? (
+                      <VolumeX className="w-3.5 h-3.5" />
+                    ) : (
+                      <Volume2 className="w-3.5 h-3.5" />
+                    )}
                   </button>
                 )}
               </div>

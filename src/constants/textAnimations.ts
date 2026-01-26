@@ -13,7 +13,16 @@ export type TextAnimationType =
   | 'wave'
   | 'flip'
   | 'zoom-blur'
-  | 'elastic';
+  | 'elastic'
+  | 'shimmer'
+  | 'glitch-rgb'
+  | 'reveal-split'
+  | 'mask-reveal'
+  | 'perspective-3d'
+  | 'blur-reveal'
+  | 'expand-letter'
+  | 'strobe'
+  | 'float-drift';
 
 export type AnimationSpeed = 'slow' | 'normal' | 'fast';
 
@@ -61,6 +70,15 @@ export const TEXT_ANIMATIONS: TextAnimationConfig[] = [
   { id: 'flip', name: 'Flip', icon: '🔄' },
   { id: 'zoom-blur', name: 'Zoom Blur', icon: '💨' },
   { id: 'elastic', name: 'Elastic', icon: '🎯' },
+  { id: 'shimmer', name: 'Shimmer', icon: '✨' },
+  { id: 'glitch-rgb', name: 'RGB Glitch', icon: '🌈' },
+  { id: 'reveal-split', name: 'Reveal Split', icon: '✂️' },
+  { id: 'mask-reveal', name: 'Mask Reveal', icon: '🎭' },
+  { id: 'perspective-3d', name: '3D Perspective', icon: '🧊' },
+  { id: 'blur-reveal', name: 'Blur Reveal', icon: '🌫️' },
+  { id: 'expand-letter', name: 'Expand Letter', icon: '↔️' },
+  { id: 'strobe', name: 'Strobe', icon: '📸' },
+  { id: 'float-drift', name: 'Float Drift', icon: '🎈' },
 ];
 
 // Easing functions
@@ -80,7 +98,7 @@ const easeOutBounce = (p: number) => {
 export const generateTextKeyframes = (
   type: TextAnimationType,
   progress: number
-): { opacity: number; transform: string; filter?: string; clipPath?: string } => {
+): { opacity: number; transform: string; filter?: string; clipPath?: string; letterSpacing?: string } => {
   const p = Math.min(1, Math.max(0, progress));
   const ease = easeOutCubic(p);
 
@@ -167,12 +185,76 @@ export const generateTextKeyframes = (
       const elasticEase = easeOutElastic(p);
       return {
         opacity: Math.min(1, p * 2),
-        transform: `scale(${elasticEase})`,
+        transform: `scale(${elasticEase}) translateZ(0)`,
       };
     }
 
+    case 'shimmer':
+      return {
+        opacity: ease,
+        transform: 'none',
+        filter: `brightness(${1 + Math.sin(p * Math.PI * 4) * 0.5})`,
+      };
+
+    case 'glitch-rgb':
+      const gOffset = Math.sin(p * 40) * (1 - p) * 10;
+      return {
+        opacity: ease,
+        transform: `translateX(${gOffset}px) translateZ(0)`,
+        filter: `drop-shadow(${gOffset}px 0 0 #ff0000) drop-shadow(${-gOffset}px 0 0 #00ffff)`,
+      };
+
+    case 'reveal-split':
+      return {
+        opacity: ease,
+        transform: `perspective(500px) rotateX(${(1 - ease) * 90}deg)`,
+        clipPath: `inset(0 0 ${(1 - p) * 100}% 0)`,
+      };
+
+    case 'mask-reveal':
+      return {
+        opacity: ease,
+        transform: 'none',
+        clipPath: `inset(0 ${(1 - p) * 100}% 0 0)`,
+      };
+
+    case 'perspective-3d':
+      return {
+        opacity: ease,
+        transform: `perspective(1000px) rotateY(${(1 - ease) * 45}deg) rotateX(${(1 - ease) * 15}deg) translateZ(${(1 - ease) * -200}px)`,
+      };
+
+    case 'blur-reveal':
+      return {
+        opacity: ease,
+        transform: `scale(${0.9 + ease * 0.1})`,
+        filter: `blur(${(1 - ease) * 20}px)`,
+      };
+
+    case 'expand-letter':
+      return {
+        opacity: ease,
+        transform: 'none',
+        letterSpacing: `${(1 - p) * 20}px`,
+      };
+
+    case 'strobe':
+      const strobeOpacity = p < 0.9 ? (Math.sin(p * 100) > 0 ? 1 : 0.2) : 1;
+      return {
+        opacity: strobeOpacity,
+        transform: 'none',
+      };
+
+    case 'float-drift':
+      const driftX = Math.sin(p * Math.PI) * 50;
+      const driftY = Math.cos(p * Math.PI) * 20;
+      return {
+        opacity: ease,
+        transform: `translate3d(${driftX}px, ${driftY}px, 0)`,
+      };
+
     default:
-      return { opacity: 1, transform: 'none' };
+      return { opacity: 1, transform: 'translateZ(0)' };
   }
 };
 
@@ -193,7 +275,10 @@ export type DeviceAnimationType =
   | 'drop'
   | 'flip-up'
   | 'rotate-in'
-  | 'wobble-3d';
+  | 'wobble-3d'
+  | 'reveal-zoom'
+  | 'parallax-3d'
+  | 'magnetic';
 
 export const DEVICE_ANIMATIONS: { id: DeviceAnimationType; name: string; icon: string }[] = [
   { id: 'none', name: 'None', icon: '⏹️' },
@@ -207,6 +292,9 @@ export const DEVICE_ANIMATIONS: { id: DeviceAnimationType; name: string; icon: s
   { id: 'flip-up', name: 'Flip Up', icon: '🔃' },
   { id: 'rotate-in', name: 'Rotate In', icon: '🔄' },
   { id: 'wobble-3d', name: '3D Wobble', icon: '🧊' },
+  { id: 'reveal-zoom', name: 'Reveal Zoom', icon: '🔍' },
+  { id: 'parallax-3d', name: '3D Parallax', icon: '🕶️' },
+  { id: 'magnetic', name: 'Magnetic', icon: '🧲' },
 ];
 
 /**
@@ -294,11 +382,29 @@ export const generateDeviceKeyframes = (
       const wobble = Math.sin(p * Math.PI * 4) * (1 - p) * 15;
       return {
         opacity: ease,
-        transform: `perspective(1000px) rotateX(${wobble}deg) rotateY(${wobble}deg)`,
+        transform: `perspective(1000px) rotateX(${wobble}deg) rotateY(${wobble}deg) translateZ(0)`,
       };
     }
 
+    case 'reveal-zoom':
+      return {
+        opacity: ease,
+        transform: `scale(${0.2 + ease * 0.8}) rotateX(${(1 - ease) * 45}deg) translateZ(0)`,
+      };
+
+    case 'parallax-3d':
+      return {
+        opacity: ease,
+        transform: `perspective(1000px) rotateY(${(1 - ease) * 45}deg) translateZ(${(1 - ease) * -500}px)`,
+      };
+
+    case 'magnetic':
+      return {
+        opacity: ease,
+        transform: `scale(${0.9 + ease * 0.1}) translateZ(${ (1 - ease) * 100 }px)`,
+      };
+
     default:
-      return { opacity: 1, transform: 'none' };
+      return { opacity: 1, transform: 'translateZ(0)' };
   }
 };

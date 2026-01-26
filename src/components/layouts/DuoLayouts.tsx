@@ -41,10 +41,11 @@ export const SideBySideLayout = ({
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
-                transform: animStyle.transform,
+                transform: `${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
                 willChange: 'transform, opacity',
+                WebkitFontSmoothing: 'antialiased',
               }}
             >
               {renderWithMockup(
@@ -106,10 +107,11 @@ export const StackedLayout = ({
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
-                transform: animStyle.transform,
+                transform: `${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
                 willChange: 'transform, opacity',
+                WebkitFontSmoothing: 'antialiased',
               }}
             >
               {renderWithMockup(
@@ -144,6 +146,7 @@ export const DiagonalLayout = ({
   playing,
   animationInfo,
   aspectValue,
+  sizePercent,
   renderWithMockup,
   hasMockup,
 }: LayoutBaseProps) => {
@@ -174,10 +177,11 @@ export const DiagonalLayout = ({
                 left: `${config.x}%`,
                 top: `${config.y}%`,
                 zIndex: config.zIndex,
-                transform: `rotate(${config.rotate}deg) ${animStyle.transform}`,
+                transform: `rotate(${config.rotate}deg) ${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
                 willChange: 'transform, opacity',
+                WebkitFontSmoothing: 'antialiased',
               }}
             >
               {renderWithMockup(
@@ -210,6 +214,8 @@ export const PolaroidLayout = ({
   onScreenClick,
   playing,
   animationInfo,
+  sizePercent,
+  renderWithMockup,
   hasMockup,
 }: LayoutBaseProps) => {
   const polaroidConfigs = [
@@ -239,10 +245,11 @@ export const PolaroidLayout = ({
                 top: `${config.y}%`,
                 zIndex: 20 + index * 10,
                 borderRadius: '4px',
-                transform: `rotate(${config.rotate}deg) ${animStyle.transform}`,
+                transform: `rotate(${config.rotate}deg) ${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
                 willChange: 'transform, opacity',
+                WebkitFontSmoothing: 'antialiased',
               }}
             >
               <div style={{ aspectRatio: 1 }}>

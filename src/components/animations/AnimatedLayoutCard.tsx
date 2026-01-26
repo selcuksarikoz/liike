@@ -14,8 +14,10 @@ import { DeviceRenderer } from '../DeviceRenderer';
 import {
   generateTextKeyframes,
   generateDeviceKeyframes,
+  ANIMATION_SPEED_MULTIPLIERS,
   type TextAnimationType,
   type DeviceAnimationType,
+  type AnimationSpeed,
 } from '../../constants/textAnimations';
 
 type Props = {
@@ -36,6 +38,7 @@ type Props = {
   backgroundImage: string | null;
   isFavorite?: boolean;
   onToggleFavorite?: (id: string) => void;
+  animationSpeed?: AnimationSpeed;
 };
 
 export const AnimatedLayoutCard = ({
@@ -56,6 +59,7 @@ export const AnimatedLayoutCard = ({
   backgroundImage,
   isFavorite = false,
   onToggleFavorite,
+  animationSpeed = 'normal',
 }: Props) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const deviceRef = useRef<HTMLDivElement>(null);
@@ -115,8 +119,10 @@ export const AnimatedLayoutCard = ({
           startTime = currentTime;
         }
 
+        const multiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1;
+        const effectiveDuration = preset.durationMs / multiplier;
         const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / preset.durationMs, 1);
+        const progress = Math.min(elapsed / effectiveDuration, 1);
         setAnimProgress(progress);
 
         // Use the same animation calculation as main canvas
@@ -365,6 +371,8 @@ export const AnimatedLayoutCard = ({
           isPreview={true}
           scale={isTextPreset && deviceConfig ? deviceConfig.scale * 0.9 : 0.9}
           playing={isHovered}
+          frameMode={preset.category === 'mockup' ? 'device' : 'basic'}
+          deviceType={preset.device?.type || 'iphone-16-pro'}
           animationInfo={
             hasAnimation
               ? {
@@ -427,7 +435,14 @@ export const AnimatedLayoutCard = ({
       <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-medium text-white">{preset.name}</span>
-          <span className="text-[8px] text-white/60">{preset.durationMs / 1000}s</span>
+          <span className="text-[8px] text-white/60">
+            {(
+              preset.durationMs /
+              (ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1) /
+              1000
+            ).toFixed(1)}
+            s
+          </span>
         </div>
       </div>
     </div>

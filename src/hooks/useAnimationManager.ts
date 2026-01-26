@@ -6,6 +6,7 @@ import {
   DEFAULT_TEXT_CONFIG,
   type LayoutPreset,
 } from '../constants/layoutAnimationPresets';
+import { ANIMATION_SPEED_MULTIPLIERS } from '../constants/textAnimations';
 import { loadGoogleFont } from './useFontLoader';
 
 export const useAnimationManager = () => {
@@ -28,10 +29,18 @@ export const useAnimationManager = () => {
   // Apply any preset (layout or text)
   const applyAnimation = useCallback(
     (preset: LayoutPreset, layout: ImageLayout = 'single') => {
-      // Stop playback and reset
+      // stop playback and reset
       setIsPlaying(false);
       setPlayhead(0);
       clearTrack('track-animation');
+
+      // Get speed multiplier from store (indirectly via state inside renderStore or similar)
+      const speed = useRenderStore.getState().animationSpeed;
+      const multiplier = ANIMATION_SPEED_MULTIPLIERS[speed] || 1;
+
+      // Calculate effective duration based on speed
+      // If speed is 'fast', multiplier is 2, so we divide duration by 2
+      const effectiveDuration = preset.durationMs / multiplier;
 
       // Merge device config with defaults
       const deviceConfig = { ...DEFAULT_DEVICE_CONFIG, ...preset.device };
@@ -84,13 +93,13 @@ export const useAnimationManager = () => {
       // Add animation clip if preset has animations
       const hasAnimation = preset.animations.some((a) => a.type !== 'none');
       if (hasAnimation) {
-        setDurationMs(preset.durationMs);
+        setDurationMs(effectiveDuration);
         addClip('track-animation', {
           trackId: 'track-animation',
           type: 'animation',
           name: preset.name,
           startMs: 0,
-          durationMs: preset.durationMs,
+          durationMs: effectiveDuration,
           color: preset.color,
           icon: preset.icon,
           data: {
@@ -100,7 +109,7 @@ export const useAnimationManager = () => {
               animations: preset.animations.map((a) => a.type).filter((t) => t !== 'none') as any[],
               icon: preset.icon,
               color: preset.color,
-              duration: preset.durationMs,
+              duration: effectiveDuration,
               easing: preset.animations[0]?.easing || 'ease-in-out',
             },
           },
@@ -108,7 +117,7 @@ export const useAnimationManager = () => {
         setTimeout(() => setIsPlaying(true), 100);
       }
     },
-    [applyPreset, setTextOverlay, setMediaPosition, setDurationMs, addClip, setIsPlaying, setPlayhead, clearTrack]
+    [setIsPlaying, setPlayhead, clearTrack, setMediaPosition, setTextOverlay, applyPreset, setDurationMs, addClip]
   );
 
   return {

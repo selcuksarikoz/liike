@@ -65,7 +65,11 @@ export const SingleLayout = ({
       <div
         ref={containerRef}
         className="relative flex items-center justify-center transition-all duration-300 ease-out"
-        style={getContainerStyle()}
+        style={{
+          ...getContainerStyle(),
+          willChange: 'transform',
+          WebkitFontSmoothing: 'antialiased',
+        }}
       >
         {renderWithMockup(mediaContent)}
       </div>

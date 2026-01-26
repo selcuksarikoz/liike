@@ -2,6 +2,18 @@
 
 @import 'tailwindcss';
 
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--color-ui-bg);
+  transform-style: preserve-3d;
+}
+
 @theme {
   /* UI Colors */
   --color-ui-bg: #141b1e;

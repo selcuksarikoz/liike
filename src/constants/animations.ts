@@ -106,6 +106,13 @@ export const DEFAULT_INTENSITIES: Record<string, number> = {
   'rotate-3d': 360,
   'elevator': 1,
   'skew-slide': 20,
+  'orbit': 30,
+  'reveal-3d': 90,
+  'float-complex': 15,
+  'pulse-3d': 1.15,
+  'parallax-drift': 40,
+  'reveal-zoom': 1.5,
+  'magnetic': 20,
 } as const;
 
 export const getDefaultIntensity = (type: string): number => {
@@ -552,15 +559,33 @@ export const createLayoutAnimation = (
     case 'skew-slide':
       return {
         keyframes: [
-          { transform: `skewX(${intensity/2}deg) translateX(100%)`, opacity: 0 },
-          { transform: 'skewX(0deg) translateX(0)', opacity: 1 },
+          { transform: `skewX(${intensity/2}deg) translateX(100%) translateZ(0)`, opacity: 0 },
+          { transform: 'skewX(0deg) translateX(0) translateZ(0)', opacity: 1 },
         ],
         options: { duration, easing: EASINGS.smoothOut, fill: 'forwards' as FillMode },
       };
 
+    case 'orbit':
+      return {
+        keyframes: [
+          { transform: `rotateY(0deg) translateX(${intensity}px) rotateY(0deg) translateZ(0)` },
+          { transform: `rotateY(360deg) translateX(${intensity}px) rotateY(-360deg) translateZ(0)` },
+        ],
+        options: { duration, easing: 'linear', iterations: Infinity },
+      };
+
+    case 'reveal-3d':
+      return {
+        keyframes: [
+          { transform: `perspective(1000px) rotateX(${intensity}deg) translateZ(-200px)`, opacity: 0 },
+          { transform: 'perspective(1000px) rotateX(0deg) translateZ(0)', opacity: 1 },
+        ],
+        options: { duration, easing: EASINGS.bounce, fill: 'forwards' as FillMode },
+      };
+
     default:
       return {
-        keyframes: [{ opacity: 1 }],
+        keyframes: [{ opacity: 1, transform: 'translateZ(0)' }],
         options: { duration: 0 },
       };
   }
@@ -753,12 +778,41 @@ export const calculateAnimationValue = (
       const skewXVal = (1 - easedProgress) * (intensity / 2);
       const slideXVal = (1 - easedProgress) * 100;
       return {
-        transform: `skewX(${skewXVal}deg) translateX(${slideXVal}%)`,
+        transform: `skewX(${skewXVal}deg) translateX(${slideXVal}%) translateZ(0)`,
+        opacity: easedProgress,
+      };
+
+    case 'orbit':
+      const orbitRot = easedProgress * 360;
+      return {
+        transform: `rotateY(${orbitRot}deg) translateX(${intensity}px) rotateY(${-orbitRot}deg) translateZ(0)`,
+      };
+
+    case 'float-complex':
+      const fX = Math.sin(easedProgress * Math.PI * 2) * intensity;
+      const fY = Math.cos(easedProgress * Math.PI * 2.5) * intensity;
+      const fR = Math.sin(easedProgress * Math.PI) * (intensity / 2);
+      return {
+        transform: `translate3d(${fX}px, ${fY}px, 0) rotate(${fR}deg)`,
+      };
+
+    case 'pulse-3d':
+      const p3dScale = 1 + halfLoopProgress * (intensity - 1);
+      const p3dZ = halfLoopProgress * 50;
+      return {
+        transform: `scale(${p3dScale}) translateZ(${p3dZ}px)`,
+      };
+
+    case 'reveal-zoom':
+      const rzScale = 0.2 + easedProgress * 0.8;
+      const rzRot = (1 - easedProgress) * 45;
+      return {
+        transform: `scale(${rzScale}) rotateX(${rzRot}deg) translateZ(0)`,
         opacity: easedProgress,
       };
 
     default:
-      return { transform: 'none' };
+      return { transform: 'translateZ(0)' };
   }
 };
 

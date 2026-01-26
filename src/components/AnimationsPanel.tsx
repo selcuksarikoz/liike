@@ -170,6 +170,7 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
       mediaAssets={assets}
       layout={layout}
       isFavorite={isFavorite(preset.id)}
+      animationSpeed={animationSpeed}
       {...cardProps}
     />
   );

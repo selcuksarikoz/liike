@@ -41,10 +41,11 @@ export const TrioRowLayout = ({
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
-                transform: animStyle.transform,
+                transform: `${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
                 willChange: 'transform, opacity',
+                WebkitFontSmoothing: 'antialiased',
               }}
             >
               {renderWithMockup(
@@ -106,10 +107,11 @@ export const TrioColumnLayout = ({
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
-                transform: animStyle.transform,
+                transform: `${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
                 willChange: 'transform, opacity',
+                WebkitFontSmoothing: 'antialiased',
               }}
             >
               {renderWithMockup(
@@ -169,9 +171,11 @@ export const FanLayout = ({
               key={index}
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
-                transform: animStyle.transform,
+                transform: `${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
+                willChange: 'transform, opacity',
+                WebkitFontSmoothing: 'antialiased',
               }}
             >
               {renderWithMockup(
@@ -250,9 +254,11 @@ export const MasonryLayout = ({
         <div
           className="relative"
           style={{
-            transform: getStaggeredAnimationStyle(animationInfo, 1, 3).transform,
+            transform: `${getStaggeredAnimationStyle(animationInfo, 1, 3).transform} translateZ(0)`,
             opacity: getStaggeredAnimationStyle(animationInfo, 1, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
+            willChange: 'transform, opacity',
+            WebkitFontSmoothing: 'antialiased',
           }}
         >
           {renderWithMockup(
@@ -271,9 +277,11 @@ export const MasonryLayout = ({
         <div
           className="relative"
           style={{
-            transform: getStaggeredAnimationStyle(animationInfo, 2, 3).transform,
+            transform: `${getStaggeredAnimationStyle(animationInfo, 2, 3).transform} translateZ(0)`,
             opacity: getStaggeredAnimationStyle(animationInfo, 2, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
+            willChange: 'transform, opacity',
+            WebkitFontSmoothing: 'antialiased',
           }}
         >
           {renderWithMockup(
@@ -474,9 +482,11 @@ export const SpotlightLayout = ({
         <div
           className="flex-[2]"
           style={{
-            transform: getStaggeredAnimationStyle(animationInfo, 0, 3).transform,
+            transform: `${getStaggeredAnimationStyle(animationInfo, 0, 3).transform} translateZ(0)`,
             opacity: getStaggeredAnimationStyle(animationInfo, 0, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
+            willChange: 'transform, opacity',
+            WebkitFontSmoothing: 'antialiased',
           }}
         >
           {renderWithMockup(
@@ -500,10 +510,11 @@ export const SpotlightLayout = ({
                 key={index}
                 className={`flex-1 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
                 style={{
-                  transform: animStyle.transform,
+                  transform: `${animStyle.transform} translateZ(0)`,
                   opacity: animStyle.opacity,
                   transition: getLayoutTransition(!!animationInfo),
                   willChange: 'transform, opacity',
+                  WebkitFontSmoothing: 'antialiased',
                 }}
               >
                 {renderWithMockup(
@@ -562,10 +573,11 @@ export const AsymmetricLayout = ({
         <div
           className={`row-span-2 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
           style={{
-            transform: getStaggeredAnimationStyle(animationInfo, 0, 3).transform,
+            transform: `${getStaggeredAnimationStyle(animationInfo, 0, 3).transform} translateZ(0)`,
             opacity: getStaggeredAnimationStyle(animationInfo, 0, 3).opacity,
             transition: getLayoutTransition(!!animationInfo),
             willChange: 'transform, opacity',
+            WebkitFontSmoothing: 'antialiased',
           }}
         >
           {renderWithMockup(
@@ -587,9 +599,11 @@ export const AsymmetricLayout = ({
             <div
               key={index}
               style={{
-                transform: animStyle.transform,
+                transform: `${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,
                 transition: getLayoutTransition(!!animationInfo),
+                willChange: 'transform, opacity',
+                WebkitFontSmoothing: 'antialiased',
               }}
             >
               {renderWithMockup(
