@@ -27,7 +27,12 @@ import {
   Palette,
   CircleDot,
   Square as SquareIcon,
+  Laptop,
+  Tablet,
+  Watch,
+  Check,
 } from 'lucide-react';
+import { DEVICES } from '../constants/devices';
 import { getFrameLabel } from '../constants/styles';
 import { DropdownTrigger } from './ui/Dropdown';
 import { SliderControl } from './ui/SliderControl';
@@ -85,7 +90,13 @@ export const SidebarLeft = () => {
     setCanvasBorderWidth,
     canvasBorderColor,
     setCanvasBorderColor,
+    deviceType,
+    setDeviceType,
+    frameMode,
+    setFrameMode,
   } = useRenderStore();
+
+  const [deviceCategory, setDeviceCategory] = useState<string>('phone');
 
   const { setIsPlaying, setPlayhead, clearTrack } = useTimelineStore();
   const [layoutFilter, setLayoutFilter] = useState<LayoutFilter>(getFilterFromLayout(imageLayout));
@@ -342,6 +353,86 @@ export const SidebarLeft = () => {
 
         {activeTab === 'device' && (
           <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+            <SidebarSection borderBottom>
+              <SidebarHeader icon={<Smartphone className="w-4 h-4" />}>Device Frame</SidebarHeader>
+
+              {/* Category Picker */}
+              <div className="flex gap-1 mb-3 p-1 bg-ui-panel/40 rounded-lg">
+                {[
+                  { id: 'phone', icon: <Smartphone className="w-3.5 h-3.5" /> },
+                  { id: 'laptop', icon: <Laptop className="w-3.5 h-3.5" /> },
+                  { id: 'tablet', icon: <Tablet className="w-3.5 h-3.5" /> },
+                  { id: 'desktop', icon: <Monitor className="w-3.5 h-3.5" /> },
+                  { id: 'watch', icon: <Watch className="w-3.5 h-3.5" /> },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setDeviceCategory(cat.id)}
+                    className={`flex-1 flex items-center justify-center p-1.5 rounded-md transition-all ${
+                      deviceCategory === cat.id
+                        ? 'bg-accent text-black shadow-sm'
+                        : 'text-ui-muted hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {cat.icon}
+                  </button>
+                ))}
+              </div>
+
+              {/* Horizontal Device List */}
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                {DEVICES.filter((d) => d.type === deviceCategory).map((device) => {
+                  const isActive = deviceType === device.id && frameMode === 'device';
+                  return (
+                    <button
+                      key={device.id}
+                      onClick={() => {
+                        setFrameMode('device');
+                        setDeviceType(device.id);
+                      }}
+                      className={`flex-shrink-0 w-24 aspect-[4/5] relative rounded-lg border transition-all ${
+                        isActive
+                          ? 'border-accent bg-accent/5 ring-1 ring-accent/20'
+                          : 'border-ui-border bg-ui-panel/20 hover:border-accent/40'
+                      }`}
+                    >
+                      <div className="absolute inset-0 p-2 flex items-center justify-center">
+                        <img
+                          src={device.image}
+                          alt=""
+                          className="w-full h-full object-contain pointer-events-none"
+                        />
+                      </div>
+                      <div className="absolute inset-x-0 bottom-0 p-1 bg-black/60 backdrop-blur-sm">
+                        <span
+                          className={`text-[8px] font-bold block truncate text-center ${isActive ? 'text-accent' : 'text-white/80'}`}
+                        >
+                          {device.name.replace('iPhone ', '').replace('MacBook ', '')}
+                        </span>
+                      </div>
+                      {isActive && (
+                        <div className="absolute top-1 right-1 bg-accent text-black rounded-full p-0.5">
+                          <Check className="w-2 h-2" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* No Mockup Toggle */}
+              <button
+                onClick={() => setFrameMode('basic')}
+                className={`w-full mt-3 p-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${
+                  frameMode === 'basic'
+                    ? 'bg-accent text-black border-accent'
+                    : 'bg-ui-panel/40 text-ui-muted border-ui-border hover:border-accent/40 hover:text-white'
+                }`}
+              >
+                No Device Mockup
+              </button>
+            </SidebarSection>
+
             <AnimationsTab layoutFilter={layoutFilter} onFilterChange={handleFilterChange} />
             <div className="h-px bg-ui-border mx-4 my-2" />
             <SidebarSection>
