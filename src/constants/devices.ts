@@ -6,38 +6,31 @@ export type DeviceConfig = {
   width: number; // Base width in px for scaling
   aspectRatio: number | string; // Container aspect ratio (width/height)
   screen: {
-    top: string;    // %
-    left: string;   // %
-    width: string;  // %
-    height: string; // %
-    radius: string; // px (at scale 1) or %
+    padding: string; // css shorthand like "3%" or "3% 4% 5% 4%" (top right bottom left)
+    radius: string; // px or %
   };
 };
 
-/**
- * Helper to generate standard screen config based on device type and orientation
- * "Detailed" presets are estimated for typical Apple marketing mockups (clay/transparent styles)
- */
 const PRESETS = {
   iphone: {
-    portrait: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' },
-    landscape: { top: '5.2%', left: '2.3%', width: '95.4%', height: '89.6%', radius: '45px' },
+    portrait: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    landscape: { padding: '4.5% 3% 3% 4.5%', radius: '45px' },
   },
   ipad: {
-    portrait: { top: '4%', left: '4%', width: '92%', height: '92%', radius: '16px' },
-    landscape: { top: '4%', left: '4%', width: '92%', height: '92%', radius: '16px' },
+    portrait: { padding: '5%', radius: '16px' },
+    landscape: { padding: '5%', radius: '16px' },
   },
   macbook: {
-    // Laptop screens - measured from actual mockup images
-    default: { top: '3.5%', left: '4.5%', width: '91%', height: '73%', radius: '8px' },
-    pro16: { top: '3.5%', left: '4.5%', width: '91%', height: '73%', radius: '8px' },
-    pro14: { top: '3.5%', left: '4.5%', width: '91%', height: '73%', radius: '8px' },
+    default: { padding: '10% 10% 10% 10%', radius: '8px' },
+    pro14: { padding: '11%', radius: '20px' },
+    pro13: { padding: '12%', radius: '8px' },
   },
   imac: {
-    default: { top: '4%', left: '3.5%', width: '93%', height: '58%', radius: '0px' }
+    default: { padding: '4% 1% 20% 1%', radius: '20px' } // Large chin
   },
   watch: {
-    default: { top: '27%', left: '18%', width: '64%', height: '32%', radius: '22%' }
+    default: { padding: '18% 15% 18% 15%', radius: '22%' },
+    s8: { padding: '20% 13% 20% 13%', radius: '22%' },
   }
 };
 
@@ -94,7 +87,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone17pro,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
+    screen: PRESETS.iphone.portrait
   },
    {
     id: 'iphone-17-pro-1',
@@ -103,7 +96,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone17pro1,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
+    screen: PRESETS.iphone.portrait
   },
    {
     id: 'iphone-17-pro-2',
@@ -112,7 +105,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone17pro2,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
+    screen: PRESETS.iphone.portrait
   },
 
   // --- iPhone 16 Pro ---
@@ -123,7 +116,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
+    screen: PRESETS.iphone.portrait
   },
   {
     id: 'iphone-16-pro-1',
@@ -132,7 +125,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro1,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
+    screen: PRESETS.iphone.portrait
   },
   {
     id: 'iphone-16-pro-2',
@@ -141,7 +134,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro2,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '3%', left: '2.5%', width: '95%', height: '92.5%', radius: '45px' }
+    screen: PRESETS.iphone.portrait
   },
 
   // --- iPhone 14 ---
@@ -181,7 +174,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13proPortrait,
     width: 390,
     aspectRatio: 370/800,
-    screen: { top: '7%', left: '3.5%', width: '92%', height: '86%', radius: '40px' }
+    screen: { padding: '7% 4% 7% 4%', radius: '40px' }
   },
   {
     id: 'iphone-13-pro-l',
@@ -190,7 +183,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13proLandscape,
     width: 800,
     aspectRatio: 800/370,
-    screen: { top: '6%', left: '2.3%', width: '95.4%', height: '80%', radius: '60px' }
+    screen: { padding: '8% 3% 8% 3%', radius: '60px' }
   },
 
   // --- iPhone 13 Mini ---
@@ -201,7 +194,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13miniPortrait,
     width: 360,
     aspectRatio: 345/780,
-    screen: { top: '2.3%', left: '2.5%', width: '95%', height: '95.4%', radius: '40px' }
+    screen: { padding: '9% 3.5% 9% 3.5%', radius: '40px' }
   },
   {
     id: 'iphone-13-mini-l',
@@ -210,7 +203,7 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13miniLandscape,
     width: 780,
     aspectRatio: 780/345,
-    screen: { top: '2.5%', left: '2.3%', width: '95.4%', height: '95%', radius: '40px' }
+    screen: { padding: '8% 3% 8% 3%', radius: '60px' }
   },
 
   // --- iPads ---
@@ -221,7 +214,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadPro12Portrait,
     width: 600,
     aspectRatio: 575/800,
-    screen: { top: '2.5%', left: '2.5%', width: '95%', height: '95%', radius: '16px' }
+    screen: PRESETS.ipad.portrait
   },
   {
     id: 'ipad-pro-12-l',
@@ -230,7 +223,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadPro12Landscape,
     width: 700,
     aspectRatio: 800/575,
-    screen: { top: '2.5%', left: '2.5%', width: '95%', height: '95%', radius: '16px' }
+    screen: PRESETS.ipad.landscape
   },
   {
     id: 'ipad-pro-11-p',
@@ -239,7 +232,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadPro11Portrait,
     width: 550,
     aspectRatio: 560/800, 
-    screen: { top: '2.5%', left: '2.5%', width: '95%', height: '95%', radius: '16px' }
+    screen: PRESETS.ipad.portrait
   },
   {
     id: 'ipad-pro-11-l',
@@ -248,7 +241,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadPro11Landscape,
     width: 650,
     aspectRatio: 800/560,
-    screen: { top: '2.5%', left: '2.5%', width: '95%', height: '95%', radius: '16px' }
+    screen: PRESETS.ipad.landscape
   },
   {
     id: 'ipad-air-p',
@@ -257,7 +250,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadAirPortrait,
     width: 550,
     aspectRatio: 560/800, 
-    screen: { top: '2.5%', left: '2.5%', width: '95%', height: '95%', radius: '16px' }
+    screen: PRESETS.ipad.portrait
   },
    {
     id: 'ipad-air-l',
@@ -266,7 +259,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadAirLandscape,
     width: 650,
     aspectRatio: 800/560, 
-    screen: { top: '2.5%', left: '2.5%', width: '95%', height: '95%', radius: '16px' }
+    screen: PRESETS.ipad.landscape
   },
   {
     id: 'ipad-mini-p',
@@ -275,7 +268,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadMiniPortrait,
     width: 420,
     aspectRatio: 540/800,
-    screen: { top: '2.5%', left: '2.5%', width: '95%', height: '95%', radius: '16px' }
+    screen: PRESETS.ipad.portrait
   },
   {
     id: 'ipad-mini-l',
@@ -284,7 +277,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadMiniLandscape,
     width: 500,
     aspectRatio: 800/540,
-    screen: { top: '2.5%', left: '2.5%', width: '95%', height: '95%', radius: '16px' }
+    screen: PRESETS.ipad.landscape
   },
   {
     id: 'ipad-base-p',
@@ -293,7 +286,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadBasePortrait,
     width: 540,
     aspectRatio: 3/4,
-    screen: { top: '6%', left: '6%', width: '88%', height: '88%', radius: '12px' }
+    screen: { padding: '5%', radius: '12px' }
   },
   {
     id: 'ipad-base-l',
@@ -302,7 +295,7 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadBaseLandscape,
     width: 640,
     aspectRatio: 4/3,
-    screen: { top: '6%', left: '6%', width: '88%', height: '88%', radius: '12px' }
+    screen: { padding: '5%', radius: '12px' }
   },
 
   // --- Macs ---
@@ -311,18 +304,18 @@ export const DEVICES: DeviceConfig[] = [
     name: 'MacBook Pro 16"',
     type: 'laptop',
     image: macbookPro16,
-    width: 800,
+    width: 1200,
     aspectRatio: 1.5,
-    screen: { top: '4%', left: '4%', width: '92%', height: '73%', radius: '8px' }
+    screen: PRESETS.macbook.default
   },
    {
     id: 'macbook-pro-14',
     name: 'MacBook Pro 14"',
     type: 'laptop',
     image: macbookPro14,
-    width: 750,
+    width: 1200,
     aspectRatio: 1.5,
-    screen: { top: '4%', left: '4%', width: '92%', height: '73%', radius: '8px' }
+    screen: PRESETS.macbook.pro14
   },
   {
     id: 'macbook-air-13',
@@ -331,16 +324,16 @@ export const DEVICES: DeviceConfig[] = [
     image: macbookAir13,
     width: 700,
     aspectRatio: 1.5,
-    screen: { top: '3.5%', left: '4.5%', width: '91%', height: '76%', radius: '8px' }
+    screen: PRESETS.macbook.pro13
   },
   {
     id: 'imac-24',
     name: 'iMac 24"',
     type: 'desktop',
     image: imac24,
-    width: 750,
+    width: 900,
     aspectRatio: 1.15,
-    screen: { top: '4.5%', left: '3.5%', width: '93%', height: '58%', radius: '0px' }
+    screen: PRESETS.imac.default
   },
   {
     id: 'imac-27',
@@ -349,7 +342,7 @@ export const DEVICES: DeviceConfig[] = [
     image: imac27,
     width: 800,
     aspectRatio: 1.15,
-    screen: { top: '4.5%', left: '3.5%', width: '93%', height: '60%', radius: '0px' }
+    screen: PRESETS.imac.default
   },
 
   // --- Watches ---
@@ -360,7 +353,7 @@ export const DEVICES: DeviceConfig[] = [
     image: watchUltra,
     width: 320,
     aspectRatio: 0.52,
-    screen: { top: '28%', left: '17%', width: '66%', height: '30%', radius: '18%' }
+    screen: PRESETS.watch.default
   },
   {
     id: 'watch-s8',
@@ -369,7 +362,7 @@ export const DEVICES: DeviceConfig[] = [
     image: watchS8,
     width: 300,
     aspectRatio: 0.54,
-    screen: { top: '26%', left: '18%', width: '64%', height: '32%', radius: '22%' }
+    screen: PRESETS.watch.s8
   },
   {
     id: 'watch-s8-1',
@@ -378,7 +371,7 @@ export const DEVICES: DeviceConfig[] = [
     image: watchS8_1,
     width: 300,
     aspectRatio: 0.54,
-    screen: { top: '26%', left: '18%', width: '64%', height: '32%', radius: '22%' }
+    screen: PRESETS.watch.s8
   }
 ];
 

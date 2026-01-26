@@ -403,7 +403,7 @@ export const SidebarLeft = () => {
                           className="w-full h-full object-contain pointer-events-none"
                         />
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 p-1 bg-black/60 backdrop-blur-sm">
+                      <div className="absolute inset-x-0 bottom-0 p-1 bg-black/60 rounded-b-lg">
                         <span
                           className={`text-[8px] font-bold block truncate text-center ${isActive ? 'text-accent' : 'text-white/80'}`}
                         >

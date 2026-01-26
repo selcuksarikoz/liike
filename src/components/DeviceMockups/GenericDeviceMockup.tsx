@@ -32,31 +32,24 @@ export const GenericDeviceMockup = ({ children, scale = 1, config }: DeviceMocku
         margin: 'auto',
       }}
     >
-      {/* Device Frame - Z-Index 20 to sit ON TOP of content */}
+      {/* Device Frame - Sitting on top */}
       <img
         src={config.image}
         alt={config.name}
         loading="eager"
         decoding="sync"
         onLoad={() => setImageLoaded(true)}
-        className={`relative z-20 w-full h-full object-contain pointer-events-none drop-shadow-2xl transition-opacity duration-150 ${
+        className={`relative z-20 w-full h-full object-contain pointer-events-none transition-opacity duration-150 ${
           imageLoaded ? 'opacity-100' : 'opacity-0'
         }`}
       />
 
-      {/* Screen Content Area - Z-Index 10 to sit BEHIND frame transparent hole (if hole exists) */}
+      {/* Screen Area - Precisely positioned inside the frame using padding/inset */}
       <div
         className="absolute z-10 overflow-hidden bg-black"
         style={{
-          top: config.screen.top,
-          left: config.screen.left,
-          width: config.screen.width,
-          height: config.screen.height,
-          borderRadius: config.screen.radius.includes('%')
-            ? config.screen.radius
-            : // Heuristic for radius when using responsive height
-              // Dividing by 1.8 is a rough approximation to keep the curve looking sensible
-              `calc(${config.screen.radius} * ${scale})`,
+          inset: config.screen?.padding || '0%',
+          borderRadius: config.screen?.radius || '0px',
         }}
       >
         <div className="w-full h-full flex items-center justify-center">{children}</div>
