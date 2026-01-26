@@ -21,12 +21,15 @@ export const GenericDeviceMockup = ({ children, scale = 1, config }: DeviceMocku
 
   return (
     <div
-      className="relative select-none flex items-center justify-center overflow-hidden"
+      className="relative select-none flex items-center justify-center transition-all duration-300"
       style={{
-        width: `${config.width * scale}px`,
+        height: `${100 * scale}%`,
+        width: 'auto',
         aspectRatio: `${config.aspectRatio}`,
         maxWidth: '100%',
         maxHeight: '100%',
+        flexShrink: 0,
+        margin: 'auto',
       }}
     >
       {/* Device Frame - Z-Index 20 to sit ON TOP of content */}
@@ -51,7 +54,9 @@ export const GenericDeviceMockup = ({ children, scale = 1, config }: DeviceMocku
           height: config.screen.height,
           borderRadius: config.screen.radius.includes('%')
             ? config.screen.radius
-            : `calc(${config.screen.radius} * ${scale})`,
+            : // Heuristic for radius when using responsive height
+              // Dividing by 1.8 is a rough approximation to keep the curve looking sensible
+              `calc(${config.screen.radius} * ${scale})`,
         }}
       >
         <div className="w-full h-full flex items-center justify-center">{children}</div>

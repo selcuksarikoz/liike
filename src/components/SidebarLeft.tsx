@@ -11,13 +11,26 @@ import {
   TabContainer,
   TabButton,
   ActionCard,
+  ControlGroup,
 } from './ui/SidebarPrimitives';
 import { AnimationsTab } from './sidebar/AnimationsTab';
-import { CanvasTab } from './sidebar/CanvasTab';
 import { BackgroundModal } from './BackgroundModal';
 import { FrameSelectorModal } from './modals/FrameSelectorModal';
 import type { LayoutFilter } from './AnimationsPanel';
-import { X, Image, Smartphone, Monitor } from 'lucide-react';
+import {
+  X,
+  Image,
+  Smartphone,
+  Monitor,
+  RefreshCw,
+  Dice4,
+  Palette,
+  CircleDot,
+  Square as SquareIcon,
+} from 'lucide-react';
+import { getFrameLabel } from '../constants/styles';
+import { DropdownTrigger } from './ui/Dropdown';
+import { SliderControl } from './ui/SliderControl';
 
 const getVideoDuration = (url: string): Promise<number> => {
   return new Promise((resolve) => {
@@ -48,9 +61,10 @@ const getFilterFromLayout = (layout: string): LayoutFilter => {
 };
 
 export const SidebarLeft = () => {
-  const [activeTab, setActiveTab] = useState<'media' | 'device' | 'canvas'>('media');
+  const [activeTab, setActiveTab] = useState<'media' | 'device'>('media');
   const [isBackgroundModalOpen, setIsBackgroundModalOpen] = useState(false);
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
 
   const {
     setMediaAssets,
@@ -89,21 +103,33 @@ export const SidebarLeft = () => {
     const filesToProcess = files.slice(0, 3);
     const updatedAssets = [...mediaAssets];
 
-    for (let i = 0; i < filesToProcess.length; i++) {
-      const file = filesToProcess[i];
-      const url = URL.createObjectURL(file);
-      const isVideo = file.type.startsWith('video/');
-      const asset: MediaAsset = isVideo
-        ? { url, type: 'video', duration: await getVideoDuration(url) }
-        : { url, type: 'image' };
+    if (selectedSlot !== null) {
+      // Single slot update
+      const file = files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        const isVideo = file.type.startsWith('video/');
+        updatedAssets[selectedSlot] = isVideo
+          ? { url, type: 'video', duration: await getVideoDuration(url) }
+          : { url, type: 'image' };
+      }
+      setSelectedSlot(null);
+    } else {
+      // Multiple or sequential update
+      for (let i = 0; i < filesToProcess.length; i++) {
+        const file = filesToProcess[i];
+        const url = URL.createObjectURL(file);
+        const isVideo = file.type.startsWith('video/');
+        const asset: MediaAsset = isVideo
+          ? { url, type: 'video', duration: await getVideoDuration(url) }
+          : { url, type: 'image' };
 
-      // Find first empty slot
-      const targetIdx = updatedAssets.indexOf(null);
-      if (targetIdx !== -1) {
-        updatedAssets[targetIdx] = asset;
-      } else if (i < 3) {
-        // If all full, replace sequentially from the start
-        updatedAssets[i] = asset;
+        const targetIdx = updatedAssets.indexOf(null);
+        if (targetIdx !== -1) {
+          updatedAssets[targetIdx] = asset;
+        } else if (i < 3) {
+          updatedAssets[i] = asset;
+        }
       }
     }
 
@@ -116,6 +142,11 @@ export const SidebarLeft = () => {
 
     if (maxVideoDuration > durationMs) setDurationMs(maxVideoDuration);
     e.target.value = '';
+  };
+
+  const handleSlotChange = (index: number) => {
+    setSelectedSlot(index);
+    inputRef.current?.click();
   };
 
   const handleRemoveAsset = (index: number) => {
@@ -173,13 +204,7 @@ export const SidebarLeft = () => {
         <TabButton active={activeTab === 'device'} onClick={() => setActiveTab('device')}>
           <div className="flex flex-col items-center gap-1">
             <Smartphone className="w-4 h-4" />
-            <span>Device</span>
-          </div>
-        </TabButton>
-        <TabButton active={activeTab === 'canvas'} onClick={() => setActiveTab('canvas')}>
-          <div className="flex flex-col items-center gap-1">
-            <Monitor className="w-4 h-4" />
-            <span>Canvas</span>
+            <span>Style & Animation</span>
           </div>
         </TabButton>
       </TabContainer>
@@ -194,19 +219,22 @@ export const SidebarLeft = () => {
                 type="file"
                 className="hidden"
                 accept="image/*,video/mp4,video/quicktime,video/webm"
-                multiple
+                multiple={selectedSlot === null}
                 onChange={handleFileSelect}
               />
-              <UploadBox onClick={() => inputRef.current?.click()} maxItems={3} />
-            </SidebarSection>
+              <UploadBox
+                onClick={() => {
+                  setSelectedSlot(null);
+                  inputRef.current?.click();
+                }}
+                maxItems={3}
+              />
 
-            <SidebarSection>
-              <SidebarHeader>Assets</SidebarHeader>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-3 gap-2 mt-2">
                 {mediaAssets.map((asset, i) => (
                   <div
                     key={i}
-                    className="relative group aspect-video rounded-xl border border-ui-border bg-ui-panel/20 overflow-hidden"
+                    className="relative group aspect-square rounded-xl border border-ui-border bg-ui-panel/20 overflow-hidden"
                   >
                     {asset ? (
                       <>
@@ -215,24 +243,99 @@ export const SidebarLeft = () => {
                         ) : (
                           <img src={asset.url} alt="" className="w-full h-full object-cover" />
                         )}
-                        <button
-                          onClick={() => handleRemoveAsset(i)}
-                          className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-500"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                        <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 rounded text-[9px] font-bold uppercase tracking-wider">
-                          Slot {i + 1}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleRemoveAsset(i)}
+                            className="p-1.5 bg-rose-500 text-white rounded-full hover:scale-110 transition-transform"
+                            title="Remove"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleSlotChange(i)}
+                            className="p-1.5 bg-accent text-black rounded-full hover:scale-110 transition-transform"
+                            title="Change"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                          </button>
                         </div>
                       </>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[10px] text-ui-muted font-medium uppercase tracking-widest border border-dashed border-ui-border/50">
-                        Empty Slot {i + 1}
-                      </div>
+                      <button
+                        onClick={() => handleSlotChange(i)}
+                        className="w-full h-full flex items-center justify-center border border-dashed border-ui-border/50 hover:border-accent/50 hover:bg-ui-panel/40 transition-colors"
+                      >
+                        <RefreshCw className="w-4 h-4 text-ui-muted" />
+                      </button>
                     )}
                   </div>
                 ))}
               </div>
+            </SidebarSection>
+
+            {/* Canvas Settings Integrated */}
+            <SidebarSection borderBottom padded>
+              <SidebarHeader icon={<Dice4 className="w-4 h-4" />}>Canvas Size</SidebarHeader>
+              <DropdownTrigger
+                icon="crop"
+                label={getFrameLabel(canvasWidth, canvasHeight)}
+                value={`${canvasWidth} × ${canvasHeight}`}
+                onClick={() => setIsFrameModalOpen(true)}
+              />
+            </SidebarSection>
+
+            <SidebarSection padded>
+              <SidebarHeader icon={<Palette className="w-4 h-4" />}>
+                Environment & Style
+              </SidebarHeader>
+              <ControlGroup>
+                <ActionCard
+                  label="Background"
+                  value={backgroundType}
+                  onClick={() => setIsBackgroundModalOpen(true)}
+                  preview={
+                    <div
+                      className={`w-10 h-10 rounded-lg border border-ui-border overflow-hidden flex-shrink-0 ${bgPreview.className || ''}`}
+                      style={bgPreview.style}
+                    />
+                  }
+                />
+                <div className="h-px bg-white/5 my-1" />
+                <SliderControl
+                  label="Canvas Corners"
+                  icon={<CircleDot className="w-3.5 h-3.5" />}
+                  value={canvasCornerRadius}
+                  min={0}
+                  max={100}
+                  unit="px"
+                  onChange={setCanvasCornerRadius}
+                />
+                <SliderControl
+                  label="Border Width"
+                  icon={<SquareIcon className="w-3.5 h-3.5" />}
+                  value={canvasBorderWidth}
+                  min={0}
+                  max={20}
+                  unit="px"
+                  onChange={setCanvasBorderWidth}
+                />
+                {canvasBorderWidth > 0 && (
+                  <div className="flex items-center justify-between pt-1">
+                    <label className="text-[10px] text-ui-muted">Border Color</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-ui-text font-mono uppercase">
+                        {canvasBorderColor}
+                      </span>
+                      <input
+                        type="color"
+                        value={canvasBorderColor}
+                        onChange={(e) => setCanvasBorderColor(e.target.value)}
+                        className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent"
+                      />
+                    </div>
+                  </div>
+                )}
+              </ControlGroup>
             </SidebarSection>
           </div>
         )}
@@ -244,37 +347,6 @@ export const SidebarLeft = () => {
             <SidebarSection>
               <CameraStylePanel />
             </SidebarSection>
-          </div>
-        )}
-
-        {activeTab === 'canvas' && (
-          <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-            <SidebarSection borderBottom padded>
-              <SidebarHeader>Environment</SidebarHeader>
-              <ActionCard
-                label="Background"
-                value={backgroundType}
-                onClick={() => setIsBackgroundModalOpen(true)}
-                preview={
-                  <div
-                    className={`w-10 h-10 rounded-lg border border-ui-border overflow-hidden flex-shrink-0 ${bgPreview.className || ''}`}
-                    style={bgPreview.style}
-                  />
-                }
-              />
-            </SidebarSection>
-
-            <CanvasTab
-              canvasWidth={canvasWidth}
-              canvasHeight={canvasHeight}
-              canvasCornerRadius={canvasCornerRadius}
-              canvasBorderWidth={canvasBorderWidth}
-              canvasBorderColor={canvasBorderColor}
-              onFrameClick={() => setIsFrameModalOpen(true)}
-              onCornerRadiusChange={setCanvasCornerRadius}
-              onBorderWidthChange={setCanvasBorderWidth}
-              onBorderColorChange={setCanvasBorderColor}
-            />
           </div>
         )}
       </SidebarContent>

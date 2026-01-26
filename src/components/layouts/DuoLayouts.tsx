@@ -19,14 +19,16 @@ export const SideBySideLayout = ({
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative flex gap-4 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: isPreview ? '100%' : '90%',
-          height: isPreview ? '100%' : '90%',
+          width: sizePercent,
+          height: sizePercent,
           maxWidth: sizePercent,
           maxHeight: sizePercent,
         }}
@@ -82,14 +84,16 @@ export const StackedLayout = ({
   hasMockup,
 }: LayoutBaseProps) => {
   return (
-    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative flex flex-col gap-4 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: isPreview ? '100%' : '90%',
-          height: isPreview ? '100%' : '90%',
+          width: sizePercent,
+          height: sizePercent,
           maxWidth: sizePercent,
           maxHeight: sizePercent,
         }}
@@ -149,11 +153,13 @@ export const DiagonalLayout = ({
   ];
 
   return (
-    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out overflow-hidden"
-        style={{ ...containerStyle, width: '90%', height: '90%' }}
+        style={{ ...containerStyle, width: sizePercent, height: sizePercent }}
       >
         {[0, 1].map((index) => {
           const config = diagonalConfigs[index];
@@ -211,11 +217,13 @@ export const PolaroidLayout = ({
   ];
 
   return (
-    <div className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}>
+    <div
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
+    >
       <div
         ref={containerRef}
         className="relative transition-transform duration-300 ease-out overflow-hidden"
-        style={{ ...containerStyle, width: '90%', height: '90%' }}
+        style={{ ...containerStyle, width: sizePercent, height: sizePercent }}
       >
         {[0, 1].map((index) => {
           const config = polaroidConfigs[index];

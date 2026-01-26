@@ -27,10 +27,10 @@ export const TrioRowLayout = ({
         className="relative flex gap-3 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: isPreview ? '100%' : '95%',
-          height: isPreview ? '100%' : '90%',
-          maxWidth: isPreview ? '100%' : sizePercent,
-          maxHeight: isPreview ? '100%' : sizePercent,
+          width: sizePercent,
+          height: sizePercent,
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
         }}
       >
         {[0, 1, 2].map((index) => {
@@ -92,10 +92,10 @@ export const TrioColumnLayout = ({
         className="relative flex flex-col gap-3 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: isPreview ? '100%' : '95%',
-          height: isPreview ? '100%' : '95%',
-          maxWidth: isPreview ? '100%' : sizePercent,
-          maxHeight: isPreview ? '100%' : sizePercent,
+          width: sizePercent,
+          height: sizePercent,
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
         }}
       >
         {[0, 1, 2].map((index) => {
@@ -149,15 +149,15 @@ export const FanLayout = ({
 }: LayoutBaseProps) => {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
     >
       <div
         ref={containerRef}
         className="relative flex gap-2 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: '95%',
-          height: '75%',
+          width: sizePercent,
+          height: sizePercent,
           maxWidth: sizePercent,
           maxHeight: sizePercent,
         }}
@@ -211,17 +211,17 @@ export const MasonryLayout = ({
 }: LayoutBaseProps) => {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
     >
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 gap-2 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: isPreview ? '100%' : '85%',
-          height: isPreview ? '100%' : '85%',
-          maxWidth: isPreview ? '100%' : sizePercent,
-          maxHeight: isPreview ? '100%' : sizePercent,
+          width: sizePercent,
+          height: sizePercent,
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
           gridTemplateRows: '1.5fr 1fr',
         }}
       >
@@ -310,17 +310,17 @@ export const MosaicLayout = ({
 }: LayoutBaseProps) => {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
     >
       <div
         ref={containerRef}
         className="relative grid grid-cols-2 grid-rows-2 gap-3 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: isPreview ? '100%' : '90%',
-          height: isPreview ? '100%' : '80%',
-          maxWidth: isPreview ? '100%' : sizePercent,
-          maxHeight: isPreview ? '100%' : sizePercent,
+          width: sizePercent,
+          height: sizePercent,
+          maxWidth: sizePercent,
+          maxHeight: sizePercent,
         }}
       >
         {[0, 1, 2].map((index) => {
@@ -455,15 +455,15 @@ export const SpotlightLayout = ({
 }: LayoutBaseProps) => {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
     >
       <div
         ref={containerRef}
         className="relative flex gap-3 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: '95%',
-          height: '85%',
+          width: sizePercent,
+          height: sizePercent,
           maxWidth: sizePercent,
           maxHeight: sizePercent,
         }}
@@ -540,15 +540,15 @@ export const AsymmetricLayout = ({
 }: LayoutBaseProps) => {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center p-4 ${hasMockup ? '' : 'overflow-hidden'}`}
+      className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
     >
       <div
         ref={containerRef}
         className="relative grid gap-2 transition-transform duration-300 ease-out"
         style={{
           ...containerStyle,
-          width: '90%',
-          height: '85%',
+          width: sizePercent,
+          height: sizePercent,
           maxWidth: sizePercent,
           maxHeight: sizePercent,
           gridTemplateColumns: '2fr 1fr',

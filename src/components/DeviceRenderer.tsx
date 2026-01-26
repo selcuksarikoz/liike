@@ -130,23 +130,12 @@ const DeviceRendererComponent = ({
         DEVICES.find((d) => d.id === deviceType) || DEVICES.find((d) => d.id === 'iphone-16-pro');
 
       const type = config?.type;
-      const deviceScale =
-        type === 'watch'
-          ? scale * 0.9
-          : type === 'desktop'
-            ? scale * 0.45
-            : type === 'laptop'
-              ? scale * 0.55
-              : type === 'tablet'
-                ? scale * 0.65
-                : scale * 0.85;
+      const deviceScale = scale; // Use direct scale, GenericDeviceMockup will handle containment
 
       return (
-        <div key={key} className="relative flex items-center justify-center pointer-events-none">
-          <GenericDeviceMockup config={config} scale={isPreview ? 0.2 : deviceScale}>
-            {content}
-          </GenericDeviceMockup>
-        </div>
+        <GenericDeviceMockup key={key} config={config} scale={isPreview ? 0.2 : deviceScale}>
+          {content}
+        </GenericDeviceMockup>
       );
     }
     return content;
@@ -157,7 +146,7 @@ const DeviceRendererComponent = ({
     transformStyle: 'preserve-3d' as const,
   };
 
-  const sizePercent = isPreview ? '100%' : '85%';
+  const sizePercent = '94%';
 
   // Common props for all layouts
   const layoutProps = {

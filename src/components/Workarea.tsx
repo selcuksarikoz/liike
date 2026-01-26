@@ -213,7 +213,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
       return { width: 400, height: 400, scale: 0.5, innerPadding: 20 };
     }
 
-    const padding = 80;
+    const padding = 20;
     const availableWidth = containerSize.width - padding;
     const availableHeight = containerSize.height - padding;
 
@@ -277,7 +277,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
 
       <div
         ref={containerRef}
-        className="relative flex flex-1 items-center justify-center p-12 overflow-hidden bg-ui-bg-secondary select-none"
+        className="relative flex flex-1 items-center justify-center overflow-hidden bg-ui-bg-secondary select-none"
       >
         {/* Background Gradient / Canvas Area */}
         <div
