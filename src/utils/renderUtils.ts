@@ -834,7 +834,7 @@ export const prepareExportContext = async (
   const svgPrefix = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
 <defs><style type="text/css">${fontCss}</style></defs>
 <foreignObject width="${outputWidth}" height="${outputHeight}">
-<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;transform-style:preserve-3d;">`;
+<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;">`;
   const svgSuffix = `</div>
 </foreignObject>
 </svg>`;
