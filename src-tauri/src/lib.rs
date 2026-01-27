@@ -1,9 +1,11 @@
 use serde::Serialize;
 use std::collections::HashMap;
-use std::io::Write;
 use std::path::PathBuf;
-use std::process::{Child, ChildStdin, Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
+use std::thread;
+use std::io::Write;
 use tauri::Emitter;
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
@@ -14,15 +16,15 @@ struct ProgressPayload {
     message: String,
 }
 
-// Streaming encoder state - holds ffmpeg process and stdin for direct piping
+// Streaming encoder state - holds channel sender and worker thread handle
 struct StreamingEncoder {
-    process: Child,
-    stdin: ChildStdin,
+    process: Option<Child>, // Wrapped in Option to take ownership during finish
+    sender: Option<SyncSender<Option<Vec<u8>>>>, // Send None to signal EOF
+    worker_thread: Option<thread::JoinHandle<Result<(), String>>>,
     width: u32,
     height: u32,
     total_frames: u32,
-    current_frame: u32,
-    has_audio: bool,
+    current_frame: Arc<Mutex<u32>>, // Shared counter for progress
 }
 
 // Global encoder registry for managing multiple concurrent encoders
@@ -218,6 +220,9 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
                     "hvc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
+                    "-color_primaries".to_string(), "bt709".to_string(),
+                    "-color_trc".to_string(), "bt709".to_string(),
+                    "-colorspace".to_string(), "bt709".to_string(),
                 ]
             }
         }
@@ -546,35 +551,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
             }
         }
     }
-
-    // Add audio encoding if audio input is provided
-    if audio_path.is_some() {
-        match format {
-            "gif" => {
-                // GIF doesn't support audio, skip
-            }
-            "webm" => {
-                args.extend(vec![
-                    "-c:a".to_string(),
-                    "libopus".to_string(),
-                    "-b:a".to_string(),
-                    "128k".to_string(),
-                    "-shortest".to_string(),
-                ]);
-            }
-            _ => {
-                // MP4/MOV - AAC audio
-                args.extend(vec![
-                    "-c:a".to_string(),
-                    "aac".to_string(),
-                    "-b:a".to_string(),
-                    "192k".to_string(),
-                    "-shortest".to_string(),
-                ]);
-            }
-        }
-    }
-
+    
     args
 }
 
@@ -607,7 +584,7 @@ fn start_streaming_encode(
         .spawn()
         .map_err(|e| format!("Failed to spawn ffmpeg: {e}"))?;
 
-    let stdin = process
+    let mut stdin = process
         .stdin
         .take()
         .ok_or("Failed to get ffmpeg stdin")?;
@@ -615,7 +592,7 @@ fn start_streaming_encode(
     let stderr = process.stderr.take().ok_or("Failed to get ffmpeg stderr")?;
 
     // Spawn a thread to drain stderr and prevent deadlock, and log messages
-    std::thread::spawn(move || {
+    thread::spawn(move || {
         use std::io::{BufRead, BufReader};
         let reader = BufReader::new(stderr);
         for line in reader.lines() {
@@ -625,19 +602,45 @@ fn start_streaming_encode(
         }
     });
 
+    // Create a bounded channel (size 10) for frame streaming
+    // This allows the UI thread to push ahead of encoding by up to 10 frames,
+    // maximizing parallelism without consuming infinite memory.
+    // If buffer fills, send_frame() will block gracefully (backpressure).
+    let (tx, rx): (SyncSender<Option<Vec<u8>>>, Receiver<Option<Vec<u8>>>) = sync_channel(10);
+    
+    // Spawn worker thread for writing frames
+    let worker_thread = thread::spawn(move || -> Result<(), String> {
+        while let Ok(msg) = rx.recv() {
+            match msg {
+                Some(frame_data) => {
+                    if let Err(e) = stdin.write_all(&frame_data) {
+                        return Err(format!("Failed to write to ffmpeg stdin: {}", e));
+                    }
+                }
+                None => {
+                    // EOF signal received
+                    break;
+                }
+            }
+        }
+        // explicit flush might be good practice, but drop() handles cleanup
+        drop(stdin); 
+        Ok(())
+    });
+
     let encoder_id = format!("encoder_{}", std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_millis());
 
     let encoder = StreamingEncoder {
-        process,
-        stdin,
+        process: Some(process),
+        sender: Some(tx),
+        worker_thread: Some(worker_thread),
         width,
         height,
         total_frames,
-        current_frame: 0,
-        has_audio: audio_path.is_some(),
+        current_frame: Arc::new(Mutex::new(0)),
     };
 
     ENCODERS
@@ -653,28 +656,35 @@ fn start_streaming_encode(
 /// frame_data: Base64-encoded RGBA pixel data
 #[tauri::command]
 fn send_frame(encoder_id: String, frame_data: Vec<u8>) -> Result<f32, String> {
-    let mut encoders = ENCODERS
-        .lock()
-        .map_err(|e| format!("Failed to lock encoders: {e}"))?;
+    // 1. Lock: Short critical section just to get the sender
+    let (sender, counter, total_frames, expected_size) = {
+        let encoders = ENCODERS
+            .lock()
+            .map_err(|e| format!("Failed to lock encoders: {e}"))?;
 
-    let encoder = encoders
-        .get_mut(&encoder_id)
-        .ok_or_else(|| format!("Encoder not found: {}", encoder_id))?;
+        let encoder = encoders
+            .get(&encoder_id)
+            .ok_or_else(|| format!("Encoder not found: {}", encoder_id))?;
 
-    // Check frame data size to ensure it matches width*height*4
-    let expected_size = (encoder.width * encoder.height * 4) as usize;
+        let expected_size = (encoder.width * encoder.height * 4) as usize;
+        let sender = encoder.sender.clone().ok_or("Encoder closed")?;
+        
+        (sender, encoder.current_frame.clone(), encoder.total_frames, expected_size)
+    };
+
+    // 2. Validation (outside lock)
     if frame_data.len() != expected_size {
         return Err(format!("Invalid frame data size: expected {}, got {}", expected_size, frame_data.len()));
     }
 
-    // Write raw RGBA bytes directly to ffmpeg stdin
-    encoder
-        .stdin
-        .write_all(&frame_data)
-        .map_err(|e| format!("Failed to write frame: {e}"))?;
+    // 3. Send: Push to channel (may block if buffer full, but releases Mutex first!)
+    // This allows other interactions to proceed.
+    sender.send(Some(frame_data)).map_err(|_| "Failed to send frame to worker thread")?;
 
-    encoder.current_frame += 1;
-    let progress = encoder.current_frame as f32 / encoder.total_frames as f32;
+    // 4. Update progress
+    let mut current = counter.lock().unwrap();
+    *current += 1;
+    let progress = *current as f32 / total_frames as f32;
 
     Ok(progress)
 }
@@ -690,20 +700,29 @@ fn finish_streaming_encode(encoder_id: String) -> Result<(), String> {
         .remove(&encoder_id)
         .ok_or_else(|| format!("Encoder not found: {}", encoder_id))?;
 
-    // Close stdin to signal EOF to ffmpeg
-    drop(encoder.stdin);
-
-    // Wait for ffmpeg to finish
-    let status = encoder
-        .process
-        .wait()
-        .map_err(|e| format!("Failed to wait for ffmpeg: {e}"))?;
-
-    if !status.success() {
-        return Err(format!("ffmpeg exited with status: {}", status));
+    // 1. Signal EOF to worker thread
+    if let Some(sender) = encoder.sender.take() {
+        let _ = sender.send(None);
     }
 
-    log::info!("[StreamEncode] Encoder finished: {} ({} frames)", encoder_id, encoder.current_frame);
+    // 2. Wait for worker thread to flush and exit
+    if let Some(worker) = encoder.worker_thread.take() {
+        worker.join().map_err(|_| "Worker thread panicked")??;
+    }
+
+    // 3. Wait for ffmpeg to finish
+    if let Some(mut process) = encoder.process.take() {
+        let status = process
+            .wait()
+            .map_err(|e| format!("Failed to wait for ffmpeg: {e}"))?;
+
+        if !status.success() {
+            return Err(format!("ffmpeg exited with status: {}", status));
+        }
+    }
+
+    let frames = *encoder.current_frame.lock().unwrap();
+    log::info!("[StreamEncode] Encoder finished: {} ({} frames)", encoder_id, frames);
     Ok(())
 }
 
@@ -715,8 +734,19 @@ fn cancel_streaming_encode(encoder_id: String) -> Result<(), String> {
         .map_err(|e| format!("Failed to lock encoders: {e}"))?;
 
     if let Some(mut encoder) = encoders.remove(&encoder_id) {
+        // Drop sender to signal worker thread
+        encoder.sender = None;
+        
+        // Wait for worker (optional, but good for cleanup)
+        if let Some(worker) = encoder.worker_thread.take() {
+            let _ = worker.join();
+        }
+
         // Kill the ffmpeg process
-        let _ = encoder.process.kill();
+        if let Some(mut process) = encoder.process.take() {
+            let _ = process.kill();
+        }
+        
         log::info!("[StreamEncode] Encoder cancelled: {}", encoder_id);
     }
 
@@ -744,4 +774,3 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
