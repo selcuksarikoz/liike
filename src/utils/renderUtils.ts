@@ -834,7 +834,7 @@ export const prepareExportContext = async (
   const svgPrefix = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
 <defs><style type="text/css">${fontCss}</style></defs>
 <foreignObject width="${outputWidth}" height="${outputHeight}">
-<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;">`;
+<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;transform-style:preserve-3d;">`;
   const svgSuffix = `</div>
 </foreignObject>
 </svg>`;
@@ -892,6 +892,15 @@ const syncFrameAnimations = () => {
     if (transformStyle && transformStyle !== 'flat') target.style.transformStyle = transformStyle;
     if (perspective && perspective !== 'none') target.style.perspective = perspective;
     if (backfaceVisibility) target.style.backfaceVisibility = backfaceVisibility;
+
+    // Sync origin properties (critical for correct rotation pivots)
+    const transformOrigin = source.style.transformOrigin || computed.transformOrigin;
+    const transformBox = source.style.transformBox || computed.transformBox;
+    const perspectiveOrigin = source.style.perspectiveOrigin || computed.perspectiveOrigin;
+    
+    if (transformOrigin) target.style.transformOrigin = transformOrigin;
+    if (transformBox) target.style.transformBox = transformBox;
+    if (perspectiveOrigin) target.style.perspectiveOrigin = perspectiveOrigin;
 
     // Sync filter and clipPath (important for blur/reveal animations)
     const filterVal = source.style.filter || computed.filter;
