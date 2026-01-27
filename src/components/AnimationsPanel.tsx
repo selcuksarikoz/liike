@@ -97,7 +97,11 @@ const TextAnimationsSection = ({
   );
 };
 
-export const AnimationsPanel = () => {
+type AnimationsPanelProps = {
+  filter: LayoutFilter;
+};
+
+export const AnimationsPanel = ({ filter }: AnimationsPanelProps) => {
   const {
     cornerRadius,
     mediaAssets,
@@ -110,15 +114,13 @@ export const AnimationsPanel = () => {
     backgroundImage,
     animationSpeed,
     setAnimationSpeed,
+    imageLayout, // Get current layout
   } = useRenderStore();
 
   const { applyAnimation } = useAnimationManager();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
 
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'single' | 'duo' | 'trio' | 'text' | 'favorites'>(
-    'all'
-  );
   const [textMode, setTextMode] = useState<'presets' | 'edit'>('presets');
 
   const handleApplyPreset = (preset: LayoutPreset, layout: ImageLayout) => {
@@ -178,26 +180,57 @@ export const AnimationsPanel = () => {
     />
   );
 
-  // Filter Logic - Consolidated
-  // We can show ALL layout animations for Single/Duo/Triple mode by default
-  // But we filter based  // Filter presets by category/type
+  // Helper to slice assets based on layout
+  const getAssetsForLayout = (layout: ImageLayout) => {
+    // 3+ items
+    if (
+      [
+        'trio-row',
+        'trio-column',
+        'fan',
+        'masonry',
+        'mosaic',
+        'film-strip',
+        'spotlight',
+        'asymmetric',
+      ].includes(layout)
+    ) {
+      return [mediaAssets[0] || null, mediaAssets[1] || null, mediaAssets[2] || null];
+    }
+    // 2 items
+    if (
+      [
+        'side-by-side',
+        'stacked',
+        'diagonal',
+        'polaroid',
+        'split-left-modern',
+        'split-right-modern',
+      ].includes(layout)
+    ) {
+      return [mediaAssets[0] || null, mediaAssets[1] || null];
+    }
+    // 1 item (default)
+    return [mediaAssets[0] || null];
+  };
+
+  // Filter presets by category/type
   const layoutPresets = LAYOUT_PRESETS.filter((p) => p.category !== 'text');
 
   // Existing text presets from layout config
   const existingTextPresets = LAYOUT_PRESETS.filter((p) => p.category === 'text');
 
   // Convert raw TEXT_ANIMATIONS to usable presets for the UI
-  // This ensures all 50+ text animations are visible and selectable
   const generatedTextPresets: LayoutPreset[] = TEXT_ANIMATIONS.map((anim) => ({
     id: `generated-text-${anim.id}`,
     name: anim.name,
     icon: anim.icon,
-    color: '#ffffff', // Default white for text presets
+    color: '#ffffff',
     durationMs: 3000,
     rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
-    backgroundGradient: 'bg-black', // Simple background to highlight text
+    backgroundGradient: 'bg-black',
     animations: [
       { type: 'zoom-in', duration: 3000, easing: 'ease-out', intensity: 1.1, stagger: 0 },
     ],
@@ -216,50 +249,36 @@ export const AnimationsPanel = () => {
     category: 'text',
   }));
 
-  // Combine them (Unique by text animation ID preference? Or just concat)
   const textPresets = [...existingTextPresets, ...generatedTextPresets];
   const favoritePresets = LAYOUT_PRESETS.filter((p) => isFavorite(p.id));
 
   return (
     <div className="flex flex-col h-full bg-ui-bg">
       {/* Header & Speed Controls */}
-      <div className="p-4 border-b border-ui-border bg-ui-panel/50">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-white">Animations</h2>
-          <div className="flex gap-1">
-            {/* Speed Controls Mini */}
-            {SPEED_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setAnimationSpeed(option.value)}
-                title={`Speed: ${option.label}`}
-                className={`w-6 h-6 flex items-center justify-center rounded transition-all ${
-                  animationSpeed === option.value
-                    ? 'bg-amber-500 text-black'
-                    : 'bg-ui-panel text-ui-muted hover:text-white'
-                }`}
-              >
-                <div className="scale-75">{option.icon}</div>
-              </button>
-            ))}
+      <div className="p-4 pt-1 border-b border-ui-border bg-ui-panel/10">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">Speed</h2>
+          {/* Segmented Control for Speed */}
+          <div className="flex flex-1 p-0.5 bg-ui-panel/80 rounded-lg border border-ui-border/50">
+            {SPEED_OPTIONS.map((option) => {
+              const isActive = animationSpeed === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setAnimationSpeed(option.value)}
+                  title={`Speed: ${option.label}`}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[9px] font-bold uppercase transition-all ${
+                    isActive
+                      ? 'bg-accent text-black shadow-sm'
+                      : 'text-ui-muted hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <span className="text-xs">{option.icon}</span>
+                  <span>{option.label}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="flex gap-1 p-1 bg-ui-panel rounded-lg overflow-x-auto no-scrollbar">
-          {(['all', 'single', 'duo', 'trio', 'text', 'favorites'] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase whitespace-nowrap transition-all ${
-                filter === f
-                  ? 'bg-indigo-500 text-white shadow-sm'
-                  : 'text-ui-muted hover:text-white hover:bg-white/5'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -294,7 +313,10 @@ export const AnimationsPanel = () => {
               <TextEditor />
             ) : (
               <div className="grid grid-cols-1 gap-3">
-                {textPresets.map((p) => renderCard(p, 'single', [mediaAssets[0] || null]))}
+                {textPresets.map((p) =>
+                  // Use current layout for text animations so it doesn't reset layout
+                  renderCard(p, imageLayout, getAssetsForLayout(imageLayout))
+                )}
               </div>
             )}
           </div>
@@ -303,8 +325,9 @@ export const AnimationsPanel = () => {
           favoritePresets.length > 0 ? (
             <div className="grid grid-cols-1 gap-3">
               {favoritePresets.map((p) => {
-                // Try to guess best layout for favorite, default to single
-                return renderCard(p, 'single', [mediaAssets[0] || null]);
+                // Determine layout: Use current layout if possible
+                const targetLayout: ImageLayout = imageLayout;
+                return renderCard(p, targetLayout, getAssetsForLayout(targetLayout));
               })}
             </div>
           ) : (
@@ -315,28 +338,21 @@ export const AnimationsPanel = () => {
           )
         ) : (
           // Standard Lists (All, Single, Duo, Trio)
-          // We map the SAME presets to different layouts based on filter
           <div className="grid grid-cols-1 gap-3">
             {layoutPresets.map((p) => {
-              // Determine layout based on current filter or section
-              let targetLayout: ImageLayout = 'single';
-              let assetsToUse = [mediaAssets[0] || null];
+              // Determine layout based on filter OR current layout
+              let targetLayout: ImageLayout = imageLayout; // Default to preserving current layout
 
-              if (filter === 'duo') {
+              if (filter === 'single') {
+                targetLayout = 'single';
+              } else if (filter === 'duo') {
                 targetLayout = 'side-by-side';
-                assetsToUse = [mediaAssets[0] || null, mediaAssets[1] || null];
               } else if (filter === 'trio') {
                 targetLayout = 'trio-row';
-                assetsToUse = [
-                  mediaAssets[0] || null,
-                  mediaAssets[1] || null,
-                  mediaAssets[2] || null,
-                ];
               }
+              // If filter is 'all', targetLayout remains imageLayout (current)
 
-              // If 'all', we render based on what makes sense or just single?
-              // Let's render as Single for 'all' to show the animation style clearly,
-              // or maybe alternate? Single is safest for preview.
+              const assetsToUse = getAssetsForLayout(targetLayout);
 
               return renderCard(p, targetLayout, assetsToUse);
             })}
