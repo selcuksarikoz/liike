@@ -331,17 +331,10 @@ export const useStreamingRender = () => {
           
           if (abortController.signal.aborted) return;
 
-          // Wait for React to re-render and browser to compute styles
-          // Videos need more time to decode frames after seeking
-          // Device animations are inline styles, not Web Animations API
-          const hasVideos = mediaAssets.some(a => a?.type === 'video');
-          const hasWebAnimations = node.getAnimations({ subtree: true }).length > 0;
-          const { textOverlay } = useRenderStore.getState();
-          const hasDeviceAnimation = textOverlay.deviceAnimation && textOverlay.deviceAnimation !== 'none';
-          const hasAnimations = hasWebAnimations || hasDeviceAnimation;
-          // Device animations need extra time for React to re-render after Zustand update
-          const waitTime = frameIndex === 0 ? 50 : (hasVideos ? 32 : (hasDeviceAnimation ? 32 : (hasAnimations ? 16 : 8)));
-          await waitForRender(waitTime);
+          // Minimal wait - animations are calculated explicitly in nodeToSvgDataUrl
+          // Videos already waited in pauseAndSeekVideos
+          // Only first frame needs a small delay for initial render
+          if (frameIndex === 0) await waitForRender(16);
 
           if (abortController.signal.aborted) return;
 

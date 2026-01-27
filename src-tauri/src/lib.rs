@@ -52,10 +52,10 @@ async fn copy_file(src: String, dest: String) -> Result<(), String> {
 }
 
 fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<String> {
-    // Scale filter - use fast_bilinear for speed, lanczos only if needed
+    // Scale filter - bicubic offers good quality/speed balance
     let scale_w = if width % 2 == 0 { width } else { width + 1 };
     let scale_h = if height % 2 == 0 { height } else { height + 1 };
-    let scale_filter = format!("scale={}:{}:flags=bilinear", scale_w, scale_h);
+    let scale_filter = format!("scale={}:{}:flags=bicubic", scale_w, scale_h);
 
     let is_macos = std::env::consts::OS == "macos";
     let is_windows = std::env::consts::OS == "windows";
@@ -67,7 +67,7 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
             "-c:v".to_string(),
             "libvpx-vp9".to_string(),
             "-crf".to_string(),
-            "28".to_string(),
+            "24".to_string(), // Better quality (lower = better)
             "-b:v".to_string(),
             "0".to_string(),
             "-pix_fmt".to_string(),
@@ -77,13 +77,15 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
             "-threads".to_string(),
             "0".to_string(),
             "-deadline".to_string(),
-            "realtime".to_string(), // Fastest
+            "good".to_string(), // Better quality than realtime
             "-cpu-used".to_string(),
-            "5".to_string(), // Max speed (0-5)
+            "4".to_string(), // Balance: 0=best quality, 5=fastest
             "-tile-columns".to_string(),
             "2".to_string(),
-            "-frame-parallel".to_string(),
+            "-auto-alt-ref".to_string(),
             "1".to_string(),
+            "-lag-in-frames".to_string(),
+            "25".to_string(), // Better compression
         ],
         "mov" => {
             if use_hw && is_macos {
@@ -127,7 +129,7 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
                     "+faststart".to_string(),
                 ]
             } else {
-                // Software HEVC - ultrafast preset
+                // Software HEVC - fast preset with good quality
                 vec![
                     "-vf".to_string(),
                     scale_filter,
@@ -136,9 +138,9 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "ultrafast".to_string(),
+                    "fast".to_string(), // Better quality than ultrafast
                     "-crf".to_string(),
-                    "24".to_string(),
+                    "22".to_string(), // Better quality (lower = better)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
@@ -147,8 +149,8 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
             }
         }
         "gif" => {
-            // Optimized GIF - reduce fps and colors for speed
-            let gif_filter = format!("{},fps=12,split[s0][s1];[s0]palettegen=max_colors=128:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3", scale_filter);
+            // Optimized GIF - better color palette for quality
+            let gif_filter = format!("{},fps=15,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=floyd_steinberg", scale_filter);
             vec![
                 "-vf".to_string(),
                 gif_filter,
@@ -200,7 +202,7 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
                     "+faststart".to_string(),
                 ]
             } else {
-                // Software HEVC
+                // Software HEVC - fast preset with good quality
                 vec![
                     "-vf".to_string(),
                     scale_filter,
@@ -209,9 +211,9 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "ultrafast".to_string(),
+                    "fast".to_string(), // Better quality than ultrafast
                     "-crf".to_string(),
-                    "24".to_string(),
+                    "22".to_string(), // Better quality (lower = better)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
@@ -454,19 +456,21 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                 "-c:v".to_string(),
                 "libvpx-vp9".to_string(),
                 "-crf".to_string(),
-                "28".to_string(), // High quality (balanced)
+                "24".to_string(), // Better quality
                 "-b:v".to_string(),
                 "0".to_string(),
                 "-pix_fmt".to_string(),
                 "yuva420p".to_string(), // With Alpha
                 "-deadline".to_string(),
-                "realtime".to_string(),
+                "good".to_string(), // Better quality
                 "-cpu-used".to_string(),
-                "5".to_string(), // Faster encoding
+                "4".to_string(), // Balance quality/speed
+                "-row-mt".to_string(),
+                "1".to_string(), // Parallel encoding
             ]);
         }
         "gif" => {
-            let gif_filter = format!("{},fps=15,split[s0][s1];[s0]palettegen=max_colors=128:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3", scale_filter);
+            let gif_filter = format!("{},fps=15,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=floyd_steinberg", scale_filter);
             args.extend(vec![
                 "-vf".to_string(),
                 gif_filter,

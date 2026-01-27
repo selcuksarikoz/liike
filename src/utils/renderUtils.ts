@@ -1,4 +1,3 @@
-import { flushSync } from 'react-dom';
 import { useTimelineStore } from '../store/timelineStore';
 import { useRenderStore, type ExportFormat, type TextPosition } from '../store/renderStore';
 import { downloadDir, join } from '@tauri-apps/api/path';
@@ -13,11 +12,9 @@ import {
   type DeviceAnimationType,
 } from '../constants/layoutAnimationPresets';
 
-// Seek timeline synchronously
+// Seek timeline - no flushSync needed, animations are calculated directly from store
 export const seekTimeline = (timeMs: number) => {
-  flushSync(() => {
-    useTimelineStore.getState().setPlayhead(timeMs);
-  });
+  useTimelineStore.getState().setPlayhead(timeMs);
 };
 
 // Pause/seek Web Animations API animations
@@ -90,15 +87,10 @@ export const pauseAndSeekVideos = async (node: HTMLElement, timeMs: number): Pro
   await Promise.all(seekPromises);
 };
 
-// Wait for DOM update (minimal wait for speed)
-export const waitForRender = (ms = 16) =>
-  new Promise<void>((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setTimeout(resolve, ms);
-      });
-    });
-  });
+// Wait for browser to process (optimized for speed)
+// Uses setTimeout only - RAF not needed since animations are calculated explicitly
+export const waitForRender = (ms = 0) =>
+  ms > 0 ? new Promise<void>((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
 
 // Get Liike export folder
 export const getExportFolder = async (): Promise<string> => {
@@ -130,8 +122,61 @@ export const getFileExtension = (format: ExportFormat): string => {
   }
 };
 
-// Image Cache: URL -> DataURL
+// Image Cache: URL -> DataURL (optimized for export resolution)
 const imageCache = new Map<string, string>();
+
+// Max dimension for cached images (matches 4K export)
+const MAX_IMAGE_DIMENSION = 2160;
+
+// Optimize image: resize to max dimension and compress
+const optimizeImage = async (blob: Blob, maxDim: number = MAX_IMAGE_DIMENSION): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      // Calculate new dimensions maintaining aspect ratio
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height / width) * maxDim);
+          width = maxDim;
+        } else {
+          width = Math.round((width / height) * maxDim);
+          height = maxDim;
+        }
+      }
+
+      // Draw to canvas at optimized size
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Use WebP for best compression, fallback to JPEG
+      // Quality 0.92 is visually lossless for most images
+      const dataUrl = canvas.toDataURL('image/webp', 0.92);
+      if (dataUrl.startsWith('data:image/webp')) {
+        resolve(dataUrl);
+      } else {
+        // Browser doesn't support WebP, use JPEG
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load image for optimization'));
+    };
+
+    img.src = url;
+  });
+};
 
 // Animation-related CSS properties that should be preserved from inline styles
 const ANIMATION_PROPERTIES = [
@@ -143,19 +188,20 @@ const ANIMATION_PROPERTIES = [
   'will-change',
 ];
 
-// Helper: Inline computed styles from source to clone
-// Preserves inline animation styles (opacity, transform, filter) set by React
-const inlineStyles = async (source: HTMLElement, clone: HTMLElement) => {
+// Helper: Inline computed styles from source to clone (optimized)
+// Uses array join instead of reduce for O(n) instead of O(n²) string building
+const inlineStyles = (source: HTMLElement, clone: HTMLElement) => {
   const sourceStyles = window.getComputedStyle(source);
 
-  // Start with computed styles
-  const cssText = Array.from(sourceStyles).reduce((css, prop) => {
-    return `${css}${prop}:${sourceStyles.getPropertyValue(prop)};`;
-  }, '');
-  clone.style.cssText = cssText;
+  // Build CSS text using array (O(n) instead of O(n²) with string concat)
+  const props = [];
+  for (let i = 0; i < sourceStyles.length; i++) {
+    const prop = sourceStyles[i];
+    props.push(`${prop}:${sourceStyles.getPropertyValue(prop)}`);
+  }
+  clone.style.cssText = props.join(';');
 
   // Override with explicit inline styles for animation properties
-  // These are set by React for text/device animations and must be preserved
   for (const prop of ANIMATION_PROPERTIES) {
     const inlineValue = source.style.getPropertyValue(prop);
     if (inlineValue) {
@@ -163,35 +209,45 @@ const inlineStyles = async (source: HTMLElement, clone: HTMLElement) => {
     }
   }
 
-  // Recursively process children
+  // Recursively process children (synchronous for speed)
   const sourceChildren = source.children;
   const cloneChildren = clone.children;
   for (let i = 0; i < sourceChildren.length; i++) {
     if (sourceChildren[i] instanceof HTMLElement && cloneChildren[i] instanceof HTMLElement) {
-      await inlineStyles(sourceChildren[i] as HTMLElement, cloneChildren[i] as HTMLElement);
+      inlineStyles(sourceChildren[i] as HTMLElement, cloneChildren[i] as HTMLElement);
     }
   }
 };
 
-// Helper: Fetch and convert URL to DataURL with caching
+// Helper: Fetch and convert URL to DataURL with caching + optimization
 const getCachedDataUrl = async (url: string): Promise<string> => {
   if (imageCache.has(url)) return imageCache.get(url)!;
 
   try {
     const response = await fetch(url);
     const blob = await response.blob();
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-    
-    // Pre-decode
+
+    // Optimize large images (> 500KB) to reduce memory during export
+    let dataUrl: string;
+    if (blob.size > 500 * 1024) {
+      console.log(`[StreamRender] Optimizing large image: ${(blob.size / 1024 / 1024).toFixed(1)}MB -> max ${MAX_IMAGE_DIMENSION}px`);
+      dataUrl = await optimizeImage(blob);
+      console.log(`[StreamRender] Optimized to: ${(dataUrl.length / 1024 / 1024).toFixed(1)}MB`);
+    } else {
+      // Small images: just convert to dataURL
+      dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    // Pre-decode for faster rendering
     const img = new Image();
     img.src = dataUrl;
     try { await img.decode(); } catch {}
-    
+
     imageCache.set(url, dataUrl);
     return dataUrl;
   } catch (e) {
@@ -436,7 +492,7 @@ export const nodeToSvgDataUrl = async (
   skipElements.forEach((el) => el.remove());
 
   // Inline all computed styles for the clone
-  await inlineStyles(node, clone);
+  inlineStyles(node, clone);
 
   // Fix potential layout shifts in SVG
   clone.style.margin = '0';
@@ -473,6 +529,51 @@ export const nodeToSvgDataUrl = async (
       .join(' ');
     deviceAnimElement.style.transform = transforms || 'none';
     deviceAnimElement.style.opacity = String(baseOpacity * deviceOpacity);
+  }
+
+  // Apply text animation explicitly (React state-based animations need manual application)
+  const { textOverlay, durationMs, animationSpeed } = useRenderStore.getState();
+  const { playheadMs } = useTimelineStore.getState();
+
+  if (textOverlay.enabled && textOverlay.animation && textOverlay.animation !== 'none') {
+    const textSpeedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1;
+    const textStartDelay = 300 / textSpeedMultiplier;
+    const textAnimDuration = ((durationMs || 3000) * 0.3) / textSpeedMultiplier;
+    const staggerDelay = textStartDelay + ((durationMs || 3000) * 0.15) / textSpeedMultiplier;
+
+    // Calculate headline progress
+    const headlineDelayed = Math.max(0, playheadMs - textStartDelay);
+    const headlineProgress = headlineDelayed === 0 ? 0 : Math.min(1, headlineDelayed / textAnimDuration);
+
+    // Calculate tagline progress (staggered)
+    const taglineDelayed = Math.max(0, playheadMs - staggerDelay);
+    const taglineProgress = Math.min(1, taglineDelayed / textAnimDuration);
+
+    // Get animation styles
+    const headlineAnim = generateTextKeyframes(textOverlay.animation as TextAnimationType, headlineProgress);
+    const taglineAnim = generateTextKeyframes(textOverlay.animation as TextAnimationType, taglineProgress);
+
+    // Find text elements in clone (they are direct children of the text overlay container)
+    // Text overlay container has pointerEvents: 'none' and zIndex: 50
+    const textContainer = clone.querySelector('[style*="pointer-events: none"][style*="z-index: 50"]') as HTMLElement | null;
+    if (textContainer) {
+      const textElements = textContainer.children;
+      // First child is headline, second is tagline
+      if (textElements[0]) {
+        const headlineEl = textElements[0] as HTMLElement;
+        headlineEl.style.opacity = String(headlineAnim.opacity);
+        headlineEl.style.transform = headlineAnim.transform;
+        if (headlineAnim.filter) headlineEl.style.filter = headlineAnim.filter;
+        if (headlineAnim.clipPath) headlineEl.style.clipPath = headlineAnim.clipPath;
+      }
+      if (textElements[1]) {
+        const taglineEl = textElements[1] as HTMLElement;
+        taglineEl.style.opacity = String(taglineAnim.opacity * 0.9);
+        taglineEl.style.transform = taglineAnim.transform;
+        if (taglineAnim.filter) taglineEl.style.filter = taglineAnim.filter;
+        if (taglineAnim.clipPath) taglineEl.style.clipPath = taglineAnim.clipPath;
+      }
+    }
   }
 
   // Convert images to data URLs (using cache)
@@ -944,6 +1045,10 @@ export const captureFrame = async (
   const displayToOutputScale = outputWidth / nodeRect.width;
   captureVideoFrames(node, ctx, nodeRect, displayToOutputScale, 0, 0);
   ctx.restore();
+
+  // Render text overlay AFTER videos so text appears on top
+  // This ensures z-index is respected even when videos are present
+  renderTextOverlay(ctx, outputWidth, outputHeight, scale, _durationMs, _playheadMs);
 
   // Get raw RGBA pixel data
   const imageData = ctx.getImageData(0, 0, outputWidth, outputHeight);
