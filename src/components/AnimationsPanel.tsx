@@ -179,11 +179,10 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
   const layoutPresets = LAYOUT_PRESETS.filter((p) => p.category !== 'text');
   const textPresets = LAYOUT_PRESETS.filter((p) => p.category === 'text');
 
-  const singlePresets = layoutPresets.filter(
-    (p) => !p.id.startsWith('duo-') && !p.id.startsWith('trio-')
-  );
-  const dualPresets = layoutPresets.filter((p) => p.id.startsWith('duo-'));
-  const trioPresets = layoutPresets.filter((p) => p.id.startsWith('trio-'));
+  // Use the same generic presets for all layouts, as requested
+  const singlePresets = layoutPresets;
+  const dualPresets = layoutPresets;
+  const trioPresets = layoutPresets;
   const favoritePresets = LAYOUT_PRESETS.filter((p) => isFavorite(p.id));
 
   return (

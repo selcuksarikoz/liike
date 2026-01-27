@@ -22,7 +22,13 @@ export type TextAnimationType =
   | 'blur-reveal'
   | 'expand-letter'
   | 'strobe'
-  | 'float-drift';
+  | 'float-drift'
+  // Apple Style
+  | 'apple-reveal'
+  | 'hero-text'
+  | 'gradient-flow'
+  | 'dynamic-island'
+  | 'cinematic-fade';
 
 export type AnimationSpeed = 'slow' | 'normal' | 'fast';
 
@@ -55,34 +61,44 @@ export type TextAnimationConfig = {
   id: TextAnimationType;
   name: string;
   icon: string;
+  category?: 'basic' | 'premium' | 'apple';
 };
 
 export const TEXT_ANIMATIONS: TextAnimationConfig[] = [
-  { id: 'fade', name: 'Fade', icon: '✨' },
-  { id: 'slide-up', name: 'Slide Up', icon: '⬆️' },
-  { id: 'slide-down', name: 'Slide Down', icon: '⬇️' },
-  { id: 'scale', name: 'Scale', icon: '🔍' },
-  { id: 'blur', name: 'Blur', icon: '👁️' },
-  { id: 'bounce', name: 'Bounce', icon: '🏀' },
-  { id: 'typewriter', name: 'Typewriter', icon: '⌨️' },
-  { id: 'glitch', name: 'Glitch', icon: '📺' },
-  { id: 'wave', name: 'Wave', icon: '🌊' },
-  { id: 'flip', name: 'Flip', icon: '🔄' },
-  { id: 'zoom-blur', name: 'Zoom Blur', icon: '💨' },
-  { id: 'elastic', name: 'Elastic', icon: '🎯' },
-  { id: 'shimmer', name: 'Shimmer', icon: '✨' },
-  { id: 'glitch-rgb', name: 'RGB Glitch', icon: '🌈' },
-  { id: 'reveal-split', name: 'Reveal Split', icon: '✂️' },
-  { id: 'mask-reveal', name: 'Mask Reveal', icon: '🎭' },
-  { id: 'perspective-3d', name: '3D Perspective', icon: '🧊' },
-  { id: 'blur-reveal', name: 'Blur Reveal', icon: '🌫️' },
-  { id: 'expand-letter', name: 'Expand Letter', icon: '↔️' },
-  { id: 'strobe', name: 'Strobe', icon: '📸' },
-  { id: 'float-drift', name: 'Float Drift', icon: '🎈' },
+  // Apple / Premium
+  { id: 'apple-reveal', name: 'Apple Reveal', icon: '🍎', category: 'apple' },
+  { id: 'hero-text', name: 'Hero Text', icon: '⭐', category: 'apple' },
+  { id: 'gradient-flow', name: 'Gradient Flow', icon: '🌈', category: 'apple' },
+  { id: 'cinematic-fade', name: 'Cinematic', icon: '🎬', category: 'apple' },
+  
+  // Clean / Modern
+  { id: 'slide-up', name: 'Slide Up', icon: '⬆️', category: 'basic' },
+  { id: 'blur-reveal', name: 'Blur Reveal', icon: '🌫️', category: 'premium' },
+  { id: 'mask-reveal', name: 'Mask Reveal', icon: '🎭', category: 'premium' },
+  { id: 'typewriter', name: 'Typewriter', icon: '⌨️', category: 'basic' },
+  
+  // Dynamic
+  { id: 'bounce', name: 'Bounce', icon: '🏀', category: 'basic' },
+  { id: 'elastic', name: 'Elastic', icon: '🎯', category: 'basic' },
+  { id: 'wave', name: 'Wave', icon: '🌊', category: 'basic' },
+  { id: 'glitch', name: 'Glitch', icon: '📺', category: 'premium' },
+  
+  // 3D / FX
+  { id: 'perspective-3d', name: '3D Perspective', icon: '🧊', category: 'premium' },
+  { id: 'zoom-blur', name: 'Zoom Blur', icon: '💨', category: 'premium' },
+  { id: 'shimmer', name: 'Shimmer', icon: '✨', category: 'premium' },
+  { id: 'expand-letter', name: 'Expand', icon: '↔️', category: 'basic' },
 ];
 
 // Easing functions
 const easeOutCubic = (p: number) => 1 - Math.pow(1 - p, 3);
+const easeOutQuart = (p: number) => 1 - Math.pow(1 - p, 4);
+const easeOutExpo = (x: number): number => (x === 1 ? 1 : 1 - Math.pow(2, -10 * x));
+const easeOutBack = (x: number): number => {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+};
 const easeOutElastic = (p: number) => {
   if (p === 0 || p === 1) return p;
   return Math.pow(2, -10 * p) * Math.sin((p * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1;
@@ -98,11 +114,50 @@ const easeOutBounce = (p: number) => {
 export const generateTextKeyframes = (
   type: TextAnimationType,
   progress: number
-): { opacity: number; transform: string; filter?: string; clipPath?: string; letterSpacing?: string } => {
+): { opacity: number; transform: string; filter?: string; clipPath?: string; letterSpacing?: string; backgroundPosition?: string; backgroundImage?: string; color?: string; backgroundClip?: string; WebkitBackgroundClip?: string; } => {
   const p = Math.min(1, Math.max(0, progress));
   const ease = easeOutCubic(p);
+  const easeExpo = easeOutExpo(p);
+  const easeQuart = easeOutQuart(p);
 
   switch (type) {
+    // --- APPLE STYLE ANIMATIONS ---
+    case 'apple-reveal':
+      return {
+        opacity: easeQuart,
+        transform: `translateY(${(1 - easeQuart) * 40}px) scale(${0.95 + easeQuart * 0.05})`,
+        filter: `blur(${(1 - easeQuart) * 10}px)`,
+        letterSpacing: `${(1 - easeQuart) * -1}px`, // Slight expansion
+      };
+      
+    case 'hero-text':
+      // Big, bold entrance typical of product reveals
+      return {
+        opacity: easeExpo,
+        transform: `scale(${1.1 - easeExpo * 0.1}) translateY(${(1 - easeExpo) * 20}px)`,
+        filter: `blur(${(1 - easeExpo) * 4}px)`,
+      };
+
+    case 'gradient-flow':
+      // Requires text to have background-clip: text typically, mimicking here with standard Props
+      // Note: Full gradient flow requires CSS keyframes usually, here we animate opacity/transform
+      // and assume the component handles the gradient class.
+      return {
+        opacity: ease,
+        transform: `translateY(${(1 - ease) * 10}px)`,
+        filter: `brightness(${0.8 + ease * 0.4}) saturate(${ease * 1.2})`, // enhancing colors
+      };
+
+    case 'cinematic-fade':
+      // Slow, luxurious fade in
+      return {
+        opacity: p < 0.2 ? p * 5 : 1, // fast fade in
+        transform: `translateY(${(1 - easeQuart) * 15}px)`,
+        letterSpacing: `${(1 - easeQuart) * 2}px`, // expanding spacing
+        filter: `blur(${(1 - p) * 4}px)`,
+      };
+
+    // --- STANDARD ANIMATIONS ---
     case 'fade':
       return {
         opacity: ease,
