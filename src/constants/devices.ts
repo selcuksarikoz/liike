@@ -1,3 +1,8 @@
+export type ScreenConfig = {
+  padding: string; // css shorthand like "3%" or "3% 4% 5% 4%" (top right bottom left)
+  radius: string; // px or %
+};
+
 export type DeviceConfig = {
   id: string;
   name: string;
@@ -6,32 +11,10 @@ export type DeviceConfig = {
   width: number; // Base width in px for scaling
   aspectRatio: number | string; // Container aspect ratio (width/height)
   screen: {
-    padding: string; // css shorthand like "3%" or "3% 4% 5% 4%" (top right bottom left)
-    radius: string; // px or %
+    single: ScreenConfig;
+    duo: ScreenConfig;
+    trio: ScreenConfig;
   };
-};
-
-const PRESETS = {
-  iphone: {
-    portrait: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-    landscape: { padding: '4.5% 3% 3% 4.5%', radius: '45px' },
-  },
-  ipad: {
-    portrait: { padding: '5%', radius: '16px' },
-    landscape: { padding: '5%', radius: '16px' },
-  },
-  macbook: {
-    default: { padding: '10% 10% 10% 10%', radius: '8px' },
-    pro14: { padding: '11%', radius: '20px' },
-    pro13: { padding: '12%', radius: '8px' },
-  },
-  imac: {
-    default: { padding: '4% 1% 20% 1%', radius: '20px' } // Large chin
-  },
-  watch: {
-    default: { padding: '18% 15% 18% 15%', radius: '22%' },
-    s8: { padding: '20% 13% 20% 13%', radius: '22%' },
-  }
 };
 
 // ==========================================
@@ -77,7 +60,6 @@ import watchUltra from '../assets/devices/apple-watch-ultra.webp';
 import watchS8 from '../assets/devices/apple-watch-s8-midnight.webp';
 import watchS8_1 from '../assets/devices/apple-watch-s8-midnight-1.webp';
 
-
 export const DEVICES: DeviceConfig[] = [
   // --- iPhone 17 Pro ---
   {
@@ -87,25 +69,37 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone17pro,
     width: 390,
     aspectRatio: 370/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
-   {
+  {
     id: 'iphone-17-pro-1',
     name: 'iPhone 17 Pro (Var 1)',
     type: 'phone',
     image: iphone17pro1,
     width: 390,
     aspectRatio: 370/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
-   {
+  {
     id: 'iphone-17-pro-2',
     name: 'iPhone 17 Pro (Var 2)',
     type: 'phone',
     image: iphone17pro2,
     width: 390,
     aspectRatio: 370/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
 
   // --- iPhone 16 Pro ---
@@ -116,7 +110,11 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro,
     width: 390,
     aspectRatio: 370/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
   {
     id: 'iphone-16-pro-1',
@@ -125,7 +123,11 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro1,
     width: 390,
     aspectRatio: 370/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
   {
     id: 'iphone-16-pro-2',
@@ -134,7 +136,11 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone16pro2,
     width: 390,
     aspectRatio: 370/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
 
   // --- iPhone 14 ---
@@ -145,25 +151,37 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone14midnight,
     width: 390,
     aspectRatio: 390/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
-   {
+  {
     id: 'iphone-14-midnight-1',
     name: 'iPhone 14 Midnight (Var 1)',
     type: 'phone',
     image: iphone14midnight1,
     width: 390,
     aspectRatio: 390/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
-   {
+  {
     id: 'iphone-14-midnight-2',
     name: 'iPhone 14 Midnight (Var 2)',
     type: 'phone',
     image: iphone14midnight2,
     width: 390,
     aspectRatio: 390/800,
-    screen: PRESETS.iphone.portrait
+    screen: {
+      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+    }
   },
 
   // --- iPhone 13 Pro ---
@@ -174,7 +192,11 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13proPortrait,
     width: 390,
     aspectRatio: 370/800,
-    screen: { padding: '7% 4% 7% 4%', radius: '40px' }
+    screen: {
+      single: { padding: '7% 4% 7% 4%', radius: '40px' },
+      duo: { padding: '7% 4% 7% 4%', radius: '40px' },
+      trio: { padding: '7% 4% 7% 4%', radius: '40px' },
+    }
   },
   {
     id: 'iphone-13-pro-l',
@@ -183,7 +205,11 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13proLandscape,
     width: 800,
     aspectRatio: 800/370,
-    screen: { padding: '8% 3% 8% 3%', radius: '60px' }
+    screen: {
+      single: { padding: '8% 3% 8% 3%', radius: '60px' },
+      duo: { padding: '30% 2% 30% 2%', radius: '20px' },
+      trio: { padding: '37% 3% 37% 3%', radius: '20px' },
+    }
   },
 
   // --- iPhone 13 Mini ---
@@ -194,7 +220,11 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13miniPortrait,
     width: 360,
     aspectRatio: 345/780,
-    screen: { padding: '9% 3.5% 9% 3.5%', radius: '40px' }
+    screen: {
+      single: { padding: '9% 3.5% 9% 3.5%', radius: '40px' },
+      duo: { padding: '9% 3.5% 9% 3.5%', radius: '40px' },
+      trio: { padding: '9% 3.5% 9% 3.5%', radius: '40px' },
+    }
   },
   {
     id: 'iphone-13-mini-l',
@@ -203,7 +233,11 @@ export const DEVICES: DeviceConfig[] = [
     image: iphone13miniLandscape,
     width: 780,
     aspectRatio: 780/345,
-    screen: { padding: '8% 3% 8% 3%', radius: '60px' }
+    screen: {
+      single: { padding: '8% 3% 8% 3%', radius: '60px' },
+      duo: { padding: '30% 2% 30% 2%', radius: '20px' },
+      trio: { padding: '37% 3% 37% 3%', radius: '20px' },
+    }
   },
 
   // --- iPads ---
@@ -214,7 +248,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadPro12Portrait,
     width: 600,
     aspectRatio: 575/800,
-    screen: PRESETS.ipad.portrait
+    screen: {
+      single: { padding: '5%', radius: '16px' },
+      duo: { padding: '5%', radius: '16px' },
+      trio: { padding: '14% 5% 14% 5%', radius: '16px' },
+    }
   },
   {
     id: 'ipad-pro-12-l',
@@ -223,7 +261,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadPro12Landscape,
     width: 700,
     aspectRatio: 800/575,
-    screen: PRESETS.ipad.landscape
+    screen: {
+      single: { padding: '5%', radius: '16px' },
+      duo: { padding: '19% 2% 19% 2%', radius: '16px' },
+      trio: { padding: '29% 2% 29% 2%', radius: '16px' },
+    }
   },
   {
     id: 'ipad-pro-11-p',
@@ -232,7 +274,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadPro11Portrait,
     width: 550,
     aspectRatio: 560/800, 
-    screen: PRESETS.ipad.portrait
+    screen: {
+      single: { padding: '5%', radius: '16px' },
+      duo: { padding: '5%', radius: '16px' },
+      trio: { padding: '14% 5% 14% 5%', radius: '8px' },
+    }
   },
   {
     id: 'ipad-pro-11-l',
@@ -241,7 +287,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadPro11Landscape,
     width: 650,
     aspectRatio: 800/560,
-    screen: PRESETS.ipad.landscape
+    screen: {
+      single: { padding: '5%', radius: '16px' },
+      duo: { padding: '19% 2% 19% 2%', radius: '20px' },
+      trio: { padding: '29% 2% 29% 2%', radius: '16px' },
+    }
   },
   {
     id: 'ipad-air-p',
@@ -250,7 +300,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadAirPortrait,
     width: 550,
     aspectRatio: 560/800, 
-    screen: PRESETS.ipad.portrait
+    screen: {
+      single: { padding: '5%', radius: '16px' },
+      duo: { padding: '5%', radius: '16px' },
+      trio: { padding: '14% 5% 14% 5%', radius: '16px' },
+    }
   },
    {
     id: 'ipad-air-l',
@@ -259,7 +313,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadAirLandscape,
     width: 650,
     aspectRatio: 800/560, 
-    screen: PRESETS.ipad.landscape
+    screen: {
+      single: { padding: '5%', radius: '16px' },
+      duo: { padding: '20% 2% 20% 2%', radius: '20px' },
+      trio: { padding: '29% 2% 29% 2%', radius: '16px' },
+    }
   },
   {
     id: 'ipad-mini-p',
@@ -268,7 +326,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadMiniPortrait,
     width: 420,
     aspectRatio: 540/800,
-    screen: PRESETS.ipad.portrait
+    screen: {
+      single: { padding: '5%', radius: '16px' },
+      duo: { padding: '5%', radius: '16px' },
+      trio: { padding: '14% 5% 14% 5%', radius: '16px' },
+    }
   },
   {
     id: 'ipad-mini-l',
@@ -277,7 +339,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadMiniLandscape,
     width: 500,
     aspectRatio: 800/540,
-    screen: PRESETS.ipad.landscape
+    screen: {
+      single: { padding: '5%', radius: '16px' },
+      duo: { padding: '21% 2% 21% 2%', radius: '20px' },
+      trio: { padding: '29% 2% 29% 2%', radius: '16px' },
+    }
   },
   {
     id: 'ipad-base-p',
@@ -286,7 +352,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadBasePortrait,
     width: 540,
     aspectRatio: 3/4,
-    screen: { padding: '5%', radius: '12px' }
+    screen: {
+      single: { padding: '5%', radius: '12px' },
+      duo: { padding: '5%', radius: '12px' },
+      trio: { padding: '5%', radius: '12px' },
+    }
   },
   {
     id: 'ipad-base-l',
@@ -295,7 +365,11 @@ export const DEVICES: DeviceConfig[] = [
     image: ipadBaseLandscape,
     width: 640,
     aspectRatio: 4/3,
-    screen: { padding: '5%', radius: '12px' }
+    screen: {
+      single: { padding: '5%', radius: '12px' },
+      duo: { padding: '21% 2% 21% 2%', radius: '20px' },
+      trio: { padding: '5%', radius: '12px' },
+    }
   },
 
   // --- Macs ---
@@ -306,7 +380,11 @@ export const DEVICES: DeviceConfig[] = [
     image: macbookPro16,
     width: 1200,
     aspectRatio: 1.5,
-    screen: PRESETS.macbook.default
+    screen: {
+      single: { padding: '10% 10% 10% 10%', radius: '8px' },
+      duo: { padding: '27% 9.5% 23% 9.5%', radius: '8px' },
+      trio: { padding: '35% 9.5% 34% 9.5%', radius: '8px' },
+    }
   },
    {
     id: 'macbook-pro-14',
@@ -315,7 +393,11 @@ export const DEVICES: DeviceConfig[] = [
     image: macbookPro14,
     width: 1200,
     aspectRatio: 1.5,
-    screen: PRESETS.macbook.pro14
+    screen: {
+      single: { padding: '11%', radius: '20px' },
+      duo: { padding: '28% 11% 23% 11%', radius: '8px' },
+      trio: { padding: '35.5% 11% 35% 11%', radius: '8px' },
+    }
   },
   {
     id: 'macbook-air-13',
@@ -324,7 +406,11 @@ export const DEVICES: DeviceConfig[] = [
     image: macbookAir13,
     width: 700,
     aspectRatio: 1.5,
-    screen: PRESETS.macbook.pro13
+    screen: {
+      single: { padding: '12%', radius: '8px' },
+      duo: { padding: '26% 12% 27% 12%', radius: '8px' },
+      trio: { padding: '35.5% 11% 35% 11%', radius: '8px' },
+    }
   },
   {
     id: 'imac-24',
@@ -333,7 +419,11 @@ export const DEVICES: DeviceConfig[] = [
     image: imac24,
     width: 900,
     aspectRatio: 1.15,
-    screen: PRESETS.imac.default
+    screen: {
+      single: { padding: '4% 1% 20% 1%', radius: '20px' },
+      duo: { padding: '14% 1% 30% 1%', radius: '20px' },
+      trio: { padding: '27% 0.5% 38% 0.5%', radius: '10px' },
+    }
   },
   {
     id: 'imac-27',
@@ -342,7 +432,11 @@ export const DEVICES: DeviceConfig[] = [
     image: imac27,
     width: 800,
     aspectRatio: 1.15,
-    screen: PRESETS.imac.default
+    screen: {
+      single: { padding: '4% 1% 20% 1%', radius: '20px' },
+      duo: { padding: '16% 1% 30% 1%', radius: '20px' },
+      trio: { padding: '29% 0.5% 38% 0.5%', radius: '10px' },
+    }
   },
 
   // --- Watches ---
@@ -353,7 +447,11 @@ export const DEVICES: DeviceConfig[] = [
     image: watchUltra,
     width: 320,
     aspectRatio: 0.52,
-    screen: PRESETS.watch.default
+    screen: {
+      single: { padding: '18% 15% 18% 15%', radius: '22%' },
+      duo: { padding: '18% 15% 18% 15%', radius: '22%' },
+      trio: { padding: '18% 15% 18% 15%', radius: '22%' },
+    }
   },
   {
     id: 'watch-s8',
@@ -362,7 +460,11 @@ export const DEVICES: DeviceConfig[] = [
     image: watchS8,
     width: 300,
     aspectRatio: 0.54,
-    screen: PRESETS.watch.s8
+    screen: {
+      single: { padding: '20% 13% 20% 13%', radius: '22%' },
+      duo: { padding: '20% 13% 20% 13%', radius: '22%' },
+      trio: { padding: '20% 13% 20% 13%', radius: '22%' },
+    }
   },
   {
     id: 'watch-s8-1',
@@ -371,7 +473,11 @@ export const DEVICES: DeviceConfig[] = [
     image: watchS8_1,
     width: 300,
     aspectRatio: 0.54,
-    screen: PRESETS.watch.s8
+    screen: {
+      single: { padding: '20% 13% 20% 13%', radius: '22%' },
+      duo: { padding: '20% 13% 20% 13%', radius: '22%' },
+      trio: { padding: '20% 13% 20% 13%', radius: '22%' },
+    }
   }
 ];
 

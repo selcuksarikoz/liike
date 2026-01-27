@@ -123,17 +123,71 @@ const DeviceRendererComponent = ({
   // No corner radius when in device mode
   const effectiveCornerRadius = frameMode === 'device' ? 0 : cornerRadius;
 
+  // Automatic scale adjustment based on layout to prevent overflow
+  const getLayoutScaleFactor = (layoutName: string): number => {
+    switch (layoutName) {
+      case 'trio-row':
+      case 'trio-column':
+      case 'fan':
+      case 'masonry':
+      case 'mosaic':
+      case 'film-strip':
+      case 'spotlight':
+      case 'asymmetric':
+        return 0.85; // More breathing room for 3+ items
+      case 'side-by-side':
+      case 'stacked':
+      case 'diagonal':
+      case 'polaroid':
+        return 0.92; // Slight adjustment for 2 items
+      default:
+        return 1;
+    }
+  };
+
+  const layoutScaleFactor = getLayoutScaleFactor(layout);
+
+  // Determine layout mode for device screen config
+  const getLayoutMode = (layoutName: string): 'single' | 'duo' | 'trio' => {
+    switch (layoutName) {
+      case 'trio-row':
+      case 'trio-column':
+      case 'fan':
+      case 'masonry':
+      case 'mosaic':
+      case 'film-strip':
+      case 'spotlight':
+      case 'asymmetric':
+        return 'trio';
+      case 'side-by-side':
+      case 'stacked':
+      case 'diagonal':
+      case 'polaroid':
+        return 'duo';
+      default:
+        return 'single';
+    }
+  };
+
+  const layoutMode = getLayoutMode(layout);
+
   // Helper to wrap content in device mockup if enabled
   const renderWithMockup = (content: React.ReactNode, key?: number | string) => {
     if (frameMode === 'device' && deviceType) {
       const config =
         DEVICES.find((d) => d.id === deviceType) || DEVICES.find((d) => d.id === 'iphone-16-pro');
 
-      const type = config?.type;
-      const deviceScale = scale; // Use direct scale, GenericDeviceMockup will handle containment
+      // Apple the layout-specific scale factor to the user's scale
+      // This ensures devices fit nicely by default in complex layouts
+      const effectiveScale = (scale || 1) * layoutScaleFactor;
 
       return (
-        <GenericDeviceMockup key={key} config={config} scale={isPreview ? 0.2 : deviceScale}>
+        <GenericDeviceMockup
+          key={key}
+          config={config}
+          scale={isPreview ? 0.2 : effectiveScale}
+          layoutMode={layoutMode}
+        >
           {content}
         </GenericDeviceMockup>
       );

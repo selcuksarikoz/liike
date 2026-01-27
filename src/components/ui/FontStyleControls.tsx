@@ -4,7 +4,6 @@ import { useRenderStore, type TextPosition } from '../../store/renderStore';
 import { loadGoogleFont } from '../../hooks/useFontLoader';
 import { SidebarHeader, ControlGroup } from './SidebarPrimitives';
 import { SliderControl } from './SliderControl';
-import { PositionPicker } from './PositionPicker';
 import { FONT_OPTIONS } from '../../constants/ui';
 
 export const FontStyleControls = () => {
@@ -193,17 +192,6 @@ export const FontStyleControls = () => {
             </>
           )}
         </ControlGroup>
-      </div>
-
-      {/* Text Position */}
-      <div>
-        <SidebarHeader icon={<Type className="w-4 h-4" />}>Text Position</SidebarHeader>
-        <PositionPicker
-          value={textOverlay.position}
-          onChange={(pos) => setTextOverlay({ position: pos as TextPosition })}
-          type="text"
-          size="sm"
-        />
       </div>
     </>
   );

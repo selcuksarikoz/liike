@@ -5,9 +5,15 @@ export type DeviceMockupProps = {
   children: React.ReactNode;
   scale?: number;
   config?: DeviceConfig;
+  layoutMode?: 'single' | 'duo' | 'trio';
 };
 
-export const GenericDeviceMockup = ({ children, scale = 1, config }: DeviceMockupProps) => {
+export const GenericDeviceMockup = ({
+  children,
+  scale = 1,
+  config,
+  layoutMode = 'single',
+}: DeviceMockupProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   // Check if already preloaded on mount
@@ -18,6 +24,8 @@ export const GenericDeviceMockup = ({ children, scale = 1, config }: DeviceMocku
   }, [config]);
 
   if (!config) return <>{children}</>;
+
+  const screenConfig = config.screen[layoutMode] || config.screen.single;
 
   return (
     <div
@@ -55,8 +63,8 @@ export const GenericDeviceMockup = ({ children, scale = 1, config }: DeviceMocku
         <div
           className="absolute z-10 overflow-hidden bg-black"
           style={{
-            inset: config.screen?.padding || '0%',
-            borderRadius: config.screen?.radius || '0px',
+            inset: screenConfig.padding,
+            borderRadius: screenConfig.radius,
           }}
         >
           <div className="w-full h-full flex items-center justify-center">{children}</div>
