@@ -2,7 +2,11 @@ import { useTimelineStore } from '../store/timelineStore';
 import { useRenderStore, type ExportFormat, type TextPosition } from '../store/renderStore';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { mkdir } from '@tauri-apps/plugin-fs';
-import { getEmbeddedFontCSS, loadFontsForExport, fetchGoogleFontCSS } from '../services/fontService';
+import {
+  getEmbeddedFontCSS,
+  loadFontsForExport,
+  fetchGoogleFontCSS,
+} from '../services/fontService';
 import {
   generateTextKeyframes,
   generateDeviceKeyframes,
@@ -38,48 +42,48 @@ export const pauseAndSeekAnimations = (node: HTMLElement, timeMs: number) => {
 // Pause/seek HTML5 Video elements and wait for seek to complete
 export const pauseAndSeekVideos = async (node: HTMLElement, timeMs: number): Promise<void> => {
   const videos = node.querySelectorAll('video');
+  if (videos.length === 0) return;
+
   const seconds = timeMs / 1000;
 
   const seekPromises = Array.from(videos).map((video) => {
     return new Promise<void>((resolve) => {
       video.pause();
 
-      // If already at target time and has data, resolve immediately
-      if (Math.abs(video.currentTime - seconds) < 0.02 && video.readyState >= 2) {
+      // If already at target time and has data, resolve immediately (more tolerance)
+      if (Math.abs(video.currentTime - seconds) < 0.05 && video.readyState >= 2) {
         resolve();
         return;
       }
 
-      // Wait for video to have enough data before seeking
-      const doSeek = () => {
+      // Video ready - just seek
+      if (video.readyState >= 2) {
         const onSeeked = () => {
           video.removeEventListener('seeked', onSeeked);
-          // Wait for frame to actually render
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => resolve());
-          });
+          resolve();
         };
 
-        // Timeout fallback
+        // Timeout fallback (reduced from 1000ms)
         const timeout = setTimeout(() => {
           video.removeEventListener('seeked', onSeeked);
           resolve();
-        }, 1000);
+        }, 200);
 
         video.addEventListener('seeked', () => clearTimeout(timeout), { once: true });
         video.addEventListener('seeked', onSeeked, { once: true });
         video.currentTime = seconds;
-      };
-
-      // Ensure video has enough data to seek
-      if (video.readyState >= 2) {
-        doSeek();
       } else {
-        video.addEventListener('canplay', () => doSeek(), { once: true });
-        // Fallback if canplay doesn't fire
+        // Video not ready - wait for canplay then seek
+        const doSeek = () => {
+          video.currentTime = seconds;
+          resolve(); // Don't wait for seeked event if we had to wait for canplay
+        };
+
+        video.addEventListener('canplay', doSeek, { once: true });
+        // Fallback
         setTimeout(() => {
-          if (video.readyState < 2) doSeek();
-        }, 500);
+          if (video.readyState < 2) resolve();
+        }, 300);
       }
     });
   });
@@ -105,20 +109,31 @@ export const getExportFolder = async (): Promise<string> => {
 };
 
 // Generate unique filename
-export const getVideoFilename = (baseName: string, width: number, height: number, ext: string): string => {
+export const getVideoFilename = (
+  baseName: string,
+  width: number,
+  height: number,
+  ext: string
+): string => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   return `${baseName}_${timestamp}_${width}x${height}.${ext}`;
 };
 
 export const getFileExtension = (format: ExportFormat): string => {
   switch (format) {
-    case 'webm': return 'webm';
-    case 'mov': return 'mov';
-    case 'png': return 'png';
-    case 'gif': return 'gif';
-    case 'webp': return 'webp';
+    case 'webm':
+      return 'webm';
+    case 'mov':
+      return 'mov';
+    case 'png':
+      return 'png';
+    case 'gif':
+      return 'gif';
+    case 'webp':
+      return 'webp';
     case 'mp4':
-    default: return 'mp4';
+    default:
+      return 'mp4';
   }
 };
 
@@ -132,6 +147,7 @@ const MAX_IMAGE_DIMENSION = 2160;
 const optimizeImage = async (blob: Blob, maxDim: number = MAX_IMAGE_DIMENSION): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     const url = URL.createObjectURL(blob);
 
     img.onload = () => {
@@ -224,13 +240,16 @@ const getCachedDataUrl = async (url: string): Promise<string> => {
   if (imageCache.has(url)) return imageCache.get(url)!;
 
   try {
-    const response = await fetch(url);
+    const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
+    const response = await tauriFetch(url);
     const blob = await response.blob();
 
     // Optimize large images (> 500KB) to reduce memory during export
     let dataUrl: string;
     if (blob.size > 500 * 1024) {
-      console.log(`[StreamRender] Optimizing large image: ${(blob.size / 1024 / 1024).toFixed(1)}MB -> max ${MAX_IMAGE_DIMENSION}px`);
+      console.log(
+        `[StreamRender] Optimizing large image: ${(blob.size / 1024 / 1024).toFixed(1)}MB -> max ${MAX_IMAGE_DIMENSION}px`
+      );
       dataUrl = await optimizeImage(blob);
       console.log(`[StreamRender] Optimized to: ${(dataUrl.length / 1024 / 1024).toFixed(1)}MB`);
     } else {
@@ -245,8 +264,11 @@ const getCachedDataUrl = async (url: string): Promise<string> => {
 
     // Pre-decode for faster rendering
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = dataUrl;
-    try { await img.decode(); } catch {}
+    try {
+      await img.decode();
+    } catch {}
 
     imageCache.set(url, dataUrl);
     return dataUrl;
@@ -259,11 +281,12 @@ const getCachedDataUrl = async (url: string): Promise<string> => {
 // Helper: Convert all images in node to data URLs
 const convertImagesToDataUrls = async (node: HTMLElement) => {
   const images = node.querySelectorAll('img');
-  
+
   for (const img of images) {
     if (img.src.startsWith('data:')) continue;
     const dataUrl = await getCachedDataUrl(img.src);
     img.src = dataUrl;
+    img.setAttribute('crossorigin', 'anonymous');
   }
 };
 
@@ -275,7 +298,7 @@ const convertBackgroundImagesToDataUrls = async (node: HTMLElement) => {
   for (const el of allElements) {
     const computed = window.getComputedStyle(el);
     const style = el.style.backgroundImage || computed.backgroundImage;
-    
+
     if (style && style !== 'none') {
       const urlMatch = style.match(/url\(['"]?(.*?)['"]?\)/);
       if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
@@ -285,7 +308,7 @@ const convertBackgroundImagesToDataUrls = async (node: HTMLElement) => {
         const repeat = el.style.backgroundRepeat || computed.backgroundRepeat;
 
         const dataUrl = await getCachedDataUrl(urlMatch[1]);
-        
+
         el.style.backgroundImage = `url("${dataUrl}")`;
         // Re-apply layout
         if (size) el.style.backgroundSize = size;
@@ -305,39 +328,39 @@ export const convertVideosToImages = async (sourceNode: HTMLElement, cloneNode: 
   const cloneVideoArray = Array.from(cloneVideos);
 
   for (let i = 0; i < sourceVideoArray.length; i++) {
-     const sourceVideo = sourceVideoArray[i];
-     const cloneVideo = cloneVideoArray[i];
+    const sourceVideo = sourceVideoArray[i];
+    const cloneVideo = cloneVideoArray[i];
 
-     if (!sourceVideo || !cloneVideo) continue;
-     if (sourceVideo.videoWidth === 0 || sourceVideo.videoHeight === 0) continue;
+    if (!sourceVideo || !cloneVideo) continue;
+    if (sourceVideo.videoWidth === 0 || sourceVideo.videoHeight === 0) continue;
 
-     try {
-        const width = sourceVideo.videoWidth;
-        const height = sourceVideo.videoHeight;
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-           ctx.drawImage(sourceVideo, 0, 0, width, height);
-           const dataUrl = canvas.toDataURL('image/png'); // Using PNG for quality
-           
-           const img = document.createElement('img');
-           img.src = dataUrl;
-           img.style.cssText = cloneVideo.style.cssText;
-           img.className = cloneVideo.className;
-           img.style.width = '100%'; 
-           img.style.height = '100%';
-           img.style.objectFit = 'cover';
-           
-           if (cloneVideo.parentNode) {
-              cloneVideo.parentNode.replaceChild(img, cloneVideo);
-           }
+    try {
+      const width = sourceVideo.videoWidth;
+      const height = sourceVideo.videoHeight;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(sourceVideo, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/png'); // Using PNG for quality
+
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.style.cssText = cloneVideo.style.cssText;
+        img.className = cloneVideo.className;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+
+        if (cloneVideo.parentNode) {
+          cloneVideo.parentNode.replaceChild(img, cloneVideo);
         }
-     } catch (e) {
-        console.error('[StreamRender] Video conversion failed:', e);
-     }
+      }
+    } catch (e) {
+      console.error('[StreamRender] Video conversion failed:', e);
+    }
   }
 };
 
@@ -358,7 +381,11 @@ export const preloadResources = async (node: HTMLElement) => {
       // Wait for load then decode
       decodePromises.push(
         new Promise<void>((resolve) => {
-          img.onload = () => img.decode().then(() => resolve()).catch(() => resolve());
+          img.onload = () =>
+            img
+              .decode()
+              .then(() => resolve())
+              .catch(() => resolve());
           img.onerror = () => resolve();
           // Trigger load if src is set but not loading
           if (img.src && !img.complete) {
@@ -421,9 +448,12 @@ const extractUsedFonts = (node: HTMLElement): Set<string> => {
     const fontFamily = computed.fontFamily;
     if (fontFamily) {
       // Parse font-family string (e.g., "'Manrope', sans-serif")
-      const families = fontFamily.split(',').map(f => f.trim().replace(/['"]/g, ''));
+      const families = fontFamily.split(',').map((f) => f.trim().replace(/['"]/g, ''));
       for (const family of families) {
-        if (family && !['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui'].includes(family)) {
+        if (
+          family &&
+          !['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui'].includes(family)
+        ) {
           fonts.add(family);
         }
       }
@@ -448,7 +478,11 @@ export const preloadFonts = async (node: HTMLElement): Promise<void> => {
   // Also cache embedded CSS for SVG fallback
   for (const fontName of usedFonts) {
     // Skip system fonts
-    if (fontName.startsWith('-apple') || fontName === 'system-ui' || fontName === 'BlinkMacSystemFont') {
+    if (
+      fontName.startsWith('-apple') ||
+      fontName === 'system-ui' ||
+      fontName === 'BlinkMacSystemFont'
+    ) {
       console.log(`[StreamRender] Skipping system font: ${fontName}`);
       continue;
     }
@@ -471,6 +505,183 @@ export const preloadFonts = async (node: HTMLElement): Promise<void> => {
   console.log(`[StreamRender] Font cache size: ${fontCssCache.size}`);
 };
 
+// Cached export context - reused across frames for performance
+interface ExportContext {
+  fontCss: string;
+  sourceWidth: number;
+  sourceHeight: number;
+  outputWidth: number;
+  outputHeight: number;
+  scaleX: number;
+  scaleY: number;
+  // Optimized rendering
+  exportClone: HTMLElement;
+  animatedElements: Array<{ source: HTMLElement; target: HTMLElement }>;
+  cachedImg: HTMLImageElement;
+  svgPrefix: string;
+  svgSuffix: string;
+}
+
+let cachedExportContext: ExportContext | null = null;
+
+// Yield to main thread to prevent blocking
+export const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+// Prepare export context once before frame loop
+export const prepareExportContext = async (
+  node: HTMLElement,
+  sourceWidth: number,
+  sourceHeight: number,
+  outputWidth: number,
+  outputHeight: number
+): Promise<void> => {
+  console.log('[Export] Preparing optimized export context...');
+  const startTime = performance.now();
+
+  const scaleX = outputWidth / sourceWidth;
+  const scaleY = outputHeight / sourceHeight;
+
+  // 1. Clone the node ONCE
+  const clone = node.cloneNode(true) as HTMLElement;
+  clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+
+  // 6. Map animated elements between source and clone
+  // We identify elements that have animations or specific animation markers
+  const animatedElements: Array<{ source: HTMLElement; target: HTMLElement }> = [];
+  
+  // Get all animated elements from source to build a fast lookup
+  const animations = node.getAnimations({ subtree: true });
+  const animatedSourceElements = new Set(animations.map(a => a.effect?.target as HTMLElement).filter(Boolean));
+
+  // Simultanously walk both trees to build mapping
+  const walkAndMap = (source: HTMLElement, target: HTMLElement) => {
+    const isDeviceAnim = source.hasAttribute('data-device-animation');
+    const hasWebAnim = animatedSourceElements.has(source);
+    const isTextChild = source.parentElement && 
+                        source.parentElement.style.zIndex === '50' && 
+                        source.parentElement.style.pointerEvents === 'none';
+
+    if (isDeviceAnim || hasWebAnim || isTextChild) {
+      animatedElements.push({ source, target });
+    }
+
+    const sourceChildren = source.children;
+    const targetChildren = target.children;
+    for (let i = 0; i < sourceChildren.length; i++) {
+        if (sourceChildren[i] instanceof HTMLElement && targetChildren[i] instanceof HTMLElement) {
+            walkAndMap(sourceChildren[i] as HTMLElement, targetChildren[i] as HTMLElement);
+        }
+    }
+  };
+
+  walkAndMap(node, clone);
+
+  // 7. Remove elements marked for export skip (doing this AFTER mapping)
+  const skipElements = clone.querySelectorAll('[data-export-skip]');
+  skipElements.forEach((el) => el.remove());
+
+  // 8. Inline all computed styles ONCE
+  inlineStyles(node, clone);
+  clone.style.margin = '0';
+
+  // 9. Convert images to data URLs ONCE (they're static)
+  await convertImagesToDataUrls(clone);
+  await convertBackgroundImagesToDataUrls(clone);
+
+  // 10. Get font CSS ONCE
+  const usedFonts = extractUsedFonts(node);
+  let fontCss = '';
+  for (const fontName of usedFonts) {
+    if (fontName.startsWith('-apple') || fontName === 'system-ui' || fontName === 'BlinkMacSystemFont') {
+      continue;
+    }
+    if (fontCssCache.has(fontName)) {
+      fontCss += fontCssCache.get(fontName);
+    }
+  }
+
+  // Pre-create reusable Image object
+  const cachedImg = new Image();
+  cachedImg.crossOrigin = 'anonymous';
+
+  // Pre-compute static SVG parts
+  const svgPrefix = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
+<defs><style type="text/css">${fontCss}</style></defs>
+<foreignObject width="${outputWidth}" height="${outputHeight}">
+<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;">`;
+  const svgSuffix = `</div>
+</foreignObject>
+</svg>`;
+
+  cachedExportContext = {
+    fontCss,
+    sourceWidth,
+    sourceHeight,
+    outputWidth,
+    outputHeight,
+    scaleX,
+    scaleY,
+    exportClone: clone,
+    animatedElements,
+    cachedImg,
+    svgPrefix,
+    svgSuffix,
+  };
+
+  console.log(
+    `[Export] Context prepared in ${(performance.now() - startTime).toFixed(0)}ms, syncing ${animatedElements.length} elements`
+  );
+};
+
+// Clear export context after rendering is complete
+export const clearExportContext = () => {
+  cachedExportContext = null;
+  // Also clear reusable canvas
+  captureCanvas = null;
+  captureCtx = null;
+};
+
+// Accelerated SVG rendering using Blob URLs and direct style synchronization
+const loadSvgImageFast = async (): Promise<HTMLImageElement> => {
+  if (!cachedExportContext) {
+    throw new Error('Export context not prepared');
+  }
+
+  const { exportClone, animatedElements, cachedImg, svgPrefix, svgSuffix } = cachedExportContext;
+
+  // 1. Sync all animated styles from real DOM to clone
+  // This handles device animations, text animations, and any layout transitions
+  for (const { source, target } of animatedElements) {
+    target.style.transform = source.style.transform;
+    target.style.opacity = source.style.opacity;
+    if (source.style.filter) target.style.filter = source.style.filter;
+    if (source.style.clipPath) target.style.clipPath = source.style.clipPath;
+  }
+
+  // 2. Fast serialization (Use XMLSerializer for well-formed XML)
+  const serializer = new XMLSerializer();
+  const nodeString = serializer.serializeToString(exportClone);
+
+  // 3. Build SVG blob (MUCH faster than base64 data URLs)
+  const svg = svgPrefix + nodeString + svgSuffix;
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  // 4. Load using cached Image object
+  return new Promise((resolve, reject) => {
+    cachedImg.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(cachedImg);
+    };
+    cachedImg.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      console.error('[StreamRender] SVG load failed. This usually means the DOM contains invalid XML characters or unclosed tags.');
+      reject(new Error('SVG render failed: The content contains invalid characters or structure for video export.'));
+    };
+    cachedImg.src = url;
+  });
+};
+
 // Helper: Convert DOM node to SVG data URL using foreignObject
 // outputWidth/outputHeight = final export size, sourceWidth/sourceHeight = DOM element size
 export const nodeToSvgDataUrl = async (
@@ -482,6 +693,9 @@ export const nodeToSvgDataUrl = async (
 ): Promise<string> => {
   const finalWidth = outputWidth || sourceWidth;
   const finalHeight = outputHeight || sourceHeight;
+
+  // Note: Fast path is now in captureFrame via loadSvgImageFast
+  // This function is used for single image export (slow path)
   const scaleX = finalWidth / sourceWidth;
   const scaleY = finalHeight / sourceHeight;
   // Clone the node
@@ -543,19 +757,28 @@ export const nodeToSvgDataUrl = async (
 
     // Calculate headline progress
     const headlineDelayed = Math.max(0, playheadMs - textStartDelay);
-    const headlineProgress = headlineDelayed === 0 ? 0 : Math.min(1, headlineDelayed / textAnimDuration);
+    const headlineProgress =
+      headlineDelayed === 0 ? 0 : Math.min(1, headlineDelayed / textAnimDuration);
 
     // Calculate tagline progress (staggered)
     const taglineDelayed = Math.max(0, playheadMs - staggerDelay);
     const taglineProgress = Math.min(1, taglineDelayed / textAnimDuration);
 
     // Get animation styles
-    const headlineAnim = generateTextKeyframes(textOverlay.animation as TextAnimationType, headlineProgress);
-    const taglineAnim = generateTextKeyframes(textOverlay.animation as TextAnimationType, taglineProgress);
+    const headlineAnim = generateTextKeyframes(
+      textOverlay.animation as TextAnimationType,
+      headlineProgress
+    );
+    const taglineAnim = generateTextKeyframes(
+      textOverlay.animation as TextAnimationType,
+      taglineProgress
+    );
 
     // Find text elements in clone (they are direct children of the text overlay container)
     // Text overlay container has pointerEvents: 'none' and zIndex: 50
-    const textContainer = clone.querySelector('[style*="pointer-events: none"][style*="z-index: 50"]') as HTMLElement | null;
+    const textContainer = clone.querySelector(
+      '[style*="pointer-events: none"][style*="z-index: 50"]'
+    ) as HTMLElement | null;
     if (textContainer) {
       const textElements = textContainer.children;
       // First child is headline, second is tagline
@@ -590,7 +813,11 @@ export const nodeToSvgDataUrl = async (
   let fontCss = '';
   for (const fontName of usedFonts) {
     // Skip system fonts
-    if (fontName.startsWith('-apple') || fontName === 'system-ui' || fontName === 'BlinkMacSystemFont') {
+    if (
+      fontName.startsWith('-apple') ||
+      fontName === 'system-ui' ||
+      fontName === 'BlinkMacSystemFont'
+    ) {
       continue;
     }
 
@@ -617,7 +844,6 @@ export const nodeToSvgDataUrl = async (
       }
     }
   }
-  console.log(`[SVG Export] Embedding fonts, CSS length: ${fontCss.length}`);
 
   const serializer = new XMLSerializer();
   const nodeString = serializer.serializeToString(clone);
@@ -645,6 +871,7 @@ export const nodeToSvgDataUrl = async (
 // Helper: Load an image from URL
 export const loadImage = async (src: string): Promise<HTMLImageElement> => {
   const img = new Image();
+  img.crossOrigin = 'anonymous';
   img.src = src;
 
   // Use decode() to ensure image is fully ready including embedded fonts
@@ -696,7 +923,8 @@ export const renderTextOverlay = (
   const effectiveDuration = durationMs || 3000;
   const delayedPlayhead = Math.max(0, (playheadMs || 0) - startDelay);
   const headlineAnimDuration = Math.max(1, (effectiveDuration * 0.3) / speedMultiplier);
-  const headlineProgress = delayedPlayhead <= 0 ? 0 : Math.min(1, delayedPlayhead / headlineAnimDuration);
+  const headlineProgress =
+    delayedPlayhead <= 0 ? 0 : Math.min(1, delayedPlayhead / headlineAnimDuration);
 
   // Calculate tagline animation progress (staggered)
   const staggerDelay = startDelay + (effectiveDuration * 0.15) / speedMultiplier;
@@ -717,7 +945,7 @@ export const renderTextOverlay = (
   } = textOverlay;
 
   // Get animation styles - use all defined text animations
-  const validAnimationIds = new Set<string>(TEXT_ANIMATIONS.map(a => a.id));
+  const validAnimationIds = new Set<string>(TEXT_ANIMATIONS.map((a) => a.id));
   validAnimationIds.add('none'); // Always allow none
   const animationType: TextAnimationType = validAnimationIds.has(animation || '')
     ? (animation as TextAnimationType)
@@ -732,7 +960,7 @@ export const renderTextOverlay = (
     taglineProgress: taglineProgress.toFixed(3),
     headlineOpacity: headlineAnim.opacity.toFixed(3),
     taglineOpacity: taglineAnim.opacity.toFixed(3),
-    delayedPlayhead: Math.max(0, playheadMs - (300 / speedMultiplier)),
+    delayedPlayhead: Math.max(0, playheadMs - 300 / speedMultiplier),
   });
 
   // Skip if both are invisible (but allow small opacity values)
@@ -766,7 +994,7 @@ export const renderTextOverlay = (
   if (pos.startsWith('center')) {
     textY = canvasHeight / 2 - (fontSize * scale) / 2;
   } else if (pos.startsWith('bottom')) {
-    textY = canvasHeight - padding * 1.5 - (taglineFontSize * scale) - 12;
+    textY = canvasHeight - padding * 1.5 - taglineFontSize * scale - 12;
   }
 
   ctx.save();
@@ -775,7 +1003,8 @@ export const renderTextOverlay = (
 
   // Helper to parse transform values
   const parseTransform = (transform: string | undefined) => {
-    if (!transform || transform === 'none') return { translateX: 0, translateY: 0, scaleVal: 1, rotate: 0, skewX: 0 };
+    if (!transform || transform === 'none')
+      return { translateX: 0, translateY: 0, scaleVal: 1, rotate: 0, skewX: 0 };
 
     const translateYMatch = transform.match(/translateY\(([^)]+)\)/);
     const translateXMatch = transform.match(/translateX\(([^)]+)\)/);
@@ -858,7 +1087,7 @@ export const renderTextOverlay = (
   renderAnimatedText(headline, headlineAnim, textX, textY, fontSize * scale, fontWeight);
 
   // Render tagline
-  const taglineY = textY + (fontSize * scale) + 12 * scale;
+  const taglineY = textY + fontSize * scale + 12 * scale;
   renderAnimatedText(tagline, taglineAnim, textX, taglineY, taglineFontSize * scale, 400, 0.9);
 
   ctx.restore();
@@ -932,7 +1161,10 @@ const captureVideoFrames = (
       const videoAspect = video.videoWidth / video.videoHeight;
       const containerAspect = relW / relH;
 
-      let srcX = 0, srcY = 0, srcW = video.videoWidth, srcH = video.videoHeight;
+      let srcX = 0,
+        srcY = 0,
+        srcW = video.videoWidth,
+        srcH = video.videoHeight;
 
       if (videoAspect > containerAspect) {
         // Video is wider - crop sides
@@ -949,7 +1181,10 @@ const captureVideoFrames = (
       const videoAspect = video.videoWidth / video.videoHeight;
       const containerAspect = relW / relH;
 
-      let destX = relX, destY = relY, destW = relW, destH = relH;
+      let destX = relX,
+        destY = relY,
+        destW = relW,
+        destH = relH;
 
       if (videoAspect > containerAspect) {
         destH = relW / videoAspect;
@@ -969,6 +1204,11 @@ const captureVideoFrames = (
   }
 };
 
+// Reusable canvas for frame capture (avoids recreating every frame)
+let captureCanvas: HTMLCanvasElement | null = null;
+let captureCtx: CanvasRenderingContext2D | null = null;
+let lastCanvasSize = { width: 0, height: 0 };
+
 // Helper: Capture a single frame from DOM to Canvas
 export const captureFrame = async (
   node: HTMLElement,
@@ -977,14 +1217,23 @@ export const captureFrame = async (
   _durationMs?: number,
   _playheadMs?: number
 ): Promise<Uint8ClampedArray> => {
-  // Create an offscreen canvas at exact output dimensions
-  const canvas = document.createElement('canvas');
-  canvas.width = outputWidth;
-  canvas.height = outputHeight;
-  const ctx = canvas.getContext('2d', {
-    willReadFrequently: true,
-    alpha: true
-  })!;
+  // Reuse canvas if same size
+  if (
+    !captureCanvas ||
+    lastCanvasSize.width !== outputWidth ||
+    lastCanvasSize.height !== outputHeight
+  ) {
+    captureCanvas = document.createElement('canvas');
+    captureCanvas.width = outputWidth;
+    captureCanvas.height = outputHeight;
+    captureCtx = captureCanvas.getContext('2d', {
+      willReadFrequently: true,
+      alpha: true,
+    })!;
+    lastCanvasSize = { width: outputWidth, height: outputHeight };
+  }
+
+  const ctx = captureCtx!;
 
   // High quality scaling
   ctx.imageSmoothingEnabled = true;
@@ -994,7 +1243,6 @@ export const captureFrame = async (
   const nodeRect = node.getBoundingClientRect();
 
   // Scale factor from display to output
-  // Display: 200x200 (what user sees) -> Output: 1080x1080 (what user wants)
   const scale = outputWidth / nodeRect.width;
 
   // Get computed styles for background
@@ -1003,26 +1251,44 @@ export const captureFrame = async (
   // Apply clipping for rounded corners (scale radius to output size)
   const radius = (parseFloat(computedStyle.borderRadius) || 0) * scale;
 
+  // Clear canvas
+  ctx.clearRect(0, 0, outputWidth, outputHeight);
+
   ctx.save();
   if (radius > 0) {
-      ctx.beginPath();
-      if (ctx.roundRect) {
-          ctx.roundRect(0, 0, outputWidth, outputHeight, radius);
-      } else {
-          ctx.rect(0, 0, outputWidth, outputHeight);
-      }
-      ctx.clip();
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(0, 0, outputWidth, outputHeight, radius);
+    } else {
+      ctx.rect(0, 0, outputWidth, outputHeight);
+    }
+    ctx.clip();
   }
 
   // Fill background first
   ctx.fillStyle = computedStyle.backgroundColor || '#000000';
   ctx.fillRect(0, 0, outputWidth, outputHeight);
 
-  // Use foreignObject SVG approach for non-video content
-  // Videos are handled separately below because SVG foreignObject can't render them
-  // Pass display dimensions as source, output dimensions as target - SVG will scale up
-  const svgUrl = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
-  const img = await loadImage(svgUrl);
+  // Use fast path if export context is prepared
+  let img: HTMLImageElement;
+  if (
+    cachedExportContext &&
+    cachedExportContext.outputWidth === outputWidth &&
+    cachedExportContext.outputHeight === outputHeight
+  ) {
+    // Fast path: use cached context and Blob URL
+    img = await loadSvgImageFast();
+  } else {
+    // Slow path: full SVG generation (for single image export)
+    const svgUrl = await nodeToSvgDataUrl(
+      node,
+      nodeRect.width,
+      nodeRect.height,
+      outputWidth,
+      outputHeight
+    );
+    img = await loadImage(svgUrl);
+  }
 
   // Draw SVG at full output size (already scaled internally)
   ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
@@ -1030,24 +1296,21 @@ export const captureFrame = async (
   ctx.restore();
 
   // Draw video frames DIRECTLY on top of SVG render
-  // This bypasses SVG foreignObject limitation for video elements
   ctx.save();
   if (radius > 0) {
-      ctx.beginPath();
-      if (ctx.roundRect) {
-          ctx.roundRect(0, 0, outputWidth, outputHeight, radius);
-      } else {
-          ctx.rect(0, 0, outputWidth, outputHeight);
-      }
-      ctx.clip();
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(0, 0, outputWidth, outputHeight, radius);
+    } else {
+      ctx.rect(0, 0, outputWidth, outputHeight);
+    }
+    ctx.clip();
   }
-  // Video frames need display-to-output scale since videos are positioned in display space
   const displayToOutputScale = outputWidth / nodeRect.width;
   captureVideoFrames(node, ctx, nodeRect, displayToOutputScale, 0, 0);
   ctx.restore();
 
   // Render text overlay AFTER videos so text appears on top
-  // This ensures z-index is respected even when videos are present
   renderTextOverlay(ctx, outputWidth, outputHeight, scale, _durationMs, _playheadMs);
 
   // Get raw RGBA pixel data

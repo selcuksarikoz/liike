@@ -32,6 +32,9 @@ import {
   captureFrame,
   nodeToSvgDataUrl,
   loadImage,
+  prepareExportContext,
+  clearExportContext,
+  yieldToMain,
 } from '../utils/renderUtils';
 
 export type StreamingRenderOptions = {
@@ -135,11 +138,16 @@ export const useStreamingRender = () => {
       const exportFolder = await getExportFolder();
       const ext = getFileExtension(format);
       
-      // Image Export (PNG/WebP) - Single frame capture
-      const isImageExport = format === 'png' || format === 'webp';
+      // Image Export (PNG/WebP) or screenshot fallback if no duration
+      const isImageFallback = effectiveDuration < 100;
+      const isImageExport = format === 'png' || format === 'webp' || isImageFallback;
+
       if (isImageExport) {
-        console.log('[StreamRender] Exporting image...');
-        const filename = getVideoFilename(outputName, outputWidth, outputHeight, ext);
+        const exportFormat = isImageFallback ? 'png' : format;
+        const exportExt = isImageFallback ? 'png' : ext;
+        
+        console.log(`[StreamRender] Exporting ${isImageFallback ? 'screenshot' : 'image'}...`);
+        const filename = getVideoFilename(outputName, outputWidth, outputHeight, exportExt);
         const outputPath = await join(exportFolder, filename);
 
         // Setting state
@@ -223,7 +231,7 @@ export const useStreamingRender = () => {
 
            // Convert to blob and write to disk
            const blob = await new Promise<Blob | null>(resolve => 
-             canvas.toBlob(resolve, format === 'webp' ? 'image/webp' : 'image/png')
+             canvas.toBlob(resolve, exportFormat === 'webp' ? 'image/webp' : 'image/png')
            );
            
            if (!blob) throw new Error('Failed to create image blob');
@@ -243,14 +251,6 @@ export const useStreamingRender = () => {
            setState(prev => ({ ...prev, error: errorMsg, isRendering: false, phase: 'idle' }));
            setRenderStatus({ error: errorMsg, isRendering: false, phase: 'idle' });
         }
-        return;
-      }
-
-      if (effectiveDuration < 100) {
-        const error = 'Video export requires a duration. Add a video or set animation duration.';
-        console.error('[StreamRender]', error);
-        setState((prev) => ({ ...prev, error, phase: 'idle' }));
-        setRenderStatus({ error });
         return;
       }
       
@@ -311,37 +311,47 @@ export const useStreamingRender = () => {
         await preloadResources(node);
         await preloadFonts(node);
 
+        // Prepare export context ONCE before frame loop (major perf optimization)
+        const nodeRect = node.getBoundingClientRect();
+        await prepareExportContext(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
+
         await waitForRender(50);
 
         // Capture and stream each frame
+        const hasVideos = node.querySelectorAll('video').length > 0;
+        console.log(`[StreamRender] Starting frame loop: ${totalFrames} frames, hasVideos: ${hasVideos}`);
+        const loopStart = performance.now();
+
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
           if (abortController.signal.aborted) {
             console.log('[StreamRender] Aborted at frame', frameIndex);
+            clearExportContext();
             return;
           }
 
           const timeMs = (frameIndex / fps) * 1000;
 
-          if (abortController.signal.aborted) return;
-
-          // Seek timeline
+          // Seek timeline and animations (sync, fast)
           seekTimeline(timeMs);
           pauseAndSeekAnimations(node, timeMs);
-          await pauseAndSeekVideos(node, timeMs);
-          
-          if (abortController.signal.aborted) return;
 
-          // Minimal wait - animations are calculated explicitly in nodeToSvgDataUrl
-          // Videos already waited in pauseAndSeekVideos
-          // Only first frame needs a small delay for initial render
-          if (frameIndex === 0) await waitForRender(16);
+          // Only wait for video seek if there are videos
+          if (hasVideos) {
+            await pauseAndSeekVideos(node, timeMs);
+          }
 
-          if (abortController.signal.aborted) return;
+          if (abortController.signal.aborted) {
+            clearExportContext();
+            return;
+          }
 
           // Capture frame to raw RGBA
           const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);
 
-          if (abortController.signal.aborted) return;
+          if (abortController.signal.aborted) {
+            clearExportContext();
+            return;
+          }
 
           // Send to Rust encoder (Uint8Array serializes properly, Uint8ClampedArray doesn't)
           const progress = await invoke<number>('send_frame', {
@@ -349,17 +359,23 @@ export const useStreamingRender = () => {
             frameData: new Uint8Array(rgbaData.buffer),
           });
 
-          // Update progress
-          setState((prev) => ({
-            ...prev,
-            currentFrame: frameIndex + 1,
-            progress,
-          }));
-          setRenderStatus({
-            currentFrame: frameIndex + 1,
-            progress,
-          });
+          // Update progress and yield to main thread every 10 frames
+          if (frameIndex % 10 === 0 || frameIndex === totalFrames - 1) {
+            setState((prev) => ({
+              ...prev,
+              currentFrame: frameIndex + 1,
+              progress,
+            }));
+            setRenderStatus({
+              currentFrame: frameIndex + 1,
+              progress,
+            });
+            // Yield to main thread to keep UI responsive
+            await yieldToMain();
+          }
         }
+
+        console.log(`[StreamRender] Frame loop completed in ${((performance.now() - loopStart) / 1000).toFixed(1)}s`);
 
         // Finish encoding
         console.log('[StreamRender] Finishing encoding...');
@@ -368,6 +384,9 @@ export const useStreamingRender = () => {
 
         await invoke('finish_streaming_encode', { encoderId: encoderIdRef.current });
         encoderIdRef.current = null;
+
+        // Clear export context
+        clearExportContext();
 
         console.log('[StreamRender] Export complete:', outputPath);
         setState((prev) => ({
@@ -385,6 +404,9 @@ export const useStreamingRender = () => {
         console.error('[StreamRender] Error:', errorMsg);
         setState((prev) => ({ ...prev, error: errorMsg, isRendering: false, phase: 'idle' }));
         setRenderStatus({ error: errorMsg, isRendering: false, phase: 'idle' });
+
+        // Clean up export context
+        clearExportContext();
 
         // Cleanup encoder if needed
         if (encoderIdRef.current) {
@@ -406,12 +428,15 @@ export const useStreamingRender = () => {
     store.setIsPlaying(false);
     store.setPlayhead(0); // Reset to start
     abortControllerRef.current?.abort();
-    
+
     // 2. Reset UI state immediately
     resetState();
     resetRenderStatus();
-    
-    // 3. Clean up backend process
+
+    // 3. Clean up export context
+    clearExportContext();
+
+    // 4. Clean up backend process
     if (encoderIdRef.current) {
       const encoderId = encoderIdRef.current;
       encoderIdRef.current = null;

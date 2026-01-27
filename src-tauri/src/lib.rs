@@ -408,8 +408,8 @@ fn get_ffmpeg_path() -> Result<PathBuf, String> {
 fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, use_hw: bool, audio_path: Option<&str>) -> Vec<String> {
     let scale_w = if width % 2 == 0 { width } else { width + 1 };
     let scale_h = if height % 2 == 0 { height } else { height + 1 };
-    // Use lanczos for highest quality scaling
-    let scale_filter = format!("scale={}:{}:flags=lanczos", scale_w, scale_h);
+    // Use bicubic for good quality/speed balance
+    let scale_filter = format!("scale={}:{}:flags=bicubic", scale_w, scale_h);
 
     let is_macos = std::env::consts::OS == "macos";
     let is_windows = std::env::consts::OS == "windows";

@@ -54,6 +54,7 @@ export const MediaContainer = memo(
               loop
               muted
               playsInline
+              crossOrigin="anonymous"
             />
           ) : (
             <img
@@ -62,6 +63,7 @@ export const MediaContainer = memo(
               alt="Media"
               loading="eager"
               decoding="sync"
+              crossOrigin="anonymous"
             />
           )
         ) : (
