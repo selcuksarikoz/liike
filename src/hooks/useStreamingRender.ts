@@ -299,7 +299,7 @@ export const useStreamingRender = () => {
 
         // OPTIMIZED: Pipeline capture and encode
         // While FFmpeg encodes frame N, we capture frame N+1
-        const UI_UPDATE_INTERVAL = 5;
+        const UI_UPDATE_INTERVAL = 10; // Less frequent UI updates = faster export
 
         // Track pending encode for pipelining
         let pendingEncode: Promise<number> | null = null;
@@ -322,8 +322,11 @@ export const useStreamingRender = () => {
             await pauseAndSeekVideos(node, timeMs);
           }
 
-          // Wait for React to update animation styles
-          await waitForRender(8);
+          // Force style recalculation - synchronous, no wait needed after reflow
+          void node.offsetHeight;
+
+          // Minimal yield - just RAF to ensure styles are painted (no timeout)
+          await waitForRender(0);
 
           // Capture current frame
           const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);

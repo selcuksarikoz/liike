@@ -1,11 +1,12 @@
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { mkdir } from '@tauri-apps/plugin-fs';
-import { calculateAnimationValue } from '../constants/animations';
 import {
   ANIMATION_SPEED_MULTIPLIERS,
+  generateDeviceKeyframes,
   generateTextKeyframes,
   LAYOUT_PRESETS,
   TEXT_ANIMATIONS,
+  type DeviceAnimationType,
   type TextAnimationType,
 } from '../constants/layoutAnimationPresets';
 import {
@@ -15,6 +16,17 @@ import {
 } from '../services/fontService';
 import { useRenderStore, type ExportFormat, type TextPosition } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
+
+// Convert Blob to data URL using native FileReader (faster than manual encoding)
+// Defined early because it's used by multiple functions
+const blobToDataUrl = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
 
 // WebKit/Safari SVG foreignObject renders rotateY mirrored - negate Y rotation to fix
 const fixWebKitPerspective = (transform: string): string => {
@@ -30,84 +42,49 @@ const fixWebKitPerspective = (transform: string): string => {
 };
 
 // Helper to manually drive animations on the clones without React overhead
-export const updateExportAnimations = (timeMs: number, effectiveDuration: number) => {
-  if (!cachedExportContext) return;
-  
-  const { animatedElements, bgClone, deviceClone } = cachedExportContext;
-  const state = useTimelineStore.getState();
-  
-  // We need to know which animation is active.
-  // In the real app, this comes from store -> Workarea -> DeviceRenderer -> AnimationInfo
-  // We can look up the current active layout preset from the store!
-  const currentLayoutId = useRenderStore.getState().imageLayout;
-  const layoutPreset = LAYOUT_PRESETS.find(p => p.id === currentLayoutId);
-  
-  if (!layoutPreset || !layoutPreset.device?.animation) return; // No animation to drive?
+// Uses the same timing logic as Workarea.tsx for consistency
+// Returns animation progress (0-1) for caching optimization
+export const updateExportAnimations = (timeMs: number, effectiveDuration: number): number => {
+  if (!cachedExportContext) return 1;
 
-  const animType = layoutPreset.device.animation;
-  // Calculate progress based on duration... but wait!
-  // Layout animations usually run once at start (entrance) or loop.
-  // LayoutPreset defines: `animateIn: true`? `animations: [...]`?
-  // Let's check `LAYOUT_PRESETS` structure in `layoutAnimationPresets.ts`.
-  // It has `animations: [{ type: 'fade', duration: 1500 ... }]`.
-  // And `device: { animation: 'swing-in', ... }`.
-  
-  // Actually, usually the animation is finite (entrance) or infinite (loop).
-  // Ideally we replicate `useLayoutAnimation` logic.
-  // Simple approximation:
-  // If `animateIn`, progress is 0->1 over `duration`.
-  // If loop, progress cycles.
-  
-  // Let's assume standard entrance for now as it's most common for video export starts.
-  // Or if it's a loop like 'float', we loop based on time.
-  const animDuration = 1000; // Default or from preset
-  
-  // Find the device animation wrapper in the clones
-  // We flagged them with `data-device-animation`
-  // We can find them in `animatedElements` map?
-  // Our map has `source` and `target`.
-  // However, we need to know WHICH target corresponds to the device wrapper.
-  // `prepareExportContext` already identified it for rasterization! 
-  // But we replaced its content. The wrapper *itself* is what we animate.
-  
-  const deviceWrapper = deviceClone.querySelector('[data-device-animation]') as HTMLElement;
-  const layoutWrapper = deviceClone.querySelector('[data-layout-animation]') as HTMLElement;
-  
-  if (deviceWrapper) {
-      // Calculate style
-     // Logic from useAnimation/animationHelpers...
-     // Since we don't have the full React hook state, we interpret based on `timeMs`.
-     
-     // 1. Calculate Progress
-     // If loop: timeMs % duration / duration
-     // If simple entrance: min(1, timeMs / duration)
-     
-     // We need to know if it is a LOOP or ENTRANCE.
-     // `animType` strings like 'swing', 'pulse' are usually loops.
-     // 'swing-in', 'slide-in' are entrances.
-     // Let's guess based on naming or preset.
-     // But `calculateAnimationValue` in `animationHelpers.ts` handles looping internally based on type!
-     // e.g. 'float' uses sin(progress * PI * 2).
-     // unique issue: calculateAnimationValue expects 0-1 progress.
-     // We need to decide the period.
-     
-     const loopDuration = 3000; // Standard loop time
-     const entranceDuration = 1200;
-     
-     let progress = 0;
-     if (animType.includes('in') || animType.includes('reveal') || animType.includes('entrance')) {
-         progress = Math.min(1, timeMs / entranceDuration);
-     } else {
-         // Loop
-         progress = (timeMs % loopDuration) / loopDuration;
-     }
+  const { deviceClone } = cachedExportContext;
+  const { textOverlay, animationSpeed } = useRenderStore.getState();
 
-     const style = calculateAnimationValue(animType, progress, 1.0, 'ease-out'); // Intensity 1.0 default
+  // Get speed multiplier (same as Workarea)
+  const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1;
 
-     // Apply to wrapper (fix WebKit perspective mirroring)
-     if (style.transform) deviceWrapper.style.transform = fixWebKitPerspective(style.transform);
-     if (style.opacity !== undefined) deviceWrapper.style.opacity = style.opacity.toString();
+  // Device animation uses same timing as Workarea.tsx
+  const deviceAnim = textOverlay.deviceAnimation;
+  if (!deviceAnim || deviceAnim === 'none' || !textOverlay.enabled) {
+    // No animation - device is static from frame 0
+    cachedExportContext.deviceAnimationComplete = true;
+    return 1;
   }
+
+  const deviceWrapper = deviceClone.querySelector('[data-device-animation]') as HTMLElement;
+  if (!deviceWrapper) return 1;
+
+  // Same timing as Workarea.tsx deviceAnimationStyle
+  const startDelay = 400 / speedMultiplier;
+  const animDuration = 800 / speedMultiplier;
+
+  const delayedPlayhead = Math.max(0, timeMs - startDelay);
+  const progress = Math.min(1, delayedPlayhead / animDuration);
+
+  // Track animation completion for caching
+  if (progress >= 1 && !cachedExportContext.deviceAnimationComplete) {
+    cachedExportContext.deviceAnimationComplete = true;
+  }
+  cachedExportContext.lastDeviceAnimProgress = progress;
+
+  // Use the same keyframe generator as Workarea
+  const style = generateDeviceKeyframes(deviceAnim as DeviceAnimationType, progress);
+
+  // Apply to wrapper (fix WebKit perspective mirroring)
+  if (style.transform) deviceWrapper.style.transform = fixWebKitPerspective(style.transform);
+  if (style.opacity !== undefined) deviceWrapper.style.opacity = style.opacity.toString();
+
+  return progress;
 };
 
 // Seek timeline - no flushSync needed, animations are calculated directly from store
@@ -185,10 +162,18 @@ export const pauseAndSeekVideos = async (node: HTMLElement, timeMs: number): Pro
   await Promise.all(seekPromises);
 };
 
-// Wait for browser to process (optimized for speed)
-// Uses setTimeout only - RAF not needed since animations are calculated explicitly
+// Wait for browser to process with RAF for proper style computation
+// RAF ensures styles are computed before we read them
 export const waitForRender = (ms = 0) =>
-  ms > 0 ? new Promise<void>((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
+  new Promise<void>((resolve) => {
+    if (ms > 0) {
+      // Wait for timeout THEN RAF to ensure styles are fully computed
+      setTimeout(() => requestAnimationFrame(() => resolve()), ms);
+    } else {
+      // Just RAF for immediate style computation
+      requestAnimationFrame(() => resolve());
+    }
+  });
 
 // Get Liike export folder
 export const getExportFolder = async (): Promise<string> => {
@@ -238,15 +223,16 @@ const imageCache = new Map<string, string>();
 const MAX_IMAGE_DIMENSION = 4320; // 4K * 2 for safety
 
 // Convert image to high-quality data URL (minimal/no compression)
+// Uses data URL loading to avoid WebKit canvas taint
 const convertImageToDataUrl = async (blob: Blob): Promise<string> => {
+  // First convert blob to data URL (WebKit-safe)
+  const blobDataUrl = await blobToDataUrl(blob);
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    const url = URL.createObjectURL(blob);
 
     img.onload = () => {
-      URL.revokeObjectURL(url);
-
       const { width, height } = img;
 
       // Draw to canvas at FULL SIZE for maximum quality
@@ -259,17 +245,15 @@ const convertImageToDataUrl = async (blob: Blob): Promise<string> => {
       ctx.drawImage(img, 0, 0, width, height);
 
       // Use PNG for lossless quality - critical for export
-      // PNG is larger but preserves all details
       const dataUrl = canvas.toDataURL('image/png');
       resolve(dataUrl);
     };
 
     img.onerror = () => {
-      URL.revokeObjectURL(url);
       reject(new Error('Failed to load image for conversion'));
     };
 
-    img.src = url;
+    img.src = blobDataUrl;
   });
 };
 
@@ -910,18 +894,26 @@ interface CachedExportContext {
   outputHeight: number;
   scaleX: number;
   scaleY: number;
+  // Locked node rect - prevents dimension changes during export
+  lockedNodeRect: { left: number; top: number; width: number; height: number };
   // Optimized rendering with layers
   bgClone: HTMLElement;
   deviceClone: HTMLElement;
   animatedElements: Array<{ source: HTMLElement; target: HTMLElement; layer: 'bg' | 'device' }>;
   bgImg: HTMLImageElement;
   deviceImg: HTMLImageElement;
+  // ImageBitmap cache for faster rendering (used when available)
+  bgBitmap: ImageBitmap | null;
+  deviceBitmap: ImageBitmap | null;
   svgPrefix: string;
   svgSuffix: string;
   bgIsStatic: boolean;      // Optimization: if true, only render BG once
   deviceIsStatic: boolean;  // Optimization: if true, only render Device once (except video)
   bgRendered: boolean;
   deviceRendered: boolean;
+  // Animation completion tracking for smart caching
+  deviceAnimationComplete: boolean;
+  lastDeviceAnimProgress: number;
 }
 
 let cachedExportContext: CachedExportContext | null = null;
@@ -942,6 +934,15 @@ export const prepareExportContext = async (
 
   const scaleX = outputWidth / sourceWidth;
   const scaleY = outputHeight / sourceHeight;
+
+  // Lock the node rect NOW to prevent dimension jitter during export
+  const actualNodeRect = node.getBoundingClientRect();
+  const lockedNodeRect = {
+    left: actualNodeRect.left,
+    top: actualNodeRect.top,
+    width: actualNodeRect.width,
+    height: actualNodeRect.height,
+  };
 
   // 1. Master Clone - Clone and Clean once
   const masterClone = node.cloneNode(true) as HTMLElement;
@@ -1199,17 +1200,23 @@ export const prepareExportContext = async (
     outputHeight,
     scaleX,
     scaleY,
+    // Locked at preparation time to prevent dimension jitter during export
+    lockedNodeRect,
     bgClone,
     deviceClone,
     animatedElements,
     bgImg,
     deviceImg,
+    bgBitmap: null,    // Will be populated on first render
+    deviceBitmap: null, // Will be populated on each frame
     svgPrefix,
     svgSuffix,
     bgIsStatic: !bgHasAnimations,       // Flag for optimization
     deviceIsStatic: !deviceHasAnimations, // Flag for optimization
     bgRendered: false,     // Track if rendered
     deviceRendered: false, // Track if rendered
+    deviceAnimationComplete: false,  // Track when entrance animation is done
+    lastDeviceAnimProgress: -1,      // Track animation progress to detect changes
   };
 
   console.log(
@@ -1219,8 +1226,17 @@ export const prepareExportContext = async (
 
 // Clear export context after rendering is complete
 export const clearExportContext = () => {
+  // Close ImageBitmaps to free GPU memory
+  if (cachedExportContext?.bgBitmap) {
+    cachedExportContext.bgBitmap.close();
+  }
+  if (cachedExportContext?.deviceBitmap) {
+    cachedExportContext.deviceBitmap.close();
+  }
   cachedExportContext = null;
-  // Also clear reusable canvas
+  // Clear reusable elements
+  reusableBgImg = null;
+  reusableDeviceImg = null;
   captureCanvas = null;
   captureCtx = null;
 };
@@ -1272,7 +1288,46 @@ const syncFrameAnimations = () => {
   }
 };
 
-// accelerated SVG rendering using Data URLs (Blob URLs taint canvas in WebKit with foreignObject)
+// Reusable image elements for faster rendering (avoid creating new elements each frame)
+let reusableBgImg: HTMLImageElement | null = null;
+let reusableDeviceImg: HTMLImageElement | null = null;
+
+// Render clone to ImageBitmap using data URL (WebKit-safe, avoids cross-origin taint)
+const renderCloneToImageBitmap = async (
+  clone: HTMLElement,
+  layerType: 'bg' | 'device'
+): Promise<ImageBitmap> => {
+  if (!cachedExportContext) {
+    throw new Error('Export context not prepared');
+  }
+
+  const { svgPrefix, svgSuffix } = cachedExportContext;
+
+  // 1. Fast serialization
+  const serializer = new XMLSerializer();
+  const nodeString = serializer.serializeToString(clone);
+  const svg = svgPrefix + nodeString + svgSuffix;
+
+  // 2. Create data URL (WebKit requires this to avoid canvas taint)
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const dataUrl = await blobToDataUrl(blob);
+
+  // 3. Load into Image element first (SVG needs to be rasterized before ImageBitmap)
+  const img = layerType === 'bg'
+    ? (reusableBgImg ||= new Image())
+    : (reusableDeviceImg ||= new Image());
+
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+
+  // 4. Create ImageBitmap from rendered Image (fast, hardware-accelerated)
+  return createImageBitmap(img);
+};
+
+// Fallback renderer using HTMLImageElement directly
 const renderCloneToImage = async (
   clone: HTMLElement,
   outputImg: HTMLImageElement
@@ -1282,27 +1337,18 @@ const renderCloneToImage = async (
   }
 
   const { svgPrefix, svgSuffix } = cachedExportContext;
-
-  // Optimistic assumption: clone is already clean from prepareExportContext
-  // Only sync styles (already done in syncFrameAnimations)
-
-  // 1. Fast serialization (Use XMLSerializer for well-formed XML)
   const serializer = new XMLSerializer();
   const nodeString = serializer.serializeToString(clone);
-
-  // 2. Build SVG as Data URL
-  // We use Data URL because Blob URLs with foreignObject often taint the canvas in WebKit (Safari/Tauri)
   const svg = svgPrefix + nodeString + svgSuffix;
-  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
-  // 3. Load into reused Image object
+  // Use data URL (WebKit-safe)
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const dataUrl = await blobToDataUrl(blob);
+
   return new Promise((resolve, reject) => {
     outputImg.onload = () => resolve(outputImg);
-    outputImg.onerror = (e) => {
-      console.error('[StreamRender] SVG load failed:', e);
-      reject(new Error('SVG render failed.'));
-    };
-    outputImg.src = svgDataUrl;
+    outputImg.onerror = () => reject(new Error('SVG render failed.'));
+    outputImg.src = dataUrl;
   });
 };
 
@@ -1919,30 +1965,66 @@ export const captureFrame = async (
     cachedExportContext.outputHeight === outputHeight
   ) {
     // Fast path: Layered Rendering
+    // Use locked dimensions to prevent jitter from DOM changes
+    const lockedScale = outputWidth / cachedExportContext.sourceWidth;
 
     // 1. Sync base styles from source (non-animated properties)
     syncFrameAnimations();
 
     // 2. Apply time-based animation values (AFTER sync to override stale values)
     // This ensures entrance animations start at correct state (opacity=0)
+    let animProgress = 1;
     if (_playheadMs !== undefined) {
-      updateExportAnimations(_playheadMs, _durationMs || 3000);
+      animProgress = updateExportAnimations(_playheadMs, _durationMs || 3000);
     }
 
-    // 2. Render Layers to Images
-    // Background can be cached if static (no animations)
-    // Device layer ALWAYS re-renders - entrance animations start at opacity 0
-    const { bgClone, deviceClone, bgImg, deviceImg, bgIsStatic } = cachedExportContext;
-    if (!bgIsStatic || !cachedExportContext.bgRendered) {
-      await renderCloneToImage(bgClone, bgImg);
-      cachedExportContext.bgRendered = true;
-    }
+    // 3. Render Layers to ImageBitmaps (much faster than base64 data URLs)
+    // Smart caching: cache device layer once animation completes
+    const { bgClone, deviceClone, bgIsStatic, lockedNodeRect, deviceAnimationComplete } = cachedExportContext;
 
-    // Always re-render device layer to capture animation state correctly
-    await renderCloneToImage(deviceClone, deviceImg);
+    // Check if we can reuse cached device layer (animation done + already rendered)
+    const canReuseDeviceCache = deviceAnimationComplete && cachedExportContext.deviceBitmap;
+
+    // Use ImageBitmap for faster rendering (fallback to HTMLImageElement if needed)
+    let bgSource: ImageBitmap | HTMLImageElement;
+    let deviceSource: ImageBitmap | HTMLImageElement;
+
+    try {
+      // Background: render once if static
+      if (!bgIsStatic || !cachedExportContext.bgRendered) {
+        if (cachedExportContext.bgBitmap) {
+          cachedExportContext.bgBitmap.close();
+        }
+        cachedExportContext.bgBitmap = await renderCloneToImageBitmap(bgClone, 'bg');
+        cachedExportContext.bgRendered = true;
+      }
+      bgSource = cachedExportContext.bgBitmap!;
+
+      // Device: reuse cache if animation is complete, otherwise re-render
+      if (canReuseDeviceCache) {
+        // Animation done - reuse cached bitmap (FAST PATH)
+        deviceSource = cachedExportContext.deviceBitmap!;
+      } else {
+        // Animation in progress - must re-render
+        if (cachedExportContext.deviceBitmap) {
+          cachedExportContext.deviceBitmap.close();
+        }
+        cachedExportContext.deviceBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
+        deviceSource = cachedExportContext.deviceBitmap;
+      }
+    } catch (e) {
+      // Fallback to HTMLImageElement if ImageBitmap fails
+      console.warn('[captureFrame] ImageBitmap failed, using fallback:', e);
+      if (!bgIsStatic || !cachedExportContext.bgRendered) {
+        await renderCloneToImage(bgClone, cachedExportContext.bgImg);
+        cachedExportContext.bgRendered = true;
+      }
+      bgSource = cachedExportContext.bgImg;
+      await renderCloneToImage(deviceClone, cachedExportContext.deviceImg);
+      deviceSource = cachedExportContext.deviceImg;
+    }
 
     // 3. Composite to Canvas (Sandwich: BG -> Video -> Device -> Text)
-    // Reuse the main capture canvas for compositing
     const context = captureCtx!;
 
     // HIGH QUALITY rendering settings
@@ -1954,13 +2036,20 @@ export const captureFrame = async (
     context.fillRect(0, 0, outputWidth, outputHeight);
 
     // A. Background Layer
-    context.drawImage(bgImg, 0, 0);
+    context.drawImage(bgSource, 0, 0);
 
     // B. Video Layer (captured directly from source videos at full quality)
-    captureVideoFrames(node, context, node.getBoundingClientRect(), scale, 0, 0);
+    // Use locked rect to prevent jitter from DOM position changes
+    const lockedDOMRect = new DOMRect(
+      lockedNodeRect.left,
+      lockedNodeRect.top,
+      lockedNodeRect.width,
+      lockedNodeRect.height
+    );
+    captureVideoFrames(node, context, lockedDOMRect, lockedScale, 0, 0);
 
     // C. Device Layer (Transparent frame on top)
-    context.drawImage(deviceImg, 0, 0);
+    context.drawImage(deviceSource, 0, 0);
 
     // D. Text Overlay (Rendered directly to canvas)
     renderTextOverlay(context, outputWidth, outputHeight, scale, _durationMs, _playheadMs);

@@ -536,7 +536,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-gray-100 to-gray-200',
-    animations: [{ type: 'wobble', duration: 4000, easing: 'ease-in-out', intensity: 2, stagger: 0.2 }],
+    animations: [{ type: 'shake', duration: 4000, easing: 'ease-in-out', intensity: 2, stagger: 0.2 }],
     device: { animation: 'wobble-3d', animateIn: true, scale: 0.85 },
     category: 'creative',
   },
