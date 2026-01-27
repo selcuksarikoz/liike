@@ -6,7 +6,7 @@ import {
   DEFAULT_TEXT_CONFIG,
   type LayoutPreset,
 } from '../constants/layoutAnimationPresets';
-import { ANIMATION_SPEED_MULTIPLIERS } from '../constants/textAnimations';
+import { ANIMATION_SPEED_MULTIPLIERS } from '../constants/layoutAnimationPresets';
 import { loadGoogleFont } from './useFontLoader';
 
 export const useAnimationManager = () => {

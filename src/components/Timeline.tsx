@@ -29,7 +29,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { useTimelineStore, ANIMATION_PRESETS } from '../store/timelineStore';
 import type { TimelineClip, AnimationPreset } from '../store/timelineStore';
 import { useRenderStore } from '../store/renderStore';
-import { ANIMATION_SPEED_MULTIPLIERS } from '../constants/textAnimations';
+import { ANIMATION_SPEED_MULTIPLIERS } from '../constants/layoutAnimationPresets';
 
 const MS_PER_SECOND = 1000;
 const PIXELS_PER_SECOND = 200;

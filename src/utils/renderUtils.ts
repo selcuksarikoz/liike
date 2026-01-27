@@ -10,7 +10,7 @@ import {
   ANIMATION_SPEED_MULTIPLIERS,
   type TextAnimationType,
   type DeviceAnimationType,
-} from '../constants/textAnimations';
+} from '../constants/layoutAnimationPresets';
 
 // Seek timeline synchronously
 export const seekTimeline = (timeMs: number) => {

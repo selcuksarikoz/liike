@@ -18,7 +18,7 @@ import {
   type TextAnimationType,
   type DeviceAnimationType,
   type AnimationSpeed,
-} from '../../constants/textAnimations';
+} from '../../constants/layoutAnimationPresets';
 
 type Props = {
   preset: LayoutPreset;

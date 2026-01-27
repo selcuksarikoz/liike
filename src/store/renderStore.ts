@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import bg1 from '../assets/bg/1.webp';
-import type { AnimationSpeed } from '../constants/textAnimations';
+import type { AnimationSpeed } from '../constants/layoutAnimationPresets';
 export type { ImageLayout } from '../constants/layouts';
 import type { ImageLayout } from '../constants/layouts';
 

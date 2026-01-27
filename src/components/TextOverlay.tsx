@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
-import { generateTextKeyframes, ANIMATION_SPEED_MULTIPLIERS, type TextAnimationType } from '../constants/textAnimations';
+import {
+  generateTextKeyframes,
+  ANIMATION_SPEED_MULTIPLIERS,
+  type TextAnimationType,
+} from '../constants/layoutAnimationPresets';
 import { useRenderStore, type TextPosition } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 

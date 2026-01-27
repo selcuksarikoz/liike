@@ -11,7 +11,7 @@ import {
   ANIMATION_SPEED_DURATIONS,
   generateDeviceKeyframes,
   type DeviceAnimationType,
-} from '../constants/textAnimations';
+} from '../constants/layoutAnimationPresets';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
   const {

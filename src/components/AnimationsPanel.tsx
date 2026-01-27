@@ -2,7 +2,7 @@ import { Columns2, Heart, LayoutGrid, Sparkles, Type, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { LayoutPreset } from '../constants/styles';
 import { LAYOUT_PRESETS } from '../constants/styles';
-import type { AnimationSpeed } from '../constants/textAnimations';
+import { type AnimationSpeed, TEXT_ANIMATIONS } from '../constants/layoutAnimationPresets';
 import { useAnimationManager } from '../hooks/useAnimationManager';
 import { useFavorites } from '../store/favoritesStore';
 import type { ImageLayout } from '../store/renderStore';
@@ -97,7 +97,7 @@ const TextAnimationsSection = ({
   );
 };
 
-export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }) => {
+export const AnimationsPanel = () => {
   const {
     cornerRadius,
     mediaAssets,
@@ -116,6 +116,9 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
 
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'single' | 'duo' | 'trio' | 'text' | 'favorites'>(
+    'all'
+  );
   const [textMode, setTextMode] = useState<'presets' | 'edit'>('presets');
 
   const handleApplyPreset = (preset: LayoutPreset, layout: ImageLayout) => {
@@ -175,118 +178,171 @@ export const AnimationsPanel = ({ filter = 'single' }: { filter?: LayoutFilter }
     />
   );
 
-  // Filter presets by category/type
+  // Filter Logic - Consolidated
+  // We can show ALL layout animations for Single/Duo/Triple mode by default
+  // But we filter based  // Filter presets by category/type
   const layoutPresets = LAYOUT_PRESETS.filter((p) => p.category !== 'text');
-  const textPresets = LAYOUT_PRESETS.filter((p) => p.category === 'text');
 
-  // Use the same generic presets for all layouts, as requested
-  const singlePresets = layoutPresets;
-  const dualPresets = layoutPresets;
-  const trioPresets = layoutPresets;
+  // Existing text presets from layout config
+  const existingTextPresets = LAYOUT_PRESETS.filter((p) => p.category === 'text');
+
+  // Convert raw TEXT_ANIMATIONS to usable presets for the UI
+  // This ensures all 50+ text animations are visible and selectable
+  const generatedTextPresets: LayoutPreset[] = TEXT_ANIMATIONS.map((anim) => ({
+    id: `generated-text-${anim.id}`,
+    name: anim.name,
+    icon: anim.icon,
+    color: '#ffffff', // Default white for text presets
+    durationMs: 3000,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
+    backgroundGradient: 'bg-black', // Simple background to highlight text
+    animations: [
+      { type: 'zoom-in', duration: 3000, easing: 'ease-out', intensity: 1.1, stagger: 0 },
+    ],
+    device: { animation: 'fade', animateIn: true, scale: 0.85 },
+    text: {
+      enabled: true,
+      headline: 'Headline',
+      tagline: 'Text Animation',
+      animation: anim.id,
+      position: 'center',
+      headlineFontSize: 64,
+      taglineFontSize: 24,
+      fontFamily: 'Manrope',
+      color: '#ffffff',
+    },
+    category: 'text',
+  }));
+
+  // Combine them (Unique by text animation ID preference? Or just concat)
+  const textPresets = [...existingTextPresets, ...generatedTextPresets];
   const favoritePresets = LAYOUT_PRESETS.filter((p) => isFavorite(p.id));
 
   return (
-    <div className="p-4">
-      {/* Animation Speed Selector - Always visible */}
-      <div className="mb-4 p-3 bg-ui-panel/30 rounded-lg border border-ui-border/50">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-3.5 h-3.5 text-amber-400" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-ui-muted">
-            Animation Speed
-          </span>
+    <div className="flex flex-col h-full bg-ui-bg">
+      {/* Header & Speed Controls */}
+      <div className="p-4 border-b border-ui-border bg-ui-panel/50">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-white">Animations</h2>
+          <div className="flex gap-1">
+            {/* Speed Controls Mini */}
+            {SPEED_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setAnimationSpeed(option.value)}
+                title={`Speed: ${option.label}`}
+                className={`w-6 h-6 flex items-center justify-center rounded transition-all ${
+                  animationSpeed === option.value
+                    ? 'bg-amber-500 text-black'
+                    : 'bg-ui-panel text-ui-muted hover:text-white'
+                }`}
+              >
+                <div className="scale-75">{option.icon}</div>
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-1">
-          {SPEED_OPTIONS.map((option) => (
+
+        {/* Filter Tabs */}
+        <div className="flex gap-1 p-1 bg-ui-panel rounded-lg overflow-x-auto no-scrollbar">
+          {(['all', 'single', 'duo', 'trio', 'text', 'favorites'] as const).map((f) => (
             <button
-              key={option.value}
-              onClick={() => setAnimationSpeed(option.value)}
-              className={`flex-1 py-1.5 px-2 rounded-md text-[10px] font-medium transition-all ${
-                animationSpeed === option.value
-                  ? 'bg-amber-500 text-black'
-                  : 'bg-ui-panel/50 text-ui-muted hover:bg-ui-panel hover:text-white'
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase whitespace-nowrap transition-all ${
+                filter === f
+                  ? 'bg-indigo-500 text-white shadow-sm'
+                  : 'text-ui-muted hover:text-white hover:bg-white/5'
               }`}
             >
-              <span className="mr-1">{option.icon}</span>
-              {option.label}
+              {f}
             </button>
           ))}
         </div>
       </div>
 
-      {filter === 'single' && (
-        <Section
-          icon={<Sparkles className="w-4 h-4 text-accent" />}
-          title="Single Image"
-          description="Hero shots, intros & attention grabbers"
-        >
-          {singlePresets.map((p) => renderCard(p, 'single', [mediaAssets[0] || null]))}
-        </Section>
-      )}
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {/* Render Logic based on Filter */}
 
-      {filter === 'duo' && (
-        <Section
-          icon={<Columns2 className="w-4 h-4 text-purple-400" />}
-          title="Dual Images"
-          description="Comparisons, reveals & synchronized effects"
-        >
-          {dualPresets.map((p) =>
-            renderCard(p, 'side-by-side', [mediaAssets[0] || null, mediaAssets[1] || null])
-          )}
-        </Section>
-      )}
+        {filter === 'text' ? (
+          // Text Mode Special Render
+          <div className="space-y-4">
+            {/* Text Edit Toggle */}
+            <div className="flex bg-ui-panel p-1 rounded-lg border border-ui-border/30">
+              <button
+                onClick={() => setTextMode('presets')}
+                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded transition-all ${
+                  textMode === 'presets' ? 'bg-ui-bg text-indigo-400 shadow-sm' : 'text-ui-muted'
+                }`}
+              >
+                Presets
+              </button>
+              <button
+                onClick={() => setTextMode('edit')}
+                className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded transition-all ${
+                  textMode === 'edit' ? 'bg-ui-bg text-indigo-400 shadow-sm' : 'text-ui-muted'
+                }`}
+              >
+                Edit Text
+              </button>
+            </div>
 
-      {filter === 'trio' && (
-        <Section
-          icon={<LayoutGrid className="w-4 h-4 text-emerald-400" />}
-          title="Trio Sequences"
-          description="Staggered reveals, one by one entrances"
-        >
-          {trioPresets.map((p) =>
-            renderCard(p, 'trio-row', [
-              mediaAssets[0] || null,
-              mediaAssets[1] || null,
-              mediaAssets[2] || null,
-            ])
-          )}
-        </Section>
-      )}
-
-      {filter === 'favorites' && (
-        <Section
-          icon={<Heart className="w-4 h-4 text-rose-400" />}
-          title="Your Favorites"
-          description="Quick access to your saved animations"
-        >
-          {favoritePresets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Heart className="w-8 h-8 text-ui-muted/30 mb-3" />
-              <p className="text-sm text-ui-muted/60 mb-1">No favorites yet</p>
-              <p className="text-xs text-ui-muted/40">
-                Click the ❤️ on any animation to save it here
-              </p>
+            {textMode === 'edit' ? (
+              <TextEditor />
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {textPresets.map((p) => renderCard(p, 'single', [mediaAssets[0] || null]))}
+              </div>
+            )}
+          </div>
+        ) : filter === 'favorites' ? (
+          // Favorites Grid
+          favoritePresets.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3">
+              {favoritePresets.map((p) => {
+                // Try to guess best layout for favorite, default to single
+                return renderCard(p, 'single', [mediaAssets[0] || null]);
+              })}
             </div>
           ) : (
-            favoritePresets.map((p) => {
-              const layout = p.id.startsWith('duo-')
-                ? 'side-by-side'
-                : p.id.startsWith('trio-')
-                  ? 'trio-row'
-                  : 'single';
-              return renderCard(p, layout, [mediaAssets[0] || null]);
-            })
-          )}
-        </Section>
-      )}
+            <div className="flex flex-col items-center justify-center py-12 text-center opacity-50">
+              <Heart className="w-8 h-8 mb-2" />
+              <p className="text-xs">No favorites saved</p>
+            </div>
+          )
+        ) : (
+          // Standard Lists (All, Single, Duo, Trio)
+          // We map the SAME presets to different layouts based on filter
+          <div className="grid grid-cols-1 gap-3">
+            {layoutPresets.map((p) => {
+              // Determine layout based on current filter or section
+              let targetLayout: ImageLayout = 'single';
+              let assetsToUse = [mediaAssets[0] || null];
 
-      {filter === 'text' && (
-        <TextAnimationsSection
-          textPresets={textPresets}
-          renderCard={renderCard}
-          mediaAssets={mediaAssets}
-          textMode={textMode}
-          setTextMode={setTextMode}
-        />
-      )}
+              if (filter === 'duo') {
+                targetLayout = 'side-by-side';
+                assetsToUse = [mediaAssets[0] || null, mediaAssets[1] || null];
+              } else if (filter === 'trio') {
+                targetLayout = 'trio-row';
+                assetsToUse = [
+                  mediaAssets[0] || null,
+                  mediaAssets[1] || null,
+                  mediaAssets[2] || null,
+                ];
+              }
+
+              // If 'all', we render based on what makes sense or just single?
+              // Let's render as Single for 'all' to show the animation style clearly,
+              // or maybe alternate? Single is safest for preview.
+
+              return renderCard(p, targetLayout, assetsToUse);
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
