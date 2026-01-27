@@ -18,7 +18,6 @@ import {
   preloadResources,
   prepareExportContext,
   seekTimeline,
-  updateExportAnimations,
   waitForRender,
   yieldToMain
 } from '../utils/renderUtils';
@@ -273,25 +272,25 @@ export const useStreamingRender = () => {
         encoderIdRef.current = encoderId;
         console.log('[StreamRender] Encoder started:', encoderId);
 
-        // Seek to start
+        // Seek to start BEFORE cloning - ensures initial animation state (opacity=0)
         seekTimeline(0);
         pauseAndSeekAnimations(node, 0);
         await pauseAndSeekVideos(node, 0);
 
-        // CRITICAL: Yield to allow React to re-render with playhead=0
-        // This ensures initial animation states (opacity=0, etc.) are applied before cloning
+        // CRITICAL: Wait for React to fully re-render with playhead=0
+        // This ensures entrance animations are at their START state (invisible)
         await yieldToMain();
-        await waitForRender(16); // Extra frame for React to settle
+        await waitForRender(100); // Longer wait for React + CSS transitions to settle
 
         // Preload resources (images, videos) and fonts for text overlay
         await preloadResources(node);
         await preloadFonts(node);
 
-        // Prepare export context ONCE before frame loop (major perf optimization)
+        // Prepare export context - clones DOM at current state (should be time=0)
         const nodeRect = node.getBoundingClientRect();
         await prepareExportContext(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
 
-        await waitForRender(50);
+        await waitForRender(16);
 
         // Capture and stream each frame with improved threading
         const hasVideos = node.querySelectorAll('video').length > 0;
@@ -314,13 +313,17 @@ export const useStreamingRender = () => {
 
           const timeMs = (frameIndex / fps) * 1000;
 
-          // Update animations (must be sequential - shared DOM state)
-          updateExportAnimations(timeMs, effectiveDuration);
+          // Seek timeline and sync animations on source DOM
+          seekTimeline(timeMs);
+          pauseAndSeekAnimations(node, timeMs);
 
           // Seek videos if present
           if (hasVideos) {
             await pauseAndSeekVideos(node, timeMs);
           }
+
+          // Wait for React to update animation styles
+          await waitForRender(8);
 
           // Capture current frame
           const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);

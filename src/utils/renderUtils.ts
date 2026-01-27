@@ -1905,23 +1905,26 @@ export const captureFrame = async (
   ) {
     // Fast path: Layered Rendering
 
-    // 1. Sync Animations
-    // We perform this even for static layers initially, but we could skip if static.
-    // Actually, for static layers, we only need to sync once (or 0 times if they are truly static properties).
-    // But our 'static' check is "has animations".
+    // 1. Sync base styles from source (non-animated properties)
     syncFrameAnimations();
 
-    // 2. Render Layers to Images (with caching)
-    const { bgClone, deviceClone, bgImg, deviceImg, bgIsStatic, deviceIsStatic } = cachedExportContext;
+    // 2. Apply time-based animation values (AFTER sync to override stale values)
+    // This ensures entrance animations start at correct state (opacity=0)
+    if (_playheadMs !== undefined) {
+      updateExportAnimations(_playheadMs, _durationMs || 3000);
+    }
+
+    // 2. Render Layers to Images
+    // Background can be cached if static (no animations)
+    // Device layer ALWAYS re-renders - entrance animations start at opacity 0
+    const { bgClone, deviceClone, bgImg, deviceImg, bgIsStatic } = cachedExportContext;
     if (!bgIsStatic || !cachedExportContext.bgRendered) {
       await renderCloneToImage(bgClone, bgImg);
       cachedExportContext.bgRendered = true;
     }
 
-    if (!deviceIsStatic || !cachedExportContext.deviceRendered) {
-      await renderCloneToImage(deviceClone, deviceImg);
-      cachedExportContext.deviceRendered = true;
-    }
+    // Always re-render device layer to capture animation state correctly
+    await renderCloneToImage(deviceClone, deviceImg);
 
     // 3. Composite to Canvas (Sandwich: BG -> Video -> Device -> Text)
     // Reuse the main capture canvas for compositing
