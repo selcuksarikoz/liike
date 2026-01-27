@@ -57,7 +57,7 @@ self.onmessage = (e: MessageEvent<FrameMessage>) => {
 
         self.postMessage(
           { type: 'frameProcessed', rgbaData: rgbaBuffer, frameIndex } as FrameResponse,
-          [rgbaBuffer.buffer] // Transfer ownership
+          { transfer: [rgbaBuffer.buffer] }
         );
         break;
 
