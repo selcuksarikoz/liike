@@ -16,6 +16,19 @@ import {
 import { useRenderStore, type ExportFormat, type TextPosition } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
 
+// WebKit/Safari SVG foreignObject renders rotateY mirrored - negate Y rotation to fix
+const fixWebKitPerspective = (transform: string): string => {
+  if (!transform || transform === 'none') return transform;
+
+  // Fix rotateY values - negate them for WebKit SVG rendering
+  return transform.replace(/rotateY\(([^)]+)\)/g, (match, value) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return match;
+    const unit = value.replace(/[0-9.-]/g, '') || 'deg';
+    return `rotateY(${-num}${unit})`;
+  });
+};
+
 // Helper to manually drive animations on the clones without React overhead
 export const updateExportAnimations = (timeMs: number, effectiveDuration: number) => {
   if (!cachedExportContext) return;
@@ -90,9 +103,9 @@ export const updateExportAnimations = (timeMs: number, effectiveDuration: number
      }
 
      const style = calculateAnimationValue(animType, progress, 1.0, 'ease-out'); // Intensity 1.0 default
-     
-     // Apply to wrapper
-     if (style.transform) deviceWrapper.style.transform = style.transform;
+
+     // Apply to wrapper (fix WebKit perspective mirroring)
+     if (style.transform) deviceWrapper.style.transform = fixWebKitPerspective(style.transform);
      if (style.opacity !== undefined) deviceWrapper.style.opacity = style.opacity.toString();
   }
 };
@@ -1229,7 +1242,9 @@ const syncFrameAnimations = () => {
     // Prefer inline style (source of truth for React state animations)
     // Fallback to computed style if inline is missing
     const computed = window.getComputedStyle(source);
-    target.style.transform = source.style.transform || computed.transform;
+    const rawTransform = source.style.transform || computed.transform;
+    // Fix WebKit/Safari perspective mirroring in SVG foreignObject
+    target.style.transform = fixWebKitPerspective(rawTransform);
     target.style.opacity = source.style.opacity || computed.opacity;
 
     // Sync 3D transform properties
