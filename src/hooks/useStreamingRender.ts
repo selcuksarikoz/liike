@@ -304,6 +304,9 @@ export const useStreamingRender = () => {
         // Track pending encode for pipelining
         let pendingEncode: Promise<number> | null = null;
 
+        let captureTime = 0;
+        let encodeTime = 0;
+
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
           if (abortController.signal.aborted) {
             console.log('[StreamRender] Aborted at frame', frameIndex);
@@ -322,14 +325,13 @@ export const useStreamingRender = () => {
             await pauseAndSeekVideos(node, timeMs);
           }
 
-          // Force style recalculation - synchronous, no wait needed after reflow
+          // Force style recalculation - synchronous
           void node.offsetHeight;
 
-          // Minimal yield - just RAF to ensure styles are painted (no timeout)
-          await waitForRender(0);
-
           // Capture current frame
+          const captureStart = performance.now();
           const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);
+          captureTime += performance.now() - captureStart;
 
           if (abortController.signal.aborted) {
             clearExportContext();
@@ -337,6 +339,7 @@ export const useStreamingRender = () => {
           }
 
           // Wait for previous encode to complete (pipelining)
+          const encodeStart = performance.now();
           if (pendingEncode) {
             await pendingEncode;
           }
@@ -346,16 +349,17 @@ export const useStreamingRender = () => {
             encoderId,
             frameData: new Uint8Array(rgbaData.buffer),
           });
+          encodeTime += performance.now() - encodeStart;
 
-          // Update progress periodically
-          const shouldUpdateUI = frameIndex % UI_UPDATE_INTERVAL === 0 || frameIndex === totalFrames - 1;
-          if (shouldUpdateUI) {
+          // Update progress periodically (less frequently for speed)
+          if (frameIndex % UI_UPDATE_INTERVAL === 0 || frameIndex === totalFrames - 1) {
             const progress = (frameIndex + 1) / totalFrames;
             setState((prev) => ({ ...prev, currentFrame: frameIndex + 1, progress }));
             setRenderStatus({ currentFrame: frameIndex + 1, progress });
-            await yieldToMain();
           }
         }
+
+        console.log(`[StreamRender] Timing: capture=${(captureTime/1000).toFixed(1)}s, encode=${(encodeTime/1000).toFixed(1)}s`);
 
         // Wait for final encode to complete
         if (pendingEncode) {

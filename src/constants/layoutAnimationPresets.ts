@@ -761,7 +761,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'bottom-center',
       headlineFontSize: 90,
       taglineFontSize: 24,
-      color: '#1c1917'
+      color: '#ffffff'
     },
     animations: [{ type: 'fade', duration: 2000, easing: 'ease-out', intensity: 1, stagger: 0 }],
     device: {
@@ -857,7 +857,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'bottom-left',
       headlineFontSize: 90,
       taglineFontSize: 28,
-      color: '#1c1917'
+      color: '#ffffff'
     },
     animations: [{ type: 'fade', duration: 2000, easing: 'ease-out', intensity: 1, stagger: 0 }],
     device: {

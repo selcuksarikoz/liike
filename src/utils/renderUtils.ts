@@ -162,18 +162,10 @@ export const pauseAndSeekVideos = async (node: HTMLElement, timeMs: number): Pro
   await Promise.all(seekPromises);
 };
 
-// Wait for browser to process with RAF for proper style computation
-// RAF ensures styles are computed before we read them
+// Wait for browser to process - use setTimeout only (works when minimized)
+// RAF is throttled/paused when window is not visible
 export const waitForRender = (ms = 0) =>
-  new Promise<void>((resolve) => {
-    if (ms > 0) {
-      // Wait for timeout THEN RAF to ensure styles are fully computed
-      setTimeout(() => requestAnimationFrame(() => resolve()), ms);
-    } else {
-      // Just RAF for immediate style computation
-      requestAnimationFrame(() => resolve());
-    }
-  });
+  ms > 0 ? new Promise<void>((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
 
 // Get Liike export folder
 export const getExportFolder = async (): Promise<string> => {
@@ -1600,15 +1592,6 @@ export const renderTextOverlay = (
   const durationMs = overrideDurationMs ?? storeDurationMs;
   const playheadMs = overridePlayheadMs ?? storePlayheadMs;
 
-  console.log('[TextOverlay] Rendering:', {
-    enabled: textOverlay.enabled,
-    animation: textOverlay.animation,
-    durationMs,
-    playheadMs,
-    animationSpeed,
-    headline: textOverlay.headline?.slice(0, 20),
-  });
-
   if (!textOverlay.enabled) return;
 
   const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1;
@@ -1649,18 +1632,8 @@ export const renderTextOverlay = (
   const headlineAnim = generateTextKeyframes(animationType, headlineProgress);
   const taglineAnim = generateTextKeyframes(animationType, taglineProgress);
 
-  console.log('[TextOverlay] Animation:', {
-    animationType,
-    headlineProgress: headlineProgress.toFixed(3),
-    taglineProgress: taglineProgress.toFixed(3),
-    headlineOpacity: headlineAnim.opacity.toFixed(3),
-    taglineOpacity: taglineAnim.opacity.toFixed(3),
-    delayedPlayhead: Math.max(0, playheadMs - 300 / speedMultiplier),
-  });
-
-  // Skip if both are invisible (but allow small opacity values)
+  // Skip if both are invisible
   if (headlineAnim.opacity <= 0.001 && taglineAnim.opacity <= 0.001) {
-    console.log('[TextOverlay] Skipping - both nearly invisible');
     return;
   }
 
@@ -1777,14 +1750,6 @@ export const renderTextOverlay = (
   };
 
   // Render headline
-  console.log('[TextOverlay] Drawing headline:', {
-    text: headline?.slice(0, 20),
-    x: textX.toFixed(0),
-    y: textY.toFixed(0),
-    fontSize: (fontSize * scale).toFixed(0),
-    fontFamily,
-    color,
-  });
   renderAnimatedText(headline, headlineAnim, textX, textY, fontSize * scale, fontWeight);
 
   // Render tagline
