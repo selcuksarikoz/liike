@@ -338,8 +338,8 @@ export const useStreamingRender = () => {
             frameData: new Uint8Array(rgbaData.buffer),
           });
 
-          // Update progress and yield to main thread every 10 frames
-          if (frameIndex % 10 === 0 || frameIndex === totalFrames - 1) {
+          // Update progress sporadically to avoid React render thrashing
+          if (frameIndex % 5 === 0 || frameIndex === totalFrames - 1) {
             setState((prev) => ({
               ...prev,
               currentFrame: frameIndex + 1,
@@ -349,9 +349,12 @@ export const useStreamingRender = () => {
               currentFrame: frameIndex + 1,
               progress,
             });
-            // Yield to main thread to keep UI responsive
-            await yieldToMain();
           }
+
+          // CRITICAL: Yield to main thread EVERY frame to prevent UI freezing
+          // This allows the browser to process events (mouse events, repaints)
+          // Since we increased the Rust buffer to 60, we can afford small pauses here.
+          await yieldToMain();
         }
 
         console.log(`[StreamRender] Frame loop completed in ${((performance.now() - loopStart) / 1000).toFixed(1)}s`);
