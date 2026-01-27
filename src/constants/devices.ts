@@ -70,9 +70,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 370/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4% 4% 4% 4%', radius: '20px' },
+      duo: { padding: '4% 4.5% 4.5% 4.5%', radius: '20px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
   {
@@ -83,9 +83,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 370/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4% 4% 4% 4%', radius: '20px' },
+      duo: { padding: '4% 4.5% 4.5% 4.5%', radius: '20px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
   {
@@ -96,9 +96,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 370/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4% 4% 4% 4%', radius: '20px' },
+      duo: { padding: '4% 4.5% 4.5% 4.5%', radius: '20px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
 
@@ -111,9 +111,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 370/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4% 4% 4% 4%', radius: '20px' },
+      duo: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
   {
@@ -124,9 +124,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 370/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4% 4% 4% 4%', radius: '20px' },
+      duo: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
   {
@@ -137,9 +137,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 370/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4% 4% 4% 4%', radius: '20px' },
+      duo: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
 
@@ -152,9 +152,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 390/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
+      duo: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
   {
@@ -165,9 +165,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 390/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
+      duo: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '30px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
   {
@@ -178,9 +178,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 390/800,
     screen: {
-      single: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      duo: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
-      trio: { padding: '3% 4.5% 4.5% 4.5%', radius: '35px' },
+      single: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
+      duo: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '30px' },
+      trio: { padding: '4.5% 4.5% 4.5% 4.5%', radius: '20px' },
     }
   },
 
@@ -193,9 +193,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 390,
     aspectRatio: 370/800,
     screen: {
-      single: { padding: '7% 4% 7% 4%', radius: '40px' },
-      duo: { padding: '7% 4% 7% 4%', radius: '40px' },
-      trio: { padding: '7% 4% 7% 4%', radius: '40px' },
+      single: { padding: '7% 4% 7% 4%', radius: '35px' },
+      duo: { padding: '7% 4% 7% 4%', radius: '30px' },
+      trio: { padding: '7% 4% 7% 4%', radius: '30px' },
     }
   },
   {
@@ -206,7 +206,7 @@ export const DEVICES: DeviceConfig[] = [
     width: 800,
     aspectRatio: 800/370,
     screen: {
-      single: { padding: '8% 3% 8% 3%', radius: '60px' },
+      single: { padding: '8% 3% 8% 3%', radius: '20px' },
       duo: { padding: '30% 2% 30% 2%', radius: '20px' },
       trio: { padding: '37% 3% 37% 3%', radius: '20px' },
     }
@@ -221,9 +221,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 360,
     aspectRatio: 345/780,
     screen: {
-      single: { padding: '9% 3.5% 9% 3.5%', radius: '40px' },
-      duo: { padding: '9% 3.5% 9% 3.5%', radius: '40px' },
-      trio: { padding: '9% 3.5% 9% 3.5%', radius: '40px' },
+      single: { padding: '9% 4% 9% 4%', radius: '30px' },
+      duo: { padding: '9% 3.5% 9% 3.5%', radius: '30px' },
+      trio: { padding: '9% 3.5% 9% 3.5%', radius: '30px' },
     }
   },
   {
@@ -234,7 +234,7 @@ export const DEVICES: DeviceConfig[] = [
     width: 780,
     aspectRatio: 780/345,
     screen: {
-      single: { padding: '8% 3% 8% 3%', radius: '60px' },
+      single: { padding: '8% 3% 8% 3%', radius: '20px' },
       duo: { padding: '30% 2% 30% 2%', radius: '20px' },
       trio: { padding: '37% 3% 37% 3%', radius: '20px' },
     }
@@ -249,9 +249,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 600,
     aspectRatio: 575/800,
     screen: {
-      single: { padding: '5%', radius: '16px' },
-      duo: { padding: '5%', radius: '16px' },
-      trio: { padding: '14% 5% 14% 5%', radius: '16px' },
+      single: { padding: '5%', radius: '20px' },
+      duo: { padding: '5%', radius: '20px' },
+      trio: { padding: '14% 5% 14% 5%', radius: '20px' },
     }
   },
   {
@@ -262,9 +262,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 700,
     aspectRatio: 800/575,
     screen: {
-      single: { padding: '5%', radius: '16px' },
-      duo: { padding: '19% 2% 19% 2%', radius: '16px' },
-      trio: { padding: '29% 2% 29% 2%', radius: '16px' },
+      single: { padding: '5%', radius: '20px' },
+      duo: { padding: '19% 2% 19% 2%', radius: '20px' },
+      trio: { padding: '29% 2% 29% 2%', radius: '20px' },
     }
   },
   {
@@ -275,9 +275,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 550,
     aspectRatio: 560/800, 
     screen: {
-      single: { padding: '5%', radius: '16px' },
-      duo: { padding: '5%', radius: '16px' },
-      trio: { padding: '14% 5% 14% 5%', radius: '8px' },
+      single: { padding: '5%', radius: '20px' },
+      duo: { padding: '5%', radius: '20px' },
+      trio: { padding: '14% 5% 14% 5%', radius: '10px' },
     }
   },
   {
@@ -288,9 +288,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 650,
     aspectRatio: 800/560,
     screen: {
-      single: { padding: '5%', radius: '16px' },
+      single: { padding: '5%', radius: '20px' },
       duo: { padding: '19% 2% 19% 2%', radius: '20px' },
-      trio: { padding: '29% 2% 29% 2%', radius: '16px' },
+      trio: { padding: '30% 2% 30% 2%', radius: '20px' },
     }
   },
   {
@@ -301,9 +301,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 550,
     aspectRatio: 560/800, 
     screen: {
-      single: { padding: '5%', radius: '16px' },
-      duo: { padding: '5%', radius: '16px' },
-      trio: { padding: '14% 5% 14% 5%', radius: '16px' },
+      single: { padding: '5%', radius: '20px' },
+      duo: { padding: '5%', radius: '20px' },
+      trio: { padding: '14% 5% 14% 5%', radius: '20px' },
     }
   },
    {
@@ -314,9 +314,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 650,
     aspectRatio: 800/560, 
     screen: {
-      single: { padding: '5%', radius: '16px' },
+      single: { padding: '5%', radius: '20px' },
       duo: { padding: '20% 2% 20% 2%', radius: '20px' },
-      trio: { padding: '29% 2% 29% 2%', radius: '16px' },
+      trio: { padding: '30% 2% 30% 2%', radius: '20px' },
     }
   },
   {
@@ -327,9 +327,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 420,
     aspectRatio: 540/800,
     screen: {
-      single: { padding: '5%', radius: '16px' },
-      duo: { padding: '5%', radius: '16px' },
-      trio: { padding: '14% 5% 14% 5%', radius: '16px' },
+      single: { padding: '5%', radius: '20px' },
+      duo: { padding: '5%', radius: '20px' },
+      trio: { padding: '11% 5% 11% 5%', radius: '20px' },
     }
   },
   {
@@ -340,9 +340,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 500,
     aspectRatio: 800/540,
     screen: {
-      single: { padding: '5%', radius: '16px' },
+      single: { padding: '5%', radius: '20px' },
       duo: { padding: '21% 2% 21% 2%', radius: '20px' },
-      trio: { padding: '29% 2% 29% 2%', radius: '16px' },
+      trio: { padding: '31% 2% 31% 2%', radius: '20px' },
     }
   },
   {
@@ -353,9 +353,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 540,
     aspectRatio: 3/4,
     screen: {
-      single: { padding: '5%', radius: '12px' },
-      duo: { padding: '5%', radius: '12px' },
-      trio: { padding: '5%', radius: '12px' },
+      single: { padding: '5%', radius: '20px' },
+      duo: { padding: '5%', radius: '20px' },
+      trio: { padding: '11% 5% 11% 5%', radius: '20px' },
     }
   },
   {
@@ -366,9 +366,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 640,
     aspectRatio: 4/3,
     screen: {
-      single: { padding: '5%', radius: '12px' },
+      single: { padding: '5%', radius: '20px' },
       duo: { padding: '21% 2% 21% 2%', radius: '20px' },
-      trio: { padding: '5%', radius: '12px' },
+      trio: { padding: '31% 2% 31% 2%', radius: '20px' },
     }
   },
 
@@ -381,9 +381,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 1200,
     aspectRatio: 1.5,
     screen: {
-      single: { padding: '10% 10% 10% 10%', radius: '8px' },
-      duo: { padding: '27% 9.5% 23% 9.5%', radius: '8px' },
-      trio: { padding: '35% 9.5% 34% 9.5%', radius: '8px' },
+      single: { padding: '10% 10% 10% 10%', radius: '20px' },
+      duo: { padding: '27% 9.5% 23% 9.5%', radius: '10px' },
+      trio: { padding: '35% 9.5% 34% 9.5%', radius: '10px' },
     }
   },
    {
@@ -395,8 +395,8 @@ export const DEVICES: DeviceConfig[] = [
     aspectRatio: 1.5,
     screen: {
       single: { padding: '11%', radius: '20px' },
-      duo: { padding: '28% 11% 23% 11%', radius: '8px' },
-      trio: { padding: '35.5% 11% 35% 11%', radius: '8px' },
+      duo: { padding: '28% 11% 23% 11%', radius: '10px' },
+      trio: { padding: '35.5% 11% 35% 11%', radius: '10px' },
     }
   },
   {
@@ -407,9 +407,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 700,
     aspectRatio: 1.5,
     screen: {
-      single: { padding: '12%', radius: '8px' },
-      duo: { padding: '26% 12% 27% 12%', radius: '8px' },
-      trio: { padding: '35.5% 11% 35% 11%', radius: '8px' },
+      single: { padding: '12%', radius: '20px' },
+      duo: { padding: '26% 12% 27% 12%', radius: '10px' },
+      trio: { padding: '35.5% 11% 35% 11%', radius: '10px' },
     }
   },
   {
@@ -422,7 +422,7 @@ export const DEVICES: DeviceConfig[] = [
     screen: {
       single: { padding: '4% 1% 20% 1%', radius: '20px' },
       duo: { padding: '14% 1% 30% 1%', radius: '20px' },
-      trio: { padding: '27% 0.5% 38% 0.5%', radius: '10px' },
+      trio: { padding: '27% 0.5% 38% 0.5%', radius: '20px' },
     }
   },
   {
@@ -435,7 +435,7 @@ export const DEVICES: DeviceConfig[] = [
     screen: {
       single: { padding: '4% 1% 20% 1%', radius: '20px' },
       duo: { padding: '16% 1% 30% 1%', radius: '20px' },
-      trio: { padding: '29% 0.5% 38% 0.5%', radius: '10px' },
+      trio: { padding: '29% 0.5% 38% 0.5%', radius: '20px' },
     }
   },
 
@@ -448,9 +448,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 320,
     aspectRatio: 0.52,
     screen: {
-      single: { padding: '18% 15% 18% 15%', radius: '22%' },
-      duo: { padding: '18% 15% 18% 15%', radius: '22%' },
-      trio: { padding: '18% 15% 18% 15%', radius: '22%' },
+      single: { padding: '25% 15% 25% 15%', radius: '20px' },
+      duo: { padding: '25% 15% 25% 15%', radius: '20px' },
+      trio: { padding: '25% 15% 25% 15%', radius: '20px' },
     }
   },
   {
@@ -461,9 +461,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 300,
     aspectRatio: 0.54,
     screen: {
-      single: { padding: '20% 13% 20% 13%', radius: '22%' },
-      duo: { padding: '20% 13% 20% 13%', radius: '22%' },
-      trio: { padding: '20% 13% 20% 13%', radius: '22%' },
+      single: { padding: '25% 13% 25% 13%', radius: '20px' },
+      duo: { padding: '25% 13% 25% 13%', radius: '20px' },
+      trio: { padding: '25% 13% 25% 13%', radius: '20px' },
     }
   },
   {
@@ -474,9 +474,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 300,
     aspectRatio: 0.54,
     screen: {
-      single: { padding: '20% 13% 20% 13%', radius: '22%' },
-      duo: { padding: '20% 13% 20% 13%', radius: '22%' },
-      trio: { padding: '20% 13% 20% 13%', radius: '22%' },
+      single: { padding: '25% 13% 25% 13%', radius: '20px' },
+      duo: { padding: '25% 13% 25% 13%', radius: '20px' },
+      trio: { padding: '25% 13% 25% 13%', radius: '20px' },
     }
   }
 ];
