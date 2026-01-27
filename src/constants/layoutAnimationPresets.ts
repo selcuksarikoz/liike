@@ -416,7 +416,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     icon: 'arrow-up',
     color: '#10B981',
     durationMs: 3000,
-    rotationX: -10,
+    rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-green-50 to-emerald-100',
@@ -430,7 +430,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     icon: 'arrow-down',
     color: '#EF4444',
     durationMs: 3000,
-    rotationX: 10,
+    rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-red-50 to-rose-100',
@@ -445,7 +445,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     color: '#F59E0B',
     durationMs: 3500,
     rotationX: 0,
-    rotationY: 5,
+    rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-amber-50 to-orange-50',
     animations: [{ type: 'slide-right', duration: 1000, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', intensity: 100, stagger: 0.1 }],
@@ -459,7 +459,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     color: '#F59E0B',
     durationMs: 3500,
     rotationX: 0,
-    rotationY: -5,
+    rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-orange-50 to-amber-50',
     animations: [{ type: 'slide-left', duration: 1000, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', intensity: 100, stagger: 0.1 }],
@@ -482,7 +482,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
   },
 
   // ==========================================
-  // CREATIVE - Dynamic, bouncy, 3D effects
+  // CREATIVE - Dynamic, bouncy effects
   // ==========================================
   {
     id: 'bounce',
@@ -490,7 +490,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     icon: 'party-popper',
     color: '#EC4899',
     durationMs: 3000,
-    rotationX: 5,
+    rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-pink-100 to-rose-200',
@@ -527,16 +527,16 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     category: 'creative',
   },
   {
-    id: 'wobble-3d',
-    name: '3D Wobble',
+    id: 'wobble',
+    name: 'Wobble',
     icon: 'cube',
     color: '#6366F1',
     durationMs: 4000,
-    rotationX: 10,
-    rotationY: 10,
+    rotationX: 0,
+    rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-gray-100 to-gray-200',
-    animations: [{ type: 'wobble-3d', duration: 4000, easing: 'ease-in-out', intensity: 2, stagger: 0.2 }],
+    animations: [{ type: 'wobble', duration: 4000, easing: 'ease-in-out', intensity: 2, stagger: 0.2 }],
     device: { animation: 'wobble-3d', animateIn: true, scale: 0.85 },
     category: 'creative',
   },
@@ -546,7 +546,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     icon: 'planet',
     color: '#A855F7',
     durationMs: 5000,
-    rotationX: 15,
+    rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-purple-900 via-fuchsia-900 to-black',
@@ -561,7 +561,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     color: '#EC4899',
     durationMs: 3000,
     rotationX: 0,
-    rotationY: 20,
+    rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-pink-900 via-purple-900 to-slate-900',
     animations: [{ type: 'glitch', duration: 3000, easing: 'steps(5)', intensity: 10, stagger: 0.1 }],
@@ -573,31 +573,31 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
   // MOCKUP - Device showcase presets
   // ==========================================
   {
-    id: 'mockup-isometric',
-    name: 'Isometric',
+    id: 'mockup-rise',
+    name: 'Rise Up',
     icon: 'cube',
     color: '#10B981',
     durationMs: 4000,
-    rotationX: 25,
-    rotationY: -25,
-    rotationZ: 10,
+    rotationX: 0,
+    rotationY: 0,
+    rotationZ: 0,
     backgroundGradient: 'from-teal-500 via-emerald-600 to-green-700',
     animations: [{ type: 'slide-up', duration: 1000, easing: 'ease-out', intensity: 40, stagger: 0.2 }],
-    device: { animation: 'rise', animateIn: true, scale: 0.75 },
+    device: { animation: 'rise', animateIn: true, scale: 0.85 },
     category: 'mockup',
   },
   {
-    id: 'mockup-tilt',
-    name: 'Tilt Reveal',
+    id: 'mockup-reveal',
+    name: 'Reveal',
     icon: 'smartphone',
     color: '#FBBF24',
     durationMs: 4500,
-    rotationX: 5,
-    rotationY: -5,
+    rotationX: 0,
+    rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-slate-900 via-slate-800 to-black',
     animations: [{ type: 'zoom-out', duration: 2500, easing: 'ease-out', intensity: 1.15, stagger: 0.2 }],
-    device: { animation: 'tilt-reveal', animateIn: true, scale: 0.8 },
+    device: { animation: 'tilt-reveal', animateIn: true, scale: 0.85 },
     category: 'mockup',
   },
   {
@@ -620,7 +620,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     icon: 'smartphone',
     color: '#333',
     durationMs: 4000,
-    rotationX: 5,
+    rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-gray-900 to-black',
@@ -634,12 +634,12 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     icon: 'mic-2',
     color: '#555',
     durationMs: 5000,
-    rotationX: 2,
+    rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-gray-800 to-gray-900',
     animations: [{ type: 'spotlight', duration: 5000, easing: 'ease-out', intensity: 1, stagger: 0 }],
-    device: { animation: 'fade', animateIn: true, scale: 0.8 },
+    device: { animation: 'fade', animateIn: true, scale: 0.85 },
     category: 'mockup',
   },
 
@@ -781,8 +781,8 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     icon: 'scaling',
     color: '#333',
     durationMs: 4500,
-    rotationX: 5,
-    rotationY: -5,
+    rotationX: 0,
+    rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-gray-100 to-gray-200',
     text: {
@@ -813,8 +813,8 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     icon: 'scaling',
     color: '#333',
     durationMs: 4500,
-    rotationX: 5,
-    rotationY: 5,
+    rotationX: 0,
+    rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-slate-100 to-slate-200',
     text: {
@@ -878,7 +878,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
     color: '#EC4899',
     durationMs: 4000,
     rotationX: 0,
-    rotationY: 5,
+    rotationY: 0,
     rotationZ: 0,
     backgroundGradient: 'from-pink-50 to-rose-50',
     text: {
@@ -1024,6 +1024,7 @@ export const DEVICE_ANIMATIONS: { id: DeviceAnimationType; name: string; icon: s
 
 /**
  * Generate CSS transform/opacity for device entry animations
+ * NOTE: Removed perspective/3D transforms - they don't export well in SVG/WebKit
  */
 export const generateDeviceKeyframes = (
   type: DeviceAnimationType,
@@ -1031,108 +1032,119 @@ export const generateDeviceKeyframes = (
 ): { opacity: number; transform: string } => {
   const p = Math.min(1, Math.max(0, progress));
   const ease = easeOutCubic(p);
-
-  // Force GPU acceleration
-  const gpu = 'translateZ(0)';
+  const easeQuart = easeOutQuart(p);
 
   switch (type) {
     case 'none':
       return { opacity: 1, transform: 'none' };
 
     case 'fade':
-      return { opacity: ease, transform: 'none' };
+      return { opacity: ease, transform: 'scale(1)' };
 
     case 'tilt-reveal':
+      // Simplified: scale + slide up + subtle rotate
       return {
         opacity: ease,
-        transform: `perspective(1000px) rotateX(${(1 - ease) * 45}deg) rotateY(${(1 - ease) * -45}deg) scale(${0.8 + ease * 0.2}) translateY(${(1 - ease) * 100}px) ${gpu}`,
+        transform: `scale(${0.85 + ease * 0.15}) translateY(${(1 - ease) * 60}px) rotate(${(1 - ease) * -3}deg)`,
       };
 
     case 'swing-in':
+      // Slide from side with slight overshoot
+      const swingBack = easeOutBack(p);
       return {
         opacity: ease,
-        transform: `perspective(1000px) rotateY(${(1 - Math.sin(p * Math.PI)) * 30}deg) translateX(${(1 - ease) * -100}px) ${gpu}`,
+        transform: `translateX(${(1 - swingBack) * -80}px) scale(${0.9 + ease * 0.1})`,
       };
 
     case 'spiral-in':
+      // Simplified spiral: rotate + scale + fade
       return {
         opacity: ease,
-        transform: `scale(${0.2 + ease * 0.8}) rotate(${(1 - ease) * 720}deg) translateY(${(1 - ease) * 200}px) ${gpu}`,
+        transform: `scale(${0.3 + ease * 0.7}) rotate(${(1 - ease) * 180}deg)`,
       };
 
     case 'zoom-in':
       return {
         opacity: ease,
-        transform: `scale(${0.5 + ease * 0.5}) ${gpu}`,
+        transform: `scale(${0.6 + easeQuart * 0.4})`,
       };
 
     case 'zoom-out':
       return {
         opacity: ease,
-        transform: `scale(${1.5 - ease * 0.5}) ${gpu}`,
+        transform: `scale(${1.3 - ease * 0.3})`,
       };
 
     case 'rise':
+      // Smooth rise from bottom with scale
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * 50}%) scale(${0.9 + ease * 0.1}) ${gpu}`,
+        transform: `translateY(${(1 - easeQuart) * 80}px) scale(${0.92 + ease * 0.08})`,
       };
 
     case 'drop': {
+      // Bouncy drop from top
       const dropBounce = easeOutBounce(p);
       return {
-        opacity: Math.min(1, p * 3),
-        transform: `translateY(${(1 - dropBounce) * -80}%) ${gpu}`,
+        opacity: Math.min(1, p * 2.5),
+        transform: `translateY(${(1 - dropBounce) * -100}px)`,
       };
     }
 
     case 'flip-up':
+      // Simplified: scale Y + translate (mimics flip without perspective)
+      const flipProgress = easeOutExpo(p);
       return {
-        opacity: p > 0.3 ? 1 : p * 3,
-        transform: `perspective(1000px) rotateX(${(1 - ease) * 90}deg) ${gpu}`,
+        opacity: p > 0.2 ? 1 : p * 5,
+        transform: `scaleY(${0.3 + flipProgress * 0.7}) translateY(${(1 - flipProgress) * 40}px)`,
       };
 
     case 'rotate-in':
       return {
         opacity: ease,
-        transform: `rotate(${(1 - ease) * -15}deg) scale(${0.8 + ease * 0.2}) ${gpu}`,
+        transform: `rotate(${(1 - ease) * -12}deg) scale(${0.85 + ease * 0.15})`,
       };
 
     case 'bounce-in': {
       const bounceEase = easeOutElastic(p);
       return {
         opacity: Math.min(1, p * 2),
-        transform: `scale(${bounceEase}) translateZ(0)`,
+        transform: `scale(${0.5 + bounceEase * 0.5})`,
       };
     }
 
     case 'wobble-3d': {
-      const wobble = Math.sin(p * Math.PI * 4) * (1 - p) * 15;
+      // Simplified wobble: alternating rotation with decay
+      const wobbleAngle = Math.sin(p * Math.PI * 3) * (1 - p) * 8;
       return {
         opacity: ease,
-        transform: `perspective(1000px) rotateX(${wobble}deg) rotateY(${wobble}deg) translateZ(0)`,
+        transform: `rotate(${wobbleAngle}deg) scale(${0.9 + ease * 0.1})`,
       };
     }
 
     case 'reveal-zoom':
+      // Scale up from small with slide
       return {
         opacity: ease,
-        transform: `scale(${0.2 + ease * 0.8}) rotateX(${(1 - ease) * 45}deg) translateZ(0)`,
+        transform: `scale(${0.4 + easeQuart * 0.6}) translateY(${(1 - ease) * 30}px)`,
       };
 
     case 'parallax-3d':
+      // Simplified parallax: horizontal slide with scale
       return {
         opacity: ease,
-        transform: `perspective(1000px) rotateY(${(1 - ease) * 45}deg) translateZ(${(1 - ease) * -500}px)`,
+        transform: `translateX(${(1 - ease) * -60}px) scale(${0.85 + ease * 0.15})`,
       };
 
     case 'magnetic':
+      // Subtle magnetic pull effect
+      const magneticPull = easeOutExpo(p);
       return {
         opacity: ease,
-        transform: `scale(${0.9 + ease * 0.1}) translateZ(${ (1 - ease) * 100 }px)`,
+        transform: `scale(${0.95 + magneticPull * 0.05}) translateY(${(1 - magneticPull) * 15}px)`,
       };
 
     default:
-      return { opacity: 1, transform: 'translateZ(0)' };
+      return { opacity: 1, transform: 'scale(1)' };
   }
 };
