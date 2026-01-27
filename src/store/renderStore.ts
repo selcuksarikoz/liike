@@ -46,7 +46,9 @@ export type MediaPosition =
   | 'top-left'
   | 'top-right'
   | 'bottom-left'
-  | 'bottom-right';
+  | 'bottom-right'
+  | 'center-left'
+  | 'center-right';
 
 // Convert semantic position to offset values (smaller values to stay in canvas)
 const MEDIA_POSITION_OFFSETS: Record<MediaPosition, { offsetX: number; offsetY: number }> = {
@@ -59,6 +61,8 @@ const MEDIA_POSITION_OFFSETS: Record<MediaPosition, { offsetX: number; offsetY: 
   'top-right': { offsetX: 25, offsetY: -20 },
   'bottom-left': { offsetX: -25, offsetY: 20 },
   'bottom-right': { offsetX: 25, offsetY: 20 },
+  'center-left': { offsetX: -30, offsetY: 0 },
+  'center-right': { offsetX: 30, offsetY: 0 },
 };
 
 export type TextOverlay = {

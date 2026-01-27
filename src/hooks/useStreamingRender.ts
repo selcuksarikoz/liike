@@ -32,7 +32,6 @@ import {
   captureFrame,
   nodeToSvgDataUrl,
   loadImage,
-  renderTextOverlay,
 } from '../utils/renderUtils';
 
 export type StreamingRenderOptions = {
@@ -220,8 +219,7 @@ export const useStreamingRender = () => {
            ctx.drawImage(img, 0, 0, nodeRect.width, nodeRect.height);
            ctx.restore();
 
-           // Render text overlay on canvas (uses Canvas 2D API for proper font rendering)
-           renderTextOverlay(ctx, outputWidth, outputHeight, scale, effectiveDuration, playheadMs);
+           // Text is already rendered in the DOM/SVG capture - no need to render again
 
            // Convert to blob and write to disk
            const blob = await new Promise<Blob | null>(resolve => 
@@ -349,13 +347,13 @@ export const useStreamingRender = () => {
 
           // Capture frame to raw RGBA
           const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);
-          
+
           if (abortController.signal.aborted) return;
-          
-          // Send to Rust encoder
+
+          // Send to Rust encoder (Uint8Array serializes properly, Uint8ClampedArray doesn't)
           const progress = await invoke<number>('send_frame', {
             encoderId,
-            frameData: rgbaData,
+            frameData: new Uint8Array(rgbaData.buffer),
           });
 
           // Update progress

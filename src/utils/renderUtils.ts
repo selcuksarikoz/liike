@@ -8,6 +8,7 @@ import {
   generateTextKeyframes,
   generateDeviceKeyframes,
   ANIMATION_SPEED_MULTIPLIERS,
+  TEXT_ANIMATIONS,
   type TextAnimationType,
   type DeviceAnimationType,
 } from '../constants/layoutAnimationPresets';
@@ -614,15 +615,12 @@ export const renderTextOverlay = (
     position,
   } = textOverlay;
 
-  // Get animation styles - validate animation type
-  const validAnimations = ['fade', 'slide-up', 'slide-down', 'scale', 'blur', 'bounce', 'typewriter', 'glitch', 'wave', 'flip', 'zoom-blur', 'elastic'];
-  const animationType = validAnimations.includes(animation || '')
+  // Get animation styles - use all defined text animations
+  const validAnimationIds = new Set<string>(TEXT_ANIMATIONS.map(a => a.id));
+  validAnimationIds.add('none'); // Always allow none
+  const animationType: TextAnimationType = validAnimationIds.has(animation || '')
     ? (animation as TextAnimationType)
-    : 'blur';
-
-  if (animation && !validAnimations.includes(animation)) {
-    console.warn(`[TextOverlay] Unknown animation type "${animation}", falling back to "blur"`);
-  }
+    : 'slide-in-left';
 
   const headlineAnim = generateTextKeyframes(animationType, headlineProgress);
   const taglineAnim = generateTextKeyframes(animationType, taglineProgress);

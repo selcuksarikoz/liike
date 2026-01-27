@@ -113,6 +113,9 @@ export const DEFAULT_INTENSITIES: Record<string, number> = {
   'parallax-drift': 40,
   'reveal-zoom': 1.5,
   'magnetic': 20,
+  'elastic-enter': 50,
+  'camera-pan': 30,
+  'spotlight': 1,
 } as const;
 
 export const getDefaultIntensity = (type: string): number => {
@@ -810,6 +813,37 @@ export const calculateAnimationValue = (
         transform: `scale(${rzScale}) rotateX(${rzRot}deg) translateZ(0)`,
         opacity: easedProgress,
       };
+
+    case 'elastic-enter': {
+      // Spring-like entrance with overshoot
+      const elasticT = easedProgress;
+      const overshoot = elasticT < 1 ? Math.sin(elasticT * Math.PI * 2.5) * (1 - elasticT) * 0.3 : 0;
+      const elasticScale = elasticT + overshoot;
+      const elasticY = (1 - elasticT) * intensity;
+      return {
+        transform: `scale(${Math.max(0, elasticScale)}) translateY(${elasticY}px) translateZ(0)`,
+        opacity: Math.min(1, easedProgress * 2),
+      };
+    }
+
+    case 'camera-pan': {
+      // Smooth horizontal pan across the scene
+      const panX = (easedProgress - 0.5) * intensity * 2;
+      const panScale = 1 + Math.sin(easedProgress * Math.PI) * 0.05;
+      return {
+        transform: `translateX(${panX}px) scale(${panScale}) translateZ(0)`,
+      };
+    }
+
+    case 'spotlight': {
+      // Spotlight/stage entrance with brightness pulse
+      const spotScale = 0.9 + easedProgress * 0.1;
+      const spotY = (1 - easedProgress) * 30;
+      return {
+        transform: `scale(${spotScale}) translateY(${spotY}px) translateZ(0)`,
+        opacity: easedProgress,
+      };
+    }
 
     default:
       return { transform: 'translateZ(0)' };

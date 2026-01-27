@@ -2,7 +2,7 @@ import { Columns2, Heart, LayoutGrid, Sparkles, Type, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { LayoutPreset } from '../constants/styles';
 import { LAYOUT_PRESETS } from '../constants/styles';
-import { type AnimationSpeed, TEXT_ANIMATIONS } from '../constants/layoutAnimationPresets';
+import { type AnimationSpeed, type TextPosition, type MediaPosition, TEXT_ANIMATIONS } from '../constants/layoutAnimationPresets';
 import { useAnimationManager } from '../hooks/useAnimationManager';
 import { useFavorites } from '../store/favoritesStore';
 import type { ImageLayout } from '../store/renderStore';
@@ -221,33 +221,48 @@ export const AnimationsPanel = ({ filter }: AnimationsPanelProps) => {
   const existingTextPresets = LAYOUT_PRESETS.filter((p) => p.category === 'text');
 
   // Convert raw TEXT_ANIMATIONS to usable presets for the UI
-  const generatedTextPresets: LayoutPreset[] = TEXT_ANIMATIONS.map((anim) => ({
-    id: `generated-text-${anim.id}`,
-    name: anim.name,
-    icon: anim.icon,
-    color: '#ffffff',
-    durationMs: 3000,
-    rotationX: 0,
-    rotationY: 0,
-    rotationZ: 0,
-    backgroundGradient: 'bg-black',
-    animations: [
-      { type: 'zoom-in', duration: 3000, easing: 'ease-out', intensity: 1.1, stagger: 0 },
-    ],
-    device: { animation: 'fade', animateIn: true, scale: 0.85 },
-    text: {
-      enabled: true,
-      headline: 'Headline',
-      tagline: 'Text Animation',
-      animation: anim.id,
-      position: 'center',
-      headlineFontSize: 64,
-      taglineFontSize: 24,
-      fontFamily: 'Manrope',
+  // Text position based on animation direction - never centered
+  const getTextPositionFromAnimation = (animId: string): { textPos: TextPosition; devicePos: MediaPosition; offsetX: number } => {
+    if (animId.includes('left')) return { textPos: 'center-left', devicePos: 'right', offsetX: 25 };
+    if (animId.includes('right')) return { textPos: 'center-right', devicePos: 'left', offsetX: -25 };
+    if (animId.includes('top')) return { textPos: 'top-center', devicePos: 'bottom', offsetX: 0 };
+    if (animId.includes('bottom')) return { textPos: 'bottom-center', devicePos: 'top', offsetX: 0 };
+    // Default: text left, device right
+    return { textPos: 'center-left', devicePos: 'right', offsetX: 25 };
+  };
+
+  const generatedTextPresets: LayoutPreset[] = TEXT_ANIMATIONS.map((anim) => {
+    const { textPos, devicePos, offsetX } = getTextPositionFromAnimation(anim.id);
+    const offsetY = devicePos === 'top' ? -20 : devicePos === 'bottom' ? 20 : 0;
+
+    return {
+      id: `generated-text-${anim.id}`,
+      name: anim.name,
+      icon: anim.icon,
       color: '#ffffff',
-    },
-    category: 'text',
-  }));
+      durationMs: 3000,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
+      backgroundGradient: 'bg-black',
+      animations: [
+        { type: 'zoom-in', duration: 3000, easing: 'ease-out', intensity: 1.1, stagger: 0 },
+      ],
+      device: { animation: 'fade', animateIn: true, scale: 0.85, position: devicePos, offsetX, offsetY },
+      text: {
+        enabled: true,
+        headline: 'Headline',
+        tagline: 'Text Animation',
+        animation: anim.id,
+        position: textPos,
+        headlineFontSize: 64,
+        taglineFontSize: 24,
+        fontFamily: 'Manrope',
+        color: '#ffffff',
+      },
+      category: 'text',
+    };
+  });
 
   const textPresets = [...existingTextPresets, ...generatedTextPresets];
   const favoritePresets = LAYOUT_PRESETS.filter((p) => isFavorite(p.id));
@@ -255,7 +270,7 @@ export const AnimationsPanel = ({ filter }: AnimationsPanelProps) => {
   return (
     <div className="flex flex-col h-full bg-ui-bg">
       {/* Header & Speed Controls */}
-      <div className="p-4 pt-1 border-b border-ui-border bg-ui-panel/10">
+      <div className="px-4 py-2 border-b border-ui-border bg-ui-panel/10">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted">Speed</h2>
           {/* Segmented Control for Speed */}
@@ -314,8 +329,8 @@ export const AnimationsPanel = ({ filter }: AnimationsPanelProps) => {
             ) : (
               <div className="grid grid-cols-1 gap-3">
                 {textPresets.map((p) =>
-                  // Use current layout for text animations so it doesn't reset layout
-                  renderCard(p, imageLayout, getAssetsForLayout(imageLayout))
+                  // Text animations always use single layout
+                  renderCard(p, 'single', [mediaAssets[0] || null])
                 )}
               </div>
             )}
