@@ -198,6 +198,9 @@ const optimizeImage = async (blob: Blob, maxDim: number = MAX_IMAGE_DIMENSION): 
 const ANIMATION_PROPERTIES = [
   'opacity',
   'transform',
+  'transform-style',
+  'perspective',
+  'backface-visibility',
   'filter',
   'clip-path',
   'visibility',
@@ -744,11 +747,14 @@ export const prepareExportContext = async (
     const isDeviceAnim = source.hasAttribute('data-device-animation');
     const isLayoutAnim = source.hasAttribute('data-layout-animation');
     const hasWebAnim = animatedSourceElements.has(source);
-    const isTextChild = source.parentElement && 
-                        source.parentElement.style.zIndex === '50' && 
+    const isTextChild = source.parentElement &&
+                        source.parentElement.style.zIndex === '50' &&
                         source.parentElement.style.pointerEvents === 'none';
+    // Also capture elements with inline animated styles (React state-driven)
+    const hasAnimatedStyle = source.style.transform || source.style.opacity ||
+                             source.style.filter || source.style.clipPath;
 
-    if (isDeviceAnim || isLayoutAnim || hasWebAnim || isTextChild) {
+    if (isDeviceAnim || isLayoutAnim || hasWebAnim || isTextChild || hasAnimatedStyle) {
       animatedElements.push({ source, target });
     }
 
@@ -800,10 +806,11 @@ export const prepareExportContext = async (
   cachedImg.crossOrigin = 'anonymous';
 
   // Pre-compute static SVG parts
+  // Include perspective and transform-style for 3D transforms to work
   const svgPrefix = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
 <defs><style type="text/css">${fontCss}</style></defs>
 <foreignObject width="${outputWidth}" height="${outputHeight}">
-<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;">`;
+<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;perspective:1000px;transform-style:preserve-3d;">`;
   const svgSuffix = `</div>
 </foreignObject>
 </svg>`;
@@ -855,8 +862,19 @@ const loadSvgImageFast = async (): Promise<HTMLImageElement> => {
     target.style.transform = source.style.transform || computed.transform;
     target.style.opacity = source.style.opacity || computed.opacity;
 
-    if (source.style.filter) target.style.filter = source.style.filter;
-    if (source.style.clipPath) target.style.clipPath = source.style.clipPath;
+    // Sync 3D transform properties
+    const transformStyle = source.style.transformStyle || computed.transformStyle;
+    const perspective = source.style.perspective || computed.perspective;
+    const backfaceVisibility = source.style.backfaceVisibility || computed.backfaceVisibility;
+    if (transformStyle && transformStyle !== 'flat') target.style.transformStyle = transformStyle;
+    if (perspective && perspective !== 'none') target.style.perspective = perspective;
+    if (backfaceVisibility) target.style.backfaceVisibility = backfaceVisibility;
+
+    // Sync filter and clipPath (important for blur/reveal animations)
+    const filterVal = source.style.filter || computed.filter;
+    const clipPathVal = source.style.clipPath || computed.clipPath;
+    if (filterVal && filterVal !== 'none') target.style.filter = filterVal;
+    if (clipPathVal && clipPathVal !== 'none') target.style.clipPath = clipPathVal;
   }
 
   // Final check: Ensure ALL images in clone are data URLs
@@ -1125,6 +1143,7 @@ export const nodeToSvgDataUrl = async (
 
   // SVG with embedded fonts and foreignObject
   // Apply scale transform to render at output resolution
+  // Include perspective and transform-style for 3D transforms
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${finalWidth}" height="${finalHeight}">
       <defs>
@@ -1133,7 +1152,7 @@ export const nodeToSvgDataUrl = async (
         </style>
       </defs>
       <foreignObject width="${finalWidth}" height="${finalHeight}">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="transform: scale(${scaleX}, ${scaleY}); transform-origin: top left; width: ${sourceWidth}px; height: ${sourceHeight}px;">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="transform: scale(${scaleX}, ${scaleY}); transform-origin: top left; width: ${sourceWidth}px; height: ${sourceHeight}px; perspective: 1000px; transform-style: preserve-3d;">
           ${nodeString}
         </div>
       </foreignObject>

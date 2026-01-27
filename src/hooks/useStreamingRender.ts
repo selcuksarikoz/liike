@@ -336,6 +336,9 @@ export const useStreamingRender = () => {
           seekTimeline(timeMs);
           pauseAndSeekAnimations(node, timeMs);
 
+          // Yield to allow React to re-render with new playhead (critical for state-driven animations)
+          await yieldToMain();
+
           // Only wait for video seek if there are videos
           if (hasVideos) {
             await pauseAndSeekVideos(node, timeMs);
