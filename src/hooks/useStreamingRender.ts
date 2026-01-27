@@ -177,7 +177,8 @@ export const useStreamingRender = () => {
            await pauseAndSeekVideos(node, playheadMs);
            await waitForRender(50); // Convert DOM to canvas needs a settled DOM
 
-           // Preload fonts for text overlay rendering
+           // Preload resources (images, videos) and fonts - CRITICAL for export
+           await preloadResources(node);
            await preloadFonts(node);
 
            // Capture frame logic (Inline here because we need Blob, captureFrame returns RGBA)

@@ -204,6 +204,26 @@ const ANIMATION_PROPERTIES = [
   'will-change',
 ];
 
+// Properties that may contain URL values
+const URL_PROPERTIES = [
+  'background-image',
+  'background',
+  'mask-image',
+  '-webkit-mask-image',
+  'list-style-image',
+  'border-image',
+  'border-image-source',
+  'content',
+  'cursor',
+];
+
+// Helper: Check if a CSS value contains an external (non-data) URL
+const hasExternalUrl = (value: string): boolean => {
+  if (!value || !value.includes('url(')) return false;
+  // Check for http/https/relative URLs (not data: or blob:)
+  return /url\(['"]?(https?:\/\/|\/(?!\/))/.test(value);
+};
+
 // Helper: Inline computed styles from source to clone (optimized)
 // Uses array join instead of reduce for O(n) instead of O(n²) string building
 const inlineStyles = (source: HTMLElement, clone: HTMLElement) => {
@@ -213,7 +233,15 @@ const inlineStyles = (source: HTMLElement, clone: HTMLElement) => {
   const props = [];
   for (let i = 0; i < sourceStyles.length; i++) {
     const prop = sourceStyles[i];
-    props.push(`${prop}:${sourceStyles.getPropertyValue(prop)}`);
+    const value = sourceStyles.getPropertyValue(prop);
+
+    // Skip properties with external URLs - these will be converted separately
+    if (URL_PROPERTIES.includes(prop) && hasExternalUrl(value)) {
+      console.warn('[inlineStyles] Skipping external URL in:', prop, value.slice(0, 100));
+      continue;
+    }
+
+    props.push(`${prop}:${value}`);
   }
   clone.style.cssText = props.join(';');
 
@@ -235,13 +263,47 @@ const inlineStyles = (source: HTMLElement, clone: HTMLElement) => {
   }
 };
 
+// Helper: Convert image via canvas (fallback when fetch fails)
+const convertImageViaCanvas = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL('image/png');
+        resolve(dataUrl);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => reject(new Error('Image load failed'));
+    img.src = url;
+  });
+};
+
 // Helper: Fetch and convert URL to DataURL with caching + optimization
 const getCachedDataUrl = async (url: string): Promise<string> => {
   if (imageCache.has(url)) return imageCache.get(url)!;
 
   try {
-    const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
-    const response = await tauriFetch(url);
+    // Use native fetch for localhost/local assets, tauriFetch for external URLs
+    const isLocalUrl = url.startsWith('http://localhost') ||
+                       url.startsWith('http://127.0.0.1') ||
+                       url.startsWith('/') ||
+                       url.startsWith('./');
+
+    let response: Response;
+    if (isLocalUrl) {
+      response = await fetch(url);
+    } else {
+      const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
+      response = await tauriFetch(url);
+    }
     const blob = await response.blob();
 
     // Optimize large images (> 500KB) to reduce memory during export
@@ -273,20 +335,122 @@ const getCachedDataUrl = async (url: string): Promise<string> => {
     imageCache.set(url, dataUrl);
     return dataUrl;
   } catch (e) {
-    console.warn('[StreamRender] Image load failed:', url, e);
-    return url; // Fallback to original URL
+    console.warn('[StreamRender] Fetch failed, trying canvas fallback:', url, e);
+    // Try canvas-based conversion as fallback
+    try {
+      const dataUrl = await convertImageViaCanvas(url);
+      imageCache.set(url, dataUrl);
+      return dataUrl;
+    } catch (canvasError) {
+      console.warn('[StreamRender] Canvas fallback also failed:', url, canvasError);
+      // Return transparent pixel to avoid canvas taint
+      return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    }
+  }
+};
+
+// Helper: Convert blob URL to data URL
+const blobUrlToDataUrl = async (blobUrl: string): Promise<string> => {
+  try {
+    const response = await fetch(blobUrl);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    // Return transparent pixel to avoid canvas taint
+    return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   }
 };
 
 // Helper: Convert all images in node to data URLs
 const convertImagesToDataUrls = async (node: HTMLElement) => {
   const images = node.querySelectorAll('img');
+  console.log(`[convertImages] Found ${images.length} img elements`);
 
   for (const img of images) {
-    if (img.src.startsWith('data:')) continue;
-    const dataUrl = await getCachedDataUrl(img.src);
-    img.src = dataUrl;
-    img.setAttribute('crossorigin', 'anonymous');
+    if (img.src.startsWith('data:')) {
+      console.log('[convertImages] Already data URL, skipping');
+      continue;
+    }
+
+    console.log('[convertImages] Converting:', img.src.slice(0, 100));
+    try {
+      let dataUrl: string;
+      if (img.src.startsWith('blob:')) {
+        dataUrl = await blobUrlToDataUrl(img.src);
+      } else {
+        dataUrl = await getCachedDataUrl(img.src);
+      }
+      img.src = dataUrl;
+      img.setAttribute('crossorigin', 'anonymous');
+      console.log('[convertImages] Success:', img.src.slice(0, 50));
+    } catch (e) {
+      console.error('[convertImages] FAILED to convert:', img.src, e);
+    }
+  }
+
+  // Also convert video poster attributes
+  const videos = node.querySelectorAll('video');
+  for (const video of videos) {
+    if (video.poster && !video.poster.startsWith('data:')) {
+      console.log('[convertImages] Converting video poster:', video.poster.slice(0, 100));
+      try {
+        const dataUrl = video.poster.startsWith('blob:')
+          ? await blobUrlToDataUrl(video.poster)
+          : await getCachedDataUrl(video.poster);
+        video.poster = dataUrl;
+      } catch {
+        console.warn('[convertImages] Removing poster that failed to convert');
+        video.removeAttribute('poster');
+      }
+    }
+  }
+
+  // Convert SVG <image> elements (xlink:href or href)
+  const svgImages = node.querySelectorAll('image');
+  for (const svgImg of svgImages) {
+    const href = svgImg.getAttribute('href') || svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+    if (href && !href.startsWith('data:')) {
+      console.log('[convertImages] Converting SVG image:', href.slice(0, 100));
+      try {
+        const dataUrl = href.startsWith('blob:')
+          ? await blobUrlToDataUrl(href)
+          : await getCachedDataUrl(href);
+        svgImg.setAttribute('href', dataUrl);
+        svgImg.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
+      } catch {
+        console.warn('[convertImages] Failed to convert SVG image');
+      }
+    }
+  }
+
+  // Clear srcset attributes (they cause issues and aren't needed for export)
+  const imgsWithSrcset = node.querySelectorAll('img[srcset]');
+  for (const img of imgsWithSrcset) {
+    console.log('[convertImages] Removing srcset from img');
+    img.removeAttribute('srcset');
+  }
+};
+
+// Helper: Convert a CSS url() value to data URL
+const convertCssUrlToDataUrl = async (cssValue: string): Promise<string> => {
+  const urlMatch = cssValue.match(/url\(['"]?(.*?)['"]?\)/);
+  if (!urlMatch || !urlMatch[1] || urlMatch[1].startsWith('data:')) {
+    return cssValue;
+  }
+
+  const originalUrl = urlMatch[1];
+  try {
+    const dataUrl = originalUrl.startsWith('blob:')
+      ? await blobUrlToDataUrl(originalUrl)
+      : await getCachedDataUrl(originalUrl);
+    return cssValue.replace(/url\(['"]?.*?['"]?\)/, `url("${dataUrl}")`);
+  } catch {
+    return cssValue;
   }
 };
 
@@ -295,26 +459,43 @@ const convertBackgroundImagesToDataUrls = async (node: HTMLElement) => {
   const elements = node.querySelectorAll('*');
   const allElements = [node, ...Array.from(elements)] as HTMLElement[];
 
+  // CSS properties that can contain url() values
+  const urlProperties = [
+    'backgroundImage',
+    'maskImage',
+    'webkitMaskImage',
+    'listStyleImage',
+    'borderImage',
+    'content',
+  ] as const;
+
   for (const el of allElements) {
     const computed = window.getComputedStyle(el);
-    const style = el.style.backgroundImage || computed.backgroundImage;
 
-    if (style && style !== 'none') {
-      const urlMatch = style.match(/url\(['"]?(.*?)['"]?\)/);
-      if (urlMatch && urlMatch[1] && !urlMatch[1].startsWith('data:')) {
-        // Preserve layout properties
-        const size = el.style.backgroundSize || computed.backgroundSize;
-        const pos = el.style.backgroundPosition || computed.backgroundPosition;
-        const repeat = el.style.backgroundRepeat || computed.backgroundRepeat;
+    for (const prop of urlProperties) {
+      const inlineValue = el.style[prop as keyof CSSStyleDeclaration] as string;
+      const computedValue = computed[prop as keyof CSSStyleDeclaration] as string;
+      const value = inlineValue || computedValue;
 
-        const dataUrl = await getCachedDataUrl(urlMatch[1]);
-
-        el.style.backgroundImage = `url("${dataUrl}")`;
-        // Re-apply layout
-        if (size) el.style.backgroundSize = size;
-        if (pos) el.style.backgroundPosition = pos;
-        if (repeat) el.style.backgroundRepeat = repeat;
+      if (value && value !== 'none' && value.includes('url(')) {
+        const convertedValue = await convertCssUrlToDataUrl(value);
+        if (convertedValue !== value) {
+          (el.style as Record<string, string>)[prop] = convertedValue;
+        }
       }
+    }
+
+    // Handle background-image specifically with layout preservation
+    const bgImage = el.style.backgroundImage || computed.backgroundImage;
+    if (bgImage && bgImage !== 'none' && bgImage.includes('url(') && !bgImage.includes('data:')) {
+      const size = el.style.backgroundSize || computed.backgroundSize;
+      const pos = el.style.backgroundPosition || computed.backgroundPosition;
+      const repeat = el.style.backgroundRepeat || computed.backgroundRepeat;
+
+      el.style.backgroundImage = await convertCssUrlToDataUrl(bgImage);
+      if (size) el.style.backgroundSize = size;
+      if (pos) el.style.backgroundPosition = pos;
+      if (repeat) el.style.backgroundRepeat = repeat;
     }
   }
 };
@@ -400,17 +581,16 @@ export const preloadResources = async (node: HTMLElement) => {
   await Promise.all(decodePromises);
 
   // Preload videos - ensure they have enough data for seeking
+  // Set crossOrigin to prevent canvas taint (must reload if already loaded without it)
   const allVideos = node.querySelectorAll('video');
   const videoPromises: Promise<void>[] = [];
   for (const video of allVideos) {
+    // Check if we need to set/reload for crossOrigin
+    const needsReload = !video.crossOrigin && video.readyState > 0;
+    video.crossOrigin = 'anonymous';
+
     videoPromises.push(
       new Promise<void>((resolve) => {
-        // Already has enough data
-        if (video.readyState >= 3) {
-          resolve();
-          return;
-        }
-
         const onCanPlay = () => {
           video.removeEventListener('canplaythrough', onCanPlay);
           resolve();
@@ -424,11 +604,13 @@ export const preloadResources = async (node: HTMLElement) => {
           resolve();
         }, 3000);
 
-        // Trigger load if needed
-        if (video.preload !== 'auto') {
-          video.preload = 'auto';
+        // Trigger load/reload
+        video.preload = 'auto';
+        if (needsReload || video.readyState < 3) {
+          video.load();
+        } else {
+          resolve();
         }
-        video.load();
       })
     );
   }
@@ -551,7 +733,11 @@ export const prepareExportContext = async (
   
   // Get all animated elements from source to build a fast lookup
   const animations = node.getAnimations({ subtree: true });
-  const animatedSourceElements = new Set(animations.map(a => a.effect?.target as HTMLElement).filter(Boolean));
+  const animatedSourceElements = new Set(
+    animations
+      .map(a => (a.effect as KeyframeEffect | null)?.target as HTMLElement | null)
+      .filter((el): el is HTMLElement => el !== null)
+  );
 
   // Simultanously walk both trees to build mapping
   const walkAndMap = (source: HTMLElement, target: HTMLElement) => {
@@ -581,11 +767,19 @@ export const prepareExportContext = async (
   const skipElements = clone.querySelectorAll('[data-export-skip]');
   skipElements.forEach((el) => el.remove());
 
-  // 8. Inline all computed styles ONCE
+  // Also remove link/script elements that could taint canvas
+  const problematicElements = clone.querySelectorAll('link, script, iframe, object, embed');
+  problematicElements.forEach((el) => el.remove());
+
+  // 8. Convert images to data URLs FIRST (before inlining styles that might copy URLs)
+  await convertImagesToDataUrls(clone);
+  await convertBackgroundImagesToDataUrls(clone);
+
+  // 9. Inline all computed styles ONCE (after URLs are converted)
   inlineStyles(node, clone);
   clone.style.margin = '0';
 
-  // 9. Convert images to data URLs ONCE (they're static)
+  // 10. Convert AGAIN after inlineStyles in case it copied any external URLs
   await convertImagesToDataUrls(clone);
   await convertBackgroundImagesToDataUrls(clone);
 
@@ -653,33 +847,120 @@ const loadSvgImageFast = async (): Promise<HTMLImageElement> => {
   // 1. Sync all animated styles from real DOM to clone
   // This handles device animations, text animations, and any layout transitions
   for (const { source, target } of animatedElements) {
-    target.style.transform = source.style.transform;
-    target.style.opacity = source.style.opacity;
+    target.style.transition = 'none'; // DISABLE TRANSITIONS to ensure immediate update
+
+    // Prefer inline style (source of truth for React state animations)
+    // Fallback to computed style if inline is missing
+    const computed = window.getComputedStyle(source);
+    target.style.transform = source.style.transform || computed.transform;
+    target.style.opacity = source.style.opacity || computed.opacity;
+
     if (source.style.filter) target.style.filter = source.style.filter;
     if (source.style.clipPath) target.style.clipPath = source.style.clipPath;
   }
 
+  // Final check: Ensure ALL images in clone are data URLs
+  // Note: blob: URLs also cause taint when serialized to SVG
+  const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  const allImages = exportClone.querySelectorAll('img');
+  for (const img of allImages) {
+    if (img.src && !img.src.startsWith('data:')) {
+      console.warn('[loadSvgImageFast] Image still has external URL:', img.src);
+      // Try to convert inline
+      try {
+        if (imageCache.has(img.src)) {
+          img.src = imageCache.get(img.src)!;
+        } else {
+          // Last resort: use a transparent pixel
+          img.src = transparentPixel;
+        }
+      } catch {
+        img.src = transparentPixel;
+      }
+    }
+  }
+
+  // Also handle SVG <image> elements
+  const svgImages = exportClone.querySelectorAll('image');
+  for (const svgImg of svgImages) {
+    const href = svgImg.getAttribute('href') || svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+    if (href && !href.startsWith('data:')) {
+      console.warn('[loadSvgImageFast] SVG image has external URL:', href);
+      svgImg.setAttribute('href', transparentPixel);
+      svgImg.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
+    }
+  }
+
   // 2. Fast serialization (Use XMLSerializer for well-formed XML)
   const serializer = new XMLSerializer();
-  const nodeString = serializer.serializeToString(exportClone);
+  let nodeString = serializer.serializeToString(exportClone);
 
-  // 3. Build SVG blob (MUCH faster than base64 data URLs)
+  // Debug: Check for ANY non-data URLs in the serialized HTML
+  const allUrlMatches = nodeString.match(/(?:src|href|url\()=['"]?(?!data:)([^'")\s>]+)/gi);
+  if (allUrlMatches && allUrlMatches.length > 0) {
+    console.warn('[loadSvgImageFast] WARNING: Found non-data URLs in SVG:', allUrlMatches.slice(0, 10));
+  }
+
+  // AGGRESSIVE FIX: Replace ALL non-data URL src/href with empty (transparent pixel for images)
+  // This prevents ANY external resource from tainting the canvas
+  const tp = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+  // Replace src attributes that aren't data URLs (handle with/without leading space)
+  nodeString = nodeString.replace(
+    /(\s)src=['"](?!data:)([^'"]*)['"]/gi,
+    `$1src="${tp}"`
+  );
+
+  // Replace href attributes that aren't data URLs (but keep # anchors and empty)
+  nodeString = nodeString.replace(
+    /(\s)href=['"](?!data:|#|['"])([^'"]+)['"]/gi,
+    '$1href=""'
+  );
+
+  // Replace xlink:href attributes (SVG image elements)
+  nodeString = nodeString.replace(
+    /xlink:href=['"](?!data:)([^'"]*)['"]/gi,
+    `xlink:href="${tp}"`
+  );
+
+  // Replace url() in style attributes that aren't data URLs
+  nodeString = nodeString.replace(
+    /url\(\s*['"]?(?!data:)([^'")\s]+)['"]?\s*\)/gi,
+    `url("${tp}")`
+  );
+
+  // Remove srcset attributes entirely (they cause taint and aren't needed)
+  nodeString = nodeString.replace(/\ssrcset=['"][^'"]*['"]/gi, '');
+
+  // Remove poster attributes that aren't data URLs
+  nodeString = nodeString.replace(
+    /(\s)poster=['"](?!data:)([^'"]*)['"]/gi,
+    '$1poster=""'
+  );
+
+  // 3. Build SVG as data URL (more compatible than blob URL for cross-origin)
   const svg = svgPrefix + nodeString + svgSuffix;
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
 
-  // 4. Load using cached Image object
+  // Debug: Log a snippet of the SVG
+  console.log('[loadSvgImageFast] SVG length:', svg.length);
+  console.log('[loadSvgImageFast] SVG snippet:', svg.slice(0, 500));
+
+  // Use data URL instead of blob URL for better cross-origin compatibility
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+  // 4. Load using NEW Image object (don't reuse - can cause issues)
   return new Promise((resolve, reject) => {
-    cachedImg.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(cachedImg);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      resolve(img);
     };
-    cachedImg.onerror = (e) => {
-      URL.revokeObjectURL(url);
-      console.error('[StreamRender] SVG load failed. This usually means the DOM contains invalid XML characters or unclosed tags.');
+    img.onerror = (e) => {
+      console.error('[StreamRender] SVG load failed:', e);
+      console.error('[StreamRender] SVG content (first 1000 chars):', svg.slice(0, 1000));
       reject(new Error('SVG render failed: The content contains invalid characters or structure for video export.'));
     };
-    cachedImg.src = url;
+    img.src = svgDataUrl;
   });
 };
 
@@ -712,39 +993,32 @@ export const nodeToSvgDataUrl = async (
   // Fix potential layout shifts in SVG
   clone.style.margin = '0';
 
-  // Apply device animation explicitly (React state-based animations need manual application)
-  // We rebuild the transform from scratch using data attributes to avoid timing issues
-  const deviceAnimElement = clone.querySelector('[data-device-animation]') as HTMLElement | null;
-  if (deviceAnimElement) {
-    const animationType = deviceAnimElement.dataset.deviceAnimation as DeviceAnimationType;
-    const baseTransform = deviceAnimElement.dataset.baseTransform || 'none';
-    const posTransform = deviceAnimElement.dataset.posTransform || 'none';
-    const baseOpacity = parseFloat(deviceAnimElement.dataset.baseOpacity || '1');
-
-    // Calculate device animation for current playhead
-    let deviceAnimTransform = 'none';
-    let deviceOpacity = 1;
-
-    if (animationType && animationType !== 'none') {
-      const { animationSpeed } = useRenderStore.getState();
-      const { playheadMs } = useTimelineStore.getState();
-      const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1;
-      const startDelay = 400 / speedMultiplier;
-      const animDuration = 800 / speedMultiplier;
-      const delayedPlayhead = Math.max(0, playheadMs - startDelay);
-      const progress = Math.min(1, delayedPlayhead / animDuration);
-      const animStyle = generateDeviceKeyframes(animationType, progress);
-      deviceAnimTransform = animStyle.transform;
-      deviceOpacity = animStyle.opacity;
+  // Explicitly sync animations from source to clone
+  // This matches the logic in prepareExportContext and ensures layout/device animations are captured
+  // regardless of inlineStyle limitations or React timing quirks (since we waited for render)
+  const syncAnimationStyles = (selector: string) => {
+    const sourceElements = node.querySelectorAll(selector);
+    const targetElements = clone.querySelectorAll(selector);
+    
+    if (sourceElements.length === targetElements.length) {
+      for (let i = 0; i < sourceElements.length; i++) {
+        const source = sourceElements[i] as HTMLElement;
+        const target = targetElements[i] as HTMLElement;
+        
+        // Force sync critical animation properties from the "live" authorized source
+        target.style.transition = 'none'; // Critical: Disable transitions to prevent SVG capture interpolation
+        
+        const computed = window.getComputedStyle(source);
+        target.style.transform = source.style.transform || computed.transform;
+        target.style.opacity = source.style.opacity || computed.opacity;
+        
+        if (source.style.filter) target.style.filter = source.style.filter;
+      }
     }
+  };
 
-    // Combine transforms (same logic as Workarea)
-    const transforms = [baseTransform, posTransform, deviceAnimTransform]
-      .filter((t) => t && t !== 'none')
-      .join(' ');
-    deviceAnimElement.style.transform = transforms || 'none';
-    deviceAnimElement.style.opacity = String(baseOpacity * deviceOpacity);
-  }
+  syncAnimationStyles('[data-layout-animation]');
+  syncAnimationStyles('[data-device-animation]');
 
   // Apply text animation explicitly (React state-based animations need manual application)
   const { textOverlay, durationMs, animationSpeed } = useRenderStore.getState();
@@ -1129,6 +1403,12 @@ const captureVideoFrames = (
       continue;
     }
 
+    // Skip if video doesn't have crossOrigin set (would taint canvas)
+    if (!video.crossOrigin) {
+      console.warn('[captureFrame] Skipping video without crossOrigin - would taint canvas');
+      continue;
+    }
+
     const videoRect = video.getBoundingClientRect();
 
     // Calculate position relative to node, scaled to output
@@ -1157,48 +1437,52 @@ const captureVideoFrames = (
       ctx.clip();
     }
 
-    // Handle object-fit
-    if (objectFit === 'cover') {
-      const videoAspect = video.videoWidth / video.videoHeight;
-      const containerAspect = relW / relH;
+    // Handle object-fit - wrap in try-catch to prevent canvas taint errors
+    try {
+      if (objectFit === 'cover') {
+        const videoAspect = video.videoWidth / video.videoHeight;
+        const containerAspect = relW / relH;
 
-      let srcX = 0,
-        srcY = 0,
-        srcW = video.videoWidth,
-        srcH = video.videoHeight;
+        let srcX = 0,
+          srcY = 0,
+          srcW = video.videoWidth,
+          srcH = video.videoHeight;
 
-      if (videoAspect > containerAspect) {
-        // Video is wider - crop sides
-        srcW = video.videoHeight * containerAspect;
-        srcX = (video.videoWidth - srcW) / 2;
+        if (videoAspect > containerAspect) {
+          // Video is wider - crop sides
+          srcW = video.videoHeight * containerAspect;
+          srcX = (video.videoWidth - srcW) / 2;
+        } else {
+          // Video is taller - crop top/bottom
+          srcH = video.videoWidth / containerAspect;
+          srcY = (video.videoHeight - srcH) / 2;
+        }
+
+        ctx.drawImage(video, srcX, srcY, srcW, srcH, relX, relY, relW, relH);
+      } else if (objectFit === 'contain') {
+        const videoAspect = video.videoWidth / video.videoHeight;
+        const containerAspect = relW / relH;
+
+        let destX = relX,
+          destY = relY,
+          destW = relW,
+          destH = relH;
+
+        if (videoAspect > containerAspect) {
+          destH = relW / videoAspect;
+          destY = relY + (relH - destH) / 2;
+        } else {
+          destW = relH * videoAspect;
+          destX = relX + (relW - destW) / 2;
+        }
+
+        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, destX, destY, destW, destH);
       } else {
-        // Video is taller - crop top/bottom
-        srcH = video.videoWidth / containerAspect;
-        srcY = (video.videoHeight - srcH) / 2;
+        // fill or other - stretch to fit
+        ctx.drawImage(video, relX, relY, relW, relH);
       }
-
-      ctx.drawImage(video, srcX, srcY, srcW, srcH, relX, relY, relW, relH);
-    } else if (objectFit === 'contain') {
-      const videoAspect = video.videoWidth / video.videoHeight;
-      const containerAspect = relW / relH;
-
-      let destX = relX,
-        destY = relY,
-        destW = relW,
-        destH = relH;
-
-      if (videoAspect > containerAspect) {
-        destH = relW / videoAspect;
-        destY = relY + (relH - destH) / 2;
-      } else {
-        destW = relH * videoAspect;
-        destX = relX + (relW - destW) / 2;
-      }
-
-      ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, destX, destY, destW, destH);
-    } else {
-      // fill or other - stretch to fit
-      ctx.drawImage(video, relX, relY, relW, relH);
+    } catch (e) {
+      console.warn('[captureFrame] Failed to draw video - possible CORS issue:', e);
     }
 
     ctx.restore();
@@ -1293,6 +1577,14 @@ export const captureFrame = async (
 
   // Draw SVG at full output size (already scaled internally)
   ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+
+  // Check if canvas is tainted after SVG draw
+  try {
+    ctx.getImageData(0, 0, 1, 1);
+  } catch (e) {
+    console.error('[captureFrame] Canvas tainted after SVG draw! SVG may contain external URLs.');
+    throw new Error('Canvas tainted by SVG content. Check that all images are converted to data URLs.');
+  }
 
   ctx.restore();
 
