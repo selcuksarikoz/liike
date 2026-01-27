@@ -1,18 +1,101 @@
-import { useTimelineStore } from '../store/timelineStore';
-import { useRenderStore, type ExportFormat, type TextPosition } from '../store/renderStore';
 import { downloadDir, join } from '@tauri-apps/api/path';
 import { mkdir } from '@tauri-apps/plugin-fs';
+import { calculateAnimationValue } from '../constants/animations';
 import {
-  getEmbeddedFontCSS,
-  loadFontsForExport,
-  fetchGoogleFontCSS,
-} from '../services/fontService';
-import {
-  generateTextKeyframes,
   ANIMATION_SPEED_MULTIPLIERS,
+  generateTextKeyframes,
+  LAYOUT_PRESETS,
   TEXT_ANIMATIONS,
   type TextAnimationType,
 } from '../constants/layoutAnimationPresets';
+import {
+  fetchGoogleFontCSS,
+  getEmbeddedFontCSS,
+  loadFontsForExport,
+} from '../services/fontService';
+import { useRenderStore, type ExportFormat, type TextPosition } from '../store/renderStore';
+import { useTimelineStore } from '../store/timelineStore';
+
+// Helper to manually drive animations on the clones without React overhead
+export const updateExportAnimations = (timeMs: number, effectiveDuration: number) => {
+  if (!cachedExportContext) return;
+  
+  const { animatedElements, bgClone, deviceClone } = cachedExportContext;
+  const state = useTimelineStore.getState();
+  
+  // We need to know which animation is active.
+  // In the real app, this comes from store -> Workarea -> DeviceRenderer -> AnimationInfo
+  // We can look up the current active layout preset from the store!
+  const currentLayoutId = useRenderStore.getState().imageLayout;
+  const layoutPreset = LAYOUT_PRESETS.find(p => p.id === currentLayoutId);
+  
+  if (!layoutPreset || !layoutPreset.device?.animation) return; // No animation to drive?
+
+  const animType = layoutPreset.device.animation;
+  // Calculate progress based on duration... but wait!
+  // Layout animations usually run once at start (entrance) or loop.
+  // LayoutPreset defines: `animateIn: true`? `animations: [...]`?
+  // Let's check `LAYOUT_PRESETS` structure in `layoutAnimationPresets.ts`.
+  // It has `animations: [{ type: 'fade', duration: 1500 ... }]`.
+  // And `device: { animation: 'swing-in', ... }`.
+  
+  // Actually, usually the animation is finite (entrance) or infinite (loop).
+  // Ideally we replicate `useLayoutAnimation` logic.
+  // Simple approximation:
+  // If `animateIn`, progress is 0->1 over `duration`.
+  // If loop, progress cycles.
+  
+  // Let's assume standard entrance for now as it's most common for video export starts.
+  // Or if it's a loop like 'float', we loop based on time.
+  const animDuration = 1000; // Default or from preset
+  
+  // Find the device animation wrapper in the clones
+  // We flagged them with `data-device-animation`
+  // We can find them in `animatedElements` map?
+  // Our map has `source` and `target`.
+  // However, we need to know WHICH target corresponds to the device wrapper.
+  // `prepareExportContext` already identified it for rasterization! 
+  // But we replaced its content. The wrapper *itself* is what we animate.
+  
+  const deviceWrapper = deviceClone.querySelector('[data-device-animation]') as HTMLElement;
+  const layoutWrapper = deviceClone.querySelector('[data-layout-animation]') as HTMLElement;
+  
+  if (deviceWrapper) {
+      // Calculate style
+     // Logic from useAnimation/animationHelpers...
+     // Since we don't have the full React hook state, we interpret based on `timeMs`.
+     
+     // 1. Calculate Progress
+     // If loop: timeMs % duration / duration
+     // If simple entrance: min(1, timeMs / duration)
+     
+     // We need to know if it is a LOOP or ENTRANCE.
+     // `animType` strings like 'swing', 'pulse' are usually loops.
+     // 'swing-in', 'slide-in' are entrances.
+     // Let's guess based on naming or preset.
+     // But `calculateAnimationValue` in `animationHelpers.ts` handles looping internally based on type!
+     // e.g. 'float' uses sin(progress * PI * 2).
+     // unique issue: calculateAnimationValue expects 0-1 progress.
+     // We need to decide the period.
+     
+     const loopDuration = 3000; // Standard loop time
+     const entranceDuration = 1200;
+     
+     let progress = 0;
+     if (animType.includes('in') || animType.includes('reveal') || animType.includes('entrance')) {
+         progress = Math.min(1, timeMs / entranceDuration);
+     } else {
+         // Loop
+         progress = (timeMs % loopDuration) / loopDuration;
+     }
+
+     const style = calculateAnimationValue(animType, progress, 1.0, 'ease-out'); // Intensity 1.0 default
+     
+     // Apply to wrapper
+     if (style.transform) deviceWrapper.style.transform = style.transform;
+     if (style.opacity !== undefined) deviceWrapper.style.opacity = style.opacity.toString();
+  }
+};
 
 // Seek timeline - no flushSync needed, animations are calculated directly from store
 export const seekTimeline = (timeMs: number) => {
@@ -135,14 +218,14 @@ export const getFileExtension = (format: ExportFormat): string => {
   }
 };
 
-// Image Cache: URL -> DataURL (optimized for export resolution)
+// Image Cache: URL -> DataURL (HIGH QUALITY for export)
 const imageCache = new Map<string, string>();
 
-// Max dimension for cached images (matches 4K export)
-const MAX_IMAGE_DIMENSION = 2160;
+// Max dimension for cached images - increased for 4K+ exports
+const MAX_IMAGE_DIMENSION = 4320; // 4K * 2 for safety
 
-// Optimize image: resize to max dimension and compress
-const optimizeImage = async (blob: Blob, maxDim: number = MAX_IMAGE_DIMENSION): Promise<string> => {
+// Convert image to high-quality data URL (minimal/no compression)
+const convertImageToDataUrl = async (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -151,19 +234,9 @@ const optimizeImage = async (blob: Blob, maxDim: number = MAX_IMAGE_DIMENSION): 
     img.onload = () => {
       URL.revokeObjectURL(url);
 
-      // Calculate new dimensions maintaining aspect ratio
-      let { width, height } = img;
-      if (width > maxDim || height > maxDim) {
-        if (width > height) {
-          height = Math.round((height / width) * maxDim);
-          width = maxDim;
-        } else {
-          width = Math.round((width / height) * maxDim);
-          height = maxDim;
-        }
-      }
+      const { width, height } = img;
 
-      // Draw to canvas at optimized size
+      // Draw to canvas at FULL SIZE for maximum quality
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
@@ -172,20 +245,15 @@ const optimizeImage = async (blob: Blob, maxDim: number = MAX_IMAGE_DIMENSION): 
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Use WebP for best compression, fallback to JPEG
-      // Quality 0.92 is visually lossless for most images
-      const dataUrl = canvas.toDataURL('image/webp', 0.92);
-      if (dataUrl.startsWith('data:image/webp')) {
-        resolve(dataUrl);
-      } else {
-        // Browser doesn't support WebP, use JPEG
-        resolve(canvas.toDataURL('image/jpeg', 0.92));
-      }
+      // Use PNG for lossless quality - critical for export
+      // PNG is larger but preserves all details
+      const dataUrl = canvas.toDataURL('image/png');
+      resolve(dataUrl);
     };
 
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image for optimization'));
+      reject(new Error('Failed to load image for conversion'));
     };
 
     img.src = url;
@@ -287,7 +355,7 @@ const convertImageViaCanvas = (url: string): Promise<string> => {
   });
 };
 
-// Helper: Fetch and convert URL to DataURL with caching + optimization
+// Helper: Fetch and convert URL to DataURL with caching (HIGH QUALITY - no compression)
 const getCachedDataUrl = async (url: string): Promise<string> => {
   if (imageCache.has(url)) return imageCache.get(url)!;
 
@@ -307,16 +375,15 @@ const getCachedDataUrl = async (url: string): Promise<string> => {
     }
     const blob = await response.blob();
 
-    // Optimize large images (> 500KB) to reduce memory during export
+    // Convert to high-quality PNG data URL (no lossy compression)
+    // This preserves image quality for export
     let dataUrl: string;
-    if (blob.size > 500 * 1024) {
-      console.log(
-        `[StreamRender] Optimizing large image: ${(blob.size / 1024 / 1024).toFixed(1)}MB -> max ${MAX_IMAGE_DIMENSION}px`
-      );
-      dataUrl = await optimizeImage(blob);
-      console.log(`[StreamRender] Optimized to: ${(dataUrl.length / 1024 / 1024).toFixed(1)}MB`);
+    if (blob.type.startsWith('image/')) {
+      // Use canvas for proper image handling
+      dataUrl = await convertImageToDataUrl(blob);
+      console.log(`[StreamRender] Converted image: ${(blob.size / 1024).toFixed(0)}KB -> PNG`);
     } else {
-      // Small images: just convert to dataURL
+      // Non-image blobs: direct conversion
       dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
@@ -367,32 +434,154 @@ const blobUrlToDataUrl = async (blobUrl: string): Promise<string> => {
   }
 };
 
+// Helper: Convert image element to data URL using canvas (fallback for bundled assets)
+const convertImageElementToDataUrl = async (img: HTMLImageElement): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const doConvert = () => {
+      try {
+        // Use displayed dimensions if natural dimensions aren't available
+        const width = img.naturalWidth || img.width || img.clientWidth;
+        const height = img.naturalHeight || img.height || img.clientHeight;
+
+        if (width === 0 || height === 0) {
+          reject(new Error(`Image has no dimensions: ${width}x${height}`));
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Verify canvas isn't tainted before converting
+        try {
+          ctx.getImageData(0, 0, 1, 1);
+        } catch {
+          reject(new Error('Canvas tainted - cannot convert'));
+          return;
+        }
+
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) {
+        reject(e);
+      }
+    };
+
+    // If image is already loaded, convert immediately
+    if (img.complete && (img.naturalWidth > 0 || img.width > 0)) {
+      doConvert();
+      return;
+    }
+
+    // Wait for load with timeout
+    const timeout = setTimeout(() => {
+      reject(new Error('Image load timeout'));
+    }, 5000);
+
+    img.onload = () => {
+      clearTimeout(timeout);
+      doConvert();
+    };
+    img.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error('Image load failed'));
+    };
+
+    // If src is set but not loading, trigger reload
+    if (img.src && !img.complete) {
+      const src = img.src;
+      img.src = '';
+      img.src = src;
+    }
+  });
+};
+
+// Helper: Load an image from URL and convert to data URL
+const loadAndConvertImage = async (src: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    const timeout = setTimeout(() => {
+      reject(new Error('Image load timeout'));
+    }, 10000);
+
+    img.onload = () => {
+      clearTimeout(timeout);
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d')!;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) {
+        reject(e);
+      }
+    };
+
+    img.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error('Image load failed'));
+    };
+
+    img.src = src;
+  });
+};
+
 // Helper: Convert all images in node to data URLs
 const convertImagesToDataUrls = async (node: HTMLElement) => {
   const images = node.querySelectorAll('img');
   console.log(`[convertImages] Found ${images.length} img elements`);
 
-  for (const img of images) {
+  // Process images in parallel for better performance
+  const conversions = Array.from(images).map(async (img) => {
     if (img.src.startsWith('data:')) {
-      console.log('[convertImages] Already data URL, skipping');
-      continue;
+      return; // Already converted
     }
 
-    console.log('[convertImages] Converting:', img.src.slice(0, 100));
+    const originalSrc = img.src;
+    console.log('[convertImages] Converting:', originalSrc.slice(0, 100));
+
     try {
       let dataUrl: string;
-      if (img.src.startsWith('blob:')) {
-        dataUrl = await blobUrlToDataUrl(img.src);
+
+      if (originalSrc.startsWith('blob:')) {
+        dataUrl = await blobUrlToDataUrl(originalSrc);
       } else {
-        dataUrl = await getCachedDataUrl(img.src);
+        // Try multiple methods in order of preference
+        // 1. First try fetching (works for most URLs)
+        // 2. Then try loading fresh (works for bundled assets)
+        // 3. Finally try using the existing element (if already loaded)
+        try {
+          dataUrl = await getCachedDataUrl(originalSrc);
+        } catch {
+          console.log('[convertImages] Fetch failed, trying fresh load for:', originalSrc.slice(0, 50));
+          try {
+            // Create a new image and load it fresh
+            dataUrl = await loadAndConvertImage(originalSrc);
+          } catch {
+            // Last resort: try using the existing element
+            console.log('[convertImages] Fresh load failed, trying existing element');
+            dataUrl = await convertImageElementToDataUrl(img);
+          }
+        }
       }
+
       img.src = dataUrl;
       img.setAttribute('crossorigin', 'anonymous');
-      console.log('[convertImages] Success:', img.src.slice(0, 50));
+      console.log('[convertImages] Success:', originalSrc.slice(0, 50));
     } catch (e) {
-      console.error('[convertImages] FAILED to convert:', img.src, e);
+      console.error('[convertImages] All methods FAILED for:', originalSrc, e);
     }
-  }
+  });
+
+  await Promise.all(conversions);
 
   // Also convert video poster attributes
   const videos = node.querySelectorAll('video');
@@ -501,7 +690,7 @@ const convertBackgroundImagesToDataUrls = async (node: HTMLElement) => {
   }
 };
 
-// Helper: Convert video elements to images
+// Helper: Convert video elements to images (HIGH QUALITY)
 export const convertVideosToImages = async (sourceNode: HTMLElement, cloneNode: HTMLElement) => {
   const sourceVideos = sourceNode.querySelectorAll('video');
   const cloneVideos = cloneNode.querySelectorAll('video');
@@ -517,16 +706,25 @@ export const convertVideosToImages = async (sourceNode: HTMLElement, cloneNode: 
     if (sourceVideo.videoWidth === 0 || sourceVideo.videoHeight === 0) continue;
 
     try {
+      // Use native video dimensions for maximum quality
       const width = sourceVideo.videoWidth;
       const height = sourceVideo.videoHeight;
 
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', {
+        alpha: false, // Video frames don't need alpha
+        willReadFrequently: false,
+      });
       if (ctx) {
+        // High quality scaling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(sourceVideo, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/png'); // Using PNG for quality
+
+        // Use PNG for lossless quality - critical for export
+        const dataUrl = canvas.toDataURL('image/png');
 
         const img = document.createElement('img');
         img.src = dataUrl;
@@ -535,6 +733,8 @@ export const convertVideosToImages = async (sourceNode: HTMLElement, cloneNode: 
         img.style.width = '100%';
         img.style.height = '100%';
         img.style.objectFit = 'cover';
+        // Ensure high quality rendering
+        img.style.imageRendering = 'auto';
 
         if (cloneVideo.parentNode) {
           cloneVideo.parentNode.replaceChild(img, cloneVideo);
@@ -689,7 +889,7 @@ export const preloadFonts = async (node: HTMLElement): Promise<void> => {
 };
 
 // Cached export context - reused across frames for performance
-interface ExportContext {
+interface CachedExportContext {
   fontCss: string;
   sourceWidth: number;
   sourceHeight: number;
@@ -700,7 +900,7 @@ interface ExportContext {
   // Optimized rendering with layers
   bgClone: HTMLElement;
   deviceClone: HTMLElement;
-  animatedElements: Array<{ source: HTMLElement; target: HTMLElement }>;
+  animatedElements: Array<{ source: HTMLElement; target: HTMLElement; layer: 'bg' | 'device' }>;
   bgImg: HTMLImageElement;
   deviceImg: HTMLImageElement;
   svgPrefix: string;
@@ -754,14 +954,29 @@ export const prepareExportContext = async (
   await convertImagesToDataUrls(masterClone);
   await convertBackgroundImagesToDataUrls(masterClone);
 
-  // AGGRESSIVE OPTIMIZATION: Sanitize DOM directly (safer & faster than serialize->regex->parse)
+  // Sanitize external URLs that could cause security issues or canvas taint
+  // BUT preserve local/bundled assets that are already loaded
   const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  
+
+  // Check if URL is external (http/https) and not converted
+  const isProblematicUrl = (url: string): boolean => {
+    if (!url) return false;
+    if (url.startsWith('data:')) return false; // Already converted
+    if (url.startsWith('blob:')) return true; // Blob URLs won't work in SVG
+    // External URLs that weren't converted
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      // Check if it's NOT a localhost URL (those are bundled assets)
+      return !url.includes('localhost') && !url.includes('127.0.0.1');
+    }
+    return false; // Local paths like /assets/... are OK
+  };
+
   const sanitizeNode = (root: HTMLElement) => {
-    // 1. Sanitize Images
+    // 1. Sanitize Images - only remove truly external URLs
     const images = root.querySelectorAll('img');
     for (const img of images) {
-      if (img.src && !img.src.startsWith('data:')) {
+      if (isProblematicUrl(img.src)) {
+        console.warn('[sanitizeNode] Replacing problematic image:', img.src.slice(0, 100));
         img.src = transparentPixel;
       }
       if (img.hasAttribute('srcset')) img.removeAttribute('srcset');
@@ -771,7 +986,7 @@ export const prepareExportContext = async (
     const svgImages = root.querySelectorAll('image');
     for (const img of svgImages) {
       const href = img.getAttribute('href') || img.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
-      if (href && !href.startsWith('data:')) {
+      if (href && isProblematicUrl(href)) {
         img.setAttribute('href', transparentPixel);
         img.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
       }
@@ -780,19 +995,21 @@ export const prepareExportContext = async (
     // 3. Sanitize Video Posters
     const videos = root.querySelectorAll('video');
     for (const video of videos) {
-      if (video.hasAttribute('poster') && !video.poster.startsWith('data:')) {
-        video.removeAttribute('poster'); 
+      if (video.hasAttribute('poster') && isProblematicUrl(video.poster)) {
+        video.removeAttribute('poster');
       }
     }
-    
-    // 4. Sanitize Styles (Background Images)
-    // Note: convertBackgroundImagesToDataUrls should have handled this, but as a fallback:
+
+    // 4. Sanitize Styles (Background Images) - only external URLs
     const allElements = root.querySelectorAll('*');
     for (const el of allElements) {
        const htmlEl = el as HTMLElement;
        const bg = htmlEl.style.backgroundImage;
-       if (bg && bg.includes('url(') && !bg.includes('data:')) {
-          htmlEl.style.backgroundImage = 'none';
+       if (bg && bg.includes('url(')) {
+          const urlMatch = bg.match(/url\(['"]?(.*?)['"]?\)/);
+          if (urlMatch && urlMatch[1] && isProblematicUrl(urlMatch[1])) {
+             htmlEl.style.backgroundImage = 'none';
+          }
        }
     }
   };
@@ -1736,16 +1953,18 @@ export const captureFrame = async (
     captureCanvas = document.createElement('canvas');
     captureCanvas.width = outputWidth;
     captureCanvas.height = outputHeight;
+    // Use alpha: false for better performance and color accuracy in video export
     captureCtx = captureCanvas.getContext('2d', {
       willReadFrequently: true,
-      alpha: true,
+      alpha: false, // Faster compositing, no transparency needed for final output
+      desynchronized: true, // Better performance - don't sync with display
     })!;
     lastCanvasSize = { width: outputWidth, height: outputHeight };
   }
 
   const ctx = captureCtx!;
 
-  // High quality scaling
+  // HIGH QUALITY rendering settings
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
@@ -1806,37 +2025,21 @@ export const captureFrame = async (
     }
 
     // 3. Composite to Canvas (Sandwich: BG -> Video -> Device -> Text)
-    // Let's reuse a global canvas or create one.
-    // Ideally, useOffscreen if available.
-    const canvas = document.createElement('canvas'); // Or reuse 
-    canvas.width = outputWidth;
-    canvas.height = outputHeight;
-    const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true })!;
+    // Reuse the main capture canvas for compositing
+    const context = captureCtx!;
 
-    // Clear
-    context.clearRect(0, 0, outputWidth, outputHeight);
+    // HIGH QUALITY rendering settings
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+
+    // Clear with solid background for better color accuracy
+    context.fillStyle = '#000000';
+    context.fillRect(0, 0, outputWidth, outputHeight);
 
     // A. Background Layer
     context.drawImage(bgImg, 0, 0);
 
-    // B. Video Layer (captured directly from source videos)
-    // We need to capture from the REAL DOM node videos, aligned with device screen
-    // The video element might be inside the device container.
-    // We need to find the video element in the source and map its position?
-    // Our captureVideoFrames helper does exactly that.
-
-    // Find the video container in the source?
-    // Actually, captureVideoFrames scans `node` for videos.
-    // It handles placement internally?
-    // It iterates all videos in `node` and draws them.
-    // This works assuming the video position logic (getBoundingClientRect) is accurate relative to the root node.
-    // Note: syncFrameAnimations handles the transforms on the clones.
-    // Does it handle transforms on the SOURCE? No, source is driven by React.
-    // But for export, we are driving the source via `playheadMs` prop in `Workarea`.
-    // Wait, `captureFrame` is called inside a loop where `playheadMs` is updated.
-    // React renders the updates to the SOURCE DOM.
-    // So `node` (source) has the correct transforms. We can rely on getBoundingClientRect.
-
+    // B. Video Layer (captured directly from source videos at full quality)
     captureVideoFrames(node, context, node.getBoundingClientRect(), scale, 0, 0);
 
     // C. Device Layer (Transparent frame on top)

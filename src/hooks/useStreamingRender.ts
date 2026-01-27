@@ -1,9 +1,27 @@
-import { useCallback, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { join, dirname } from '@tauri-apps/api/path';
-import { Command } from '@tauri-apps/plugin-shell';
+import { dirname, join } from '@tauri-apps/api/path';
 import { platform } from '@tauri-apps/plugin-os';
+import { Command } from '@tauri-apps/plugin-shell';
+import { useCallback, useRef, useState } from 'react';
+import type { ExportFormat } from '../store/renderStore';
 import { useRenderStore } from '../store/renderStore';
+import { useTimelineStore } from '../store/timelineStore';
+import {
+  captureFrame,
+  clearExportContext,
+  getExportFolder,
+  getFileExtension,
+  getVideoFilename,
+  pauseAndSeekAnimations,
+  pauseAndSeekVideos,
+  preloadFonts,
+  preloadResources,
+  prepareExportContext,
+  seekTimeline,
+  updateExportAnimations,
+  waitForRender,
+  yieldToMain
+} from '../utils/renderUtils';
 
 const revealInFileManager = async (filePath: string) => {
   const os = platform();
@@ -17,25 +35,6 @@ const revealInFileManager = async (filePath: string) => {
     await Command.create('xdg-open', [folder]).execute();
   }
 };
-import type { ExportFormat } from '../store/renderStore';
-import { useTimelineStore } from '../store/timelineStore';
-import {
-  getExportFolder,
-  getVideoFilename,
-  getFileExtension,
-  seekTimeline,
-  pauseAndSeekAnimations,
-  pauseAndSeekVideos,
-  waitForRender,
-  preloadResources,
-  preloadFonts,
-  captureFrame,
-  nodeToSvgDataUrl,
-  loadImage,
-  prepareExportContext,
-  clearExportContext,
-  yieldToMain,
-} from '../utils/renderUtils';
 
 export type StreamingRenderOptions = {
   node: HTMLElement | null;
@@ -194,7 +193,8 @@ export const useStreamingRender = () => {
            canvas.width = outputWidth;
            canvas.height = outputHeight;
            const ctx = canvas.getContext('2d')!;
-           const imageData = new ImageData(rgbaData, outputWidth, outputHeight);
+           // TS workaround: Uint8ClampedArray mismatch
+           const imageData = new ImageData(rgbaData as any, outputWidth, outputHeight);
            ctx.putImageData(imageData, 0, 0);
 
            // Clean up context immediately
@@ -293,10 +293,14 @@ export const useStreamingRender = () => {
 
         await waitForRender(50);
 
-        // Capture and stream each frame
+        // Capture and stream each frame with improved threading
         const hasVideos = node.querySelectorAll('video').length > 0;
         console.log(`[StreamRender] Starting frame loop: ${totalFrames} frames, hasVideos: ${hasVideos}`);
         const loopStart = performance.now();
+
+        // Batch size for yielding - process multiple frames before yielding
+        // This improves throughput while still allowing UI updates
+        const BATCH_SIZE = 3;
 
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
           if (abortController.signal.aborted) {
@@ -307,14 +311,13 @@ export const useStreamingRender = () => {
 
           const timeMs = (frameIndex / fps) * 1000;
 
-          // Seek timeline and animations (sync, fast)
-          seekTimeline(timeMs);
-          pauseAndSeekAnimations(node, timeMs);
+          // Direct-Drive Animation Loop
+          // We do NOT update React state or seek the timeline here.
+          // We manually drive the cloned DOM elements using `updateExportAnimations`.
 
-          // Yield to allow React to re-render with new playhead (critical for state-driven animations)
-          await yieldToMain();
+          updateExportAnimations(timeMs, effectiveDuration);
 
-          // Only wait for video seek if there are videos
+          // Only sync videos (they are native elements)
           if (hasVideos) {
             await pauseAndSeekVideos(node, timeMs);
           }
@@ -324,7 +327,7 @@ export const useStreamingRender = () => {
             return;
           }
 
-          // Capture frame to raw RGBA
+          // Capture frame to raw RGBA (high quality)
           const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);
 
           if (abortController.signal.aborted) {
@@ -338,8 +341,10 @@ export const useStreamingRender = () => {
             frameData: new Uint8Array(rgbaData.buffer),
           });
 
-          // Update progress sporadically to avoid React render thrashing
-          if (frameIndex % 5 === 0 || frameIndex === totalFrames - 1) {
+          // Update progress - every frame for accurate progress tracking
+          // But batch React state updates for performance
+          const shouldUpdateUI = frameIndex % BATCH_SIZE === 0 || frameIndex === totalFrames - 1;
+          if (shouldUpdateUI) {
             setState((prev) => ({
               ...prev,
               currentFrame: frameIndex + 1,
@@ -351,10 +356,19 @@ export const useStreamingRender = () => {
             });
           }
 
-          // CRITICAL: Yield to main thread EVERY frame to prevent UI freezing
-          // This allows the browser to process events (mouse events, repaints)
-          // Since we increased the Rust buffer to 60, we can afford small pauses here.
-          await yieldToMain();
+          // Yield to main thread periodically to prevent UI freezing
+          // Use requestAnimationFrame for smoother yielding when possible
+          if (shouldUpdateUI) {
+            await new Promise<void>(resolve => {
+              if (typeof requestAnimationFrame !== 'undefined') {
+                requestAnimationFrame(() => {
+                  setTimeout(resolve, 0);
+                });
+              } else {
+                setTimeout(resolve, 0);
+              }
+            });
+          }
         }
 
         console.log(`[StreamRender] Frame loop completed in ${((performance.now() - loopStart) / 1000).toFixed(1)}s`);

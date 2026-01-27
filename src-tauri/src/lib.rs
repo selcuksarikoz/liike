@@ -452,7 +452,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
         ]);
     }
 
-    // Output encoding args based on format
+    // Output encoding args based on format - PRIORITIZE QUALITY
     match format {
         "webm" => {
             args.extend(vec![
@@ -461,17 +461,25 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                 "-c:v".to_string(),
                 "libvpx-vp9".to_string(),
                 "-crf".to_string(),
-                "24".to_string(), // Better quality
+                "18".to_string(), // High quality (lower = better, 18-24 is excellent)
                 "-b:v".to_string(),
                 "0".to_string(),
                 "-pix_fmt".to_string(),
-                "yuva420p".to_string(), // With Alpha
+                "yuva420p".to_string(),
                 "-deadline".to_string(),
-                "good".to_string(), // Better quality
+                "good".to_string(), // Better quality than realtime
                 "-cpu-used".to_string(),
-                "4".to_string(), // Balance quality/speed
+                "2".to_string(), // Quality-focused (0=best, 8=fastest)
                 "-row-mt".to_string(),
-                "1".to_string(), // Parallel encoding
+                "1".to_string(),
+                "-threads".to_string(),
+                "0".to_string(), // Use all available threads
+                "-tile-columns".to_string(),
+                "2".to_string(),
+                "-auto-alt-ref".to_string(),
+                "1".to_string(),
+                "-lag-in-frames".to_string(),
+                "25".to_string(), // Better compression with lookahead
             ]);
         }
         "gif" => {
@@ -484,7 +492,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
             ]);
         }
         _ => {
-            // MP4/MOV - use hardware encoding when available
+            // MP4/MOV - use hardware encoding when available - HIGH QUALITY
             if use_hw && is_macos {
                 args.extend(vec![
                     "-vf".to_string(),
@@ -494,11 +502,12 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-q:v".to_string(),
-                    "90".to_string(), // Maximum quality (0-100)
+                    "80".to_string(), // High quality (0-100 scale, 80+ is excellent)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
+                    // Color space for accurate reproduction
                     "-color_primaries".to_string(), "bt709".to_string(),
                     "-color_trc".to_string(), "bt709".to_string(),
                     "-colorspace".to_string(), "bt709".to_string(),
@@ -512,13 +521,15 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "p7".to_string(), // Highest quality preset
+                    "p6".to_string(), // High quality preset (p7 is slowest/best, p6 is good balance)
                     "-tune".to_string(),
                     "hq".to_string(),
                     "-rc".to_string(),
                     "vbr".to_string(),
                     "-cq".to_string(),
-                    "18".to_string(), // Near-lossless quality
+                    "18".to_string(), // High quality (lower = better, 18-22 is excellent)
+                    "-b:v".to_string(),
+                    "0".to_string(),
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
@@ -528,7 +539,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-colorspace".to_string(), "bt709".to_string(),
                 ]);
             } else {
-                // Software encoding fallback - maximum quality
+                // Software encoding fallback - QUALITY FOCUSED
                 args.extend(vec![
                     "-vf".to_string(),
                     scale_filter,
@@ -537,13 +548,15 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "medium".to_string(), // Better quality
+                    "medium".to_string(), // Good quality/speed balance
                     "-crf".to_string(),
-                    "18".to_string(), // Near-lossless (lower = better, 18 is visually lossless)
+                    "20".to_string(), // High quality (18-22 is excellent)
                     "-tag:v".to_string(),
                     "hvc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
+                    "-threads".to_string(),
+                    "0".to_string(), // Use all available threads
                     "-color_primaries".to_string(), "bt709".to_string(),
                     "-color_trc".to_string(), "bt709".to_string(),
                     "-colorspace".to_string(), "bt709".to_string(),
