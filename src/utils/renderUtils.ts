@@ -705,9 +705,13 @@ interface ExportContext {
   deviceImg: HTMLImageElement;
   svgPrefix: string;
   svgSuffix: string;
+  bgIsStatic: boolean;      // Optimization: if true, only render BG once
+  deviceIsStatic: boolean;  // Optimization: if true, only render Device once (except video)
+  bgRendered: boolean;
+  deviceRendered: boolean;
 }
 
-let cachedExportContext: ExportContext | null = null;
+let cachedExportContext: CachedExportContext | null = null;
 
 // Yield to main thread to prevent blocking
 export const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -750,7 +754,52 @@ export const prepareExportContext = async (
   await convertImagesToDataUrls(masterClone);
   await convertBackgroundImagesToDataUrls(masterClone);
 
-  // 3. Create Layers
+  // AGGRESSIVE OPTIMIZATION: Sanitize DOM directly (safer & faster than serialize->regex->parse)
+  const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  
+  const sanitizeNode = (root: HTMLElement) => {
+    // 1. Sanitize Images
+    const images = root.querySelectorAll('img');
+    for (const img of images) {
+      if (img.src && !img.src.startsWith('data:')) {
+        img.src = transparentPixel;
+      }
+      if (img.hasAttribute('srcset')) img.removeAttribute('srcset');
+    }
+
+    // 2. Sanitize SVG <image>
+    const svgImages = root.querySelectorAll('image');
+    for (const img of svgImages) {
+      const href = img.getAttribute('href') || img.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+      if (href && !href.startsWith('data:')) {
+        img.setAttribute('href', transparentPixel);
+        img.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
+      }
+    }
+
+    // 3. Sanitize Video Posters
+    const videos = root.querySelectorAll('video');
+    for (const video of videos) {
+      if (video.hasAttribute('poster') && !video.poster.startsWith('data:')) {
+        video.removeAttribute('poster'); 
+      }
+    }
+    
+    // 4. Sanitize Styles (Background Images)
+    // Note: convertBackgroundImagesToDataUrls should have handled this, but as a fallback:
+    const allElements = root.querySelectorAll('*');
+    for (const el of allElements) {
+       const htmlEl = el as HTMLElement;
+       const bg = htmlEl.style.backgroundImage;
+       if (bg && bg.includes('url(') && !bg.includes('data:')) {
+          htmlEl.style.backgroundImage = 'none';
+       }
+    }
+  };
+
+  sanitizeNode(masterClone);
+
+  // 3. Create Layers from sanitized master
   const bgClone = masterClone.cloneNode(true) as HTMLElement;
   const deviceClone = masterClone.cloneNode(true) as HTMLElement;
 
@@ -773,44 +822,113 @@ export const prepareExportContext = async (
     screenContainer.style.backgroundImage = 'none';
   }
 
-  // 4. Map Animated Elements (for both clones)
-  const animatedElements: Array<{ source: HTMLElement; target: HTMLElement }> = [];
+  // 4. Map Animated Elements & Detect Static Layers
+  const animatedElements: Array<{ source: HTMLElement; target: HTMLElement; layer: 'bg' | 'device' }> = [];
+  let bgHasAnimations = false;
+  let deviceHasAnimations = false;
 
   // Get all animated elements from source to build a fast lookup
   const animations = node.getAnimations({ subtree: true });
   const animatedSourceElements = new Set(
     animations
-      .map(a => (a.effect as KeyframeEffect | null)?.target as HTMLElement | null)
+      .map((a) => (a.effect as KeyframeEffect | null)?.target as HTMLElement | null)
       .filter((el): el is HTMLElement => el !== null)
   );
 
+  // Helper to determine which layer an element belongs to
+  const getLayerType = (el: HTMLElement): 'bg' | 'device' | 'unknown' => {
+    // Check closest data-layer parent in the CLONE structure
+    // Since we are walking source/target in parallel, we can check target's parents
+    let current: HTMLElement | null = el;
+    while (current) {
+        if (current.getAttribute('data-layer') === 'background') return 'bg';
+        if (current.getAttribute('data-layer') === 'device') return 'device';
+        current = current.parentElement;
+    }
+    return 'unknown';
+  };
+
   // Simultanously walk trees to build mapping
-  const walkAndMap = (source: HTMLElement, target: HTMLElement) => {
+  const walkAndMap = (source: HTMLElement, target: HTMLElement, rootLayer: 'bg' | 'device') => {
     const isDeviceAnim = source.hasAttribute('data-device-animation');
     const isLayoutAnim = source.hasAttribute('data-layout-animation');
     const hasWebAnim = animatedSourceElements.has(source);
     const isTextChild = source.parentElement &&
                         source.parentElement.style.zIndex === '50' &&
                         source.parentElement.style.pointerEvents === 'none';
-    // Also capture elements with inline animated styles (React state-driven)
+    
+    // Check for inline animated styles (React state-driven)
+    // Note: We only care if these change over time, but for safety we track them all.
     const hasAnimatedStyle = source.style.transform || source.style.opacity ||
                              source.style.filter || source.style.clipPath;
 
     if (isDeviceAnim || isLayoutAnim || hasWebAnim || isTextChild || hasAnimatedStyle) {
-      animatedElements.push({ source, target });
+      animatedElements.push({ source, target, layer: rootLayer });
+      
+      if (rootLayer === 'bg') bgHasAnimations = true;
+      if (rootLayer === 'device') deviceHasAnimations = true;
     }
 
     const sourceChildren = source.children;
     const targetChildren = target.children;
     for (let i = 0; i < sourceChildren.length; i++) {
         if (sourceChildren[i] instanceof HTMLElement && targetChildren[i] instanceof HTMLElement) {
-            walkAndMap(sourceChildren[i] as HTMLElement, targetChildren[i] as HTMLElement);
+            walkAndMap(sourceChildren[i] as HTMLElement, targetChildren[i] as HTMLElement, rootLayer);
         }
     }
   };
 
-  walkAndMap(node, bgClone);
-  walkAndMap(node, deviceClone);
+  walkAndMap(node, bgClone, 'bg');
+  // Device layers in BG clone are hidden, but root mapping might still traverse?
+  // Actually, wait. bgClone has 'device' layer HIDDEN (display:none).
+  // But the DOM nodes still exist inside it.
+  // We want to map animations relevant to the visible part.
+  
+  // Correction: We should only map animations that are VISIBLE in that layer.
+  // Since we hide the other layer's container, effectively those animations don't matter for that clone.
+  // The 'target' in walkAndMap is the clone node.
+  // If we are in bgClone, we shouldn't map into the hidden device layer.
+  // But traversing the whole tree is simpler. 
+  // Optimization: Stop traversal at hidden layers?
+  
+  // Let's refine walkAndMap to stop at data-layer boundary of the OTHER type.
+  const walkAndMapIdeally = (source: HTMLElement, target: HTMLElement, layerType: 'bg' | 'device') => {
+      // If we hit the OTHER layer's container, stop traversing down
+      const targetLayerAttr = target.getAttribute('data-layer');
+      if (layerType === 'bg' && targetLayerAttr === 'device') return; 
+      if (layerType === 'device' && targetLayerAttr === 'background') return;
+
+      const isDeviceAnim = source.hasAttribute('data-device-animation');
+      const isLayoutAnim = source.hasAttribute('data-layout-animation');
+      const hasWebAnim = animatedSourceElements.has(source);
+      // Text children usually overlay everything, treated separately or as top level?
+      // Actually text overlay is usually separate canvas now.
+      
+      const hasAnimatedStyle = source.style.transform || source.style.opacity ||
+                               source.style.filter || source.style.clipPath;
+
+      if (isDeviceAnim || isLayoutAnim || hasWebAnim || hasAnimatedStyle) {
+          animatedElements.push({ source, target, layer: layerType });
+          if (layerType === 'bg') bgHasAnimations = true;
+          if (layerType === 'device') deviceHasAnimations = true;
+      }
+
+      const sourceChildren = source.children;
+      const targetChildren = target.children;
+      // Use efficient loop
+      const len = sourceChildren.length;
+      for (let i = 0; i < len; i++) {
+          const sChild = sourceChildren[i];
+          const tChild = targetChildren[i];
+          if (sChild instanceof HTMLElement && tChild instanceof HTMLElement) {
+               walkAndMapIdeally(sChild, tChild, layerType);
+          }
+      }
+  };
+  
+  walkAndMapIdeally(node, bgClone, 'bg');
+  walkAndMapIdeally(node, deviceClone, 'device');
+
 
   // 5. Get font CSS ONCE
   const usedFonts = extractUsedFonts(node);
@@ -824,13 +942,13 @@ export const prepareExportContext = async (
     }
   }
 
-  // Pre-create reusable Image objects
+  // Pre-create re-usable Image objects
   const bgImg = new Image();
   bgImg.crossOrigin = 'anonymous';
   const deviceImg = new Image();
   deviceImg.crossOrigin = 'anonymous';
-
-  // Pre-compute static SVG parts
+  
+  // NEW: SVG Prefix
   const svgPrefix = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
 <defs><style type="text/css">${fontCss}</style></defs>
 <foreignObject width="${outputWidth}" height="${outputHeight}">
@@ -854,10 +972,14 @@ export const prepareExportContext = async (
     deviceImg,
     svgPrefix,
     svgSuffix,
+    bgIsStatic: !bgHasAnimations,       // Flag for optimization
+    deviceIsStatic: !deviceHasAnimations, // Flag for optimization
+    bgRendered: false,     // Track if rendered
+    deviceRendered: false, // Track if rendered
   };
 
   console.log(
-    `[Export] Context prepared in ${(performance.now() - startTime).toFixed(0)}ms, syncing ${animatedElements.length} elements`
+    `[Export] Context prepared. BG Static: ${!bgHasAnimations}, Device Static: ${!deviceHasAnimations}`
   );
 };
 
@@ -874,9 +996,13 @@ export const clearExportContext = () => {
 const syncFrameAnimations = () => {
   if (!cachedExportContext) return;
 
-  const { animatedElements } = cachedExportContext;
+  const { animatedElements, bgIsStatic, deviceIsStatic, bgRendered, deviceRendered } = cachedExportContext;
 
-  for (const { source, target } of animatedElements) {
+  for (const { source, target, layer } of animatedElements) {
+    // OPTIMIZATION: Skip syncing if the target layer is static and already rendered
+    if (layer === 'bg' && bgIsStatic && bgRendered) continue;
+    if (layer === 'device' && deviceIsStatic && deviceRendered) continue;
+
     target.style.transition = 'none'; // DISABLE TRANSITIONS to ensure immediate update
 
     // Prefer inline style (source of truth for React state animations)
@@ -910,7 +1036,7 @@ const syncFrameAnimations = () => {
   }
 };
 
-// accelerated SVG rendering using Blob URLs and direct style synchronization
+// accelerated SVG rendering using Data URLs (Blob URLs taint canvas in WebKit with foreignObject)
 const renderCloneToImage = async (
   clone: HTMLElement,
   outputImg: HTMLImageElement
@@ -921,88 +1047,24 @@ const renderCloneToImage = async (
 
   const { svgPrefix, svgSuffix } = cachedExportContext;
 
-  // Final check: Ensure ALL images in clone are data URLs
-  // Note: blob: URLs also cause taint when serialized to SVG
-  const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  const allImages = clone.querySelectorAll('img');
-  for (const img of allImages) {
-    if (img.src && !img.src.startsWith('data:')) {
-      // Try to convert inline
-      try {
-        if (imageCache.has(img.src)) {
-          img.src = imageCache.get(img.src)!;
-        } else {
-          img.src = transparentPixel;
-        }
-      } catch {
-        img.src = transparentPixel;
-      }
-    }
-  }
+  // Optimistic assumption: clone is already clean from prepareExportContext
+  // Only sync styles (already done in syncFrameAnimations)
 
-  // Also handle SVG <image> elements
-  const svgImages = clone.querySelectorAll('image');
-  for (const svgImg of svgImages) {
-    const href = svgImg.getAttribute('href') || svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
-    if (href && !href.startsWith('data:')) {
-      svgImg.setAttribute('href', transparentPixel);
-      svgImg.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
-    }
-  }
-
-  // 2. Fast serialization (Use XMLSerializer for well-formed XML)
+  // 1. Fast serialization (Use XMLSerializer for well-formed XML)
   const serializer = new XMLSerializer();
-  let nodeString = serializer.serializeToString(clone);
+  const nodeString = serializer.serializeToString(clone);
 
-  // AGGRESSIVE FIX: Replace ALL non-data URL src/href with empty (transparent pixel for images)
-  // This prevents ANY external resource from tainting the canvas
-  const tp = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-
-  // Replace src attributes that aren't data URLs (handle with/without leading space)
-  nodeString = nodeString.replace(
-    /(\s)src=['"](?!data:)([^'"]*)['"]/gi,
-    `$1src="${tp}"`
-  );
-
-  // Replace href attributes that aren't data URLs (but keep # anchors and empty)
-  nodeString = nodeString.replace(
-    /(\s)href=['"](?!data:|#|['"])([^'"]+)['"]/gi,
-    '$1href=""'
-  );
-
-  // Replace xlink:href attributes (SVG image elements)
-  nodeString = nodeString.replace(
-    /xlink:href=['"](?!data:)([^'"]*)['"]/gi,
-    `xlink:href="${tp}"`
-  );
-
-  // Replace url() in style attributes that aren't data URLs
-  nodeString = nodeString.replace(
-    /url\(\s*['"]?(?!data:)([^'")\s]+)['"]?\s*\)/gi,
-    `url("${tp}")`
-  );
-
-  // Remove srcset attributes entirely (they cause taint and aren't needed)
-  nodeString = nodeString.replace(/\ssrcset=['"][^'"]*['"]/gi, '');
-
-  // Remove poster attributes that aren't data URLs
-  nodeString = nodeString.replace(
-    /(\s)poster=['"](?!data:)([^'"]*)['"]/gi,
-    '$1poster=""'
-  );
-
-  // 3. Build SVG as data URL
+  // 2. Build SVG as Data URL
+  // We use Data URL because Blob URLs with foreignObject often taint the canvas in WebKit (Safari/Tauri)
   const svg = svgPrefix + nodeString + svgSuffix;
-
-  // Use data URL instead of blob URL for better cross-origin compatibility
   const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
-  // 4. Load into reused Image object
+  // 3. Load into reused Image object
   return new Promise((resolve, reject) => {
     outputImg.onload = () => resolve(outputImg);
     outputImg.onerror = (e) => {
       console.error('[StreamRender] SVG load failed:', e);
-      reject(new Error('SVG render failed: The content contains invalid characters or structure for video export.'));
+      reject(new Error('SVG render failed.'));
     };
     outputImg.src = svgDataUrl;
   });
@@ -1620,26 +1682,66 @@ export const captureFrame = async (
   ) {
     // Fast path: Layered Rendering
 
-    // 1. Sync Animation State
+    // 1. Sync Animations
+    // We perform this even for static layers initially, but we could skip if static.
+    // Actually, for static layers, we only need to sync once (or 0 times if they are truly static properties).
+    // But our 'static' check is "has animations".
     syncFrameAnimations();
 
-    // 2. Render Layers (Background & Device)
-    const { bgClone, deviceClone, bgImg, deviceImg } = cachedExportContext;
-    await Promise.all([
-      renderCloneToImage(bgClone, bgImg),
-      renderCloneToImage(deviceClone, deviceImg)
-    ]);
+    // 2. Render Layers to Images (with caching)
+    const { bgClone, deviceClone, bgImg, deviceImg, bgIsStatic, deviceIsStatic } = cachedExportContext;
+    if (!bgIsStatic || !cachedExportContext.bgRendered) {
+      await renderCloneToImage(bgClone, bgImg);
+      cachedExportContext.bgRendered = true;
+    }
 
-    // 3. Draw Background Layer
-    ctx.drawImage(bgImg, 0, 0, outputWidth, outputHeight);
+    if (!deviceIsStatic || !cachedExportContext.deviceRendered) {
+      await renderCloneToImage(deviceClone, deviceImg);
+      cachedExportContext.deviceRendered = true;
+    }
 
-    // 4. Draw Video Frames (Sandwiched between Background and Device)
-    const displayToOutputScale = outputWidth / nodeRect.width;
-    captureVideoFrames(node, ctx, nodeRect, displayToOutputScale, 0, 0);
+    // 3. Composite to Canvas (Sandwich: BG -> Video -> Device -> Text)
+    // Let's reuse a global canvas or create one.
+    // Ideally, useOffscreen if available.
+    const canvas = document.createElement('canvas'); // Or reuse 
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true })!;
 
-    // 5. Draw Device Layer (On top of video, includes Frame/Glare)
-    ctx.drawImage(deviceImg, 0, 0, outputWidth, outputHeight);
+    // Clear
+    context.clearRect(0, 0, outputWidth, outputHeight);
 
+    // A. Background Layer
+    context.drawImage(bgImg, 0, 0);
+
+    // B. Video Layer (captured directly from source videos)
+    // We need to capture from the REAL DOM node videos, aligned with device screen
+    // The video element might be inside the device container.
+    // We need to find the video element in the source and map its position?
+    // Our captureVideoFrames helper does exactly that.
+
+    // Find the video container in the source?
+    // Actually, captureVideoFrames scans `node` for videos.
+    // It handles placement internally?
+    // It iterates all videos in `node` and draws them.
+    // This works assuming the video position logic (getBoundingClientRect) is accurate relative to the root node.
+    // Note: syncFrameAnimations handles the transforms on the clones.
+    // Does it handle transforms on the SOURCE? No, source is driven by React.
+    // But for export, we are driving the source via `playheadMs` prop in `Workarea`.
+    // Wait, `captureFrame` is called inside a loop where `playheadMs` is updated.
+    // React renders the updates to the SOURCE DOM.
+    // So `node` (source) has the correct transforms. We can rely on getBoundingClientRect.
+
+    captureVideoFrames(node, context, node.getBoundingClientRect(), scale, 0, 0);
+
+    // C. Device Layer (Transparent frame on top)
+    context.drawImage(deviceImg, 0, 0);
+
+    // D. Text Overlay (Rendered directly to canvas)
+    renderTextOverlay(context, outputWidth, outputHeight, scale, _durationMs, _playheadMs);
+
+    // Return raw pixel data
+    return context.getImageData(0, 0, outputWidth, outputHeight).data;
   } else {
     // Slow path: Full single-pass SVG generation (no layering optimization)
     // Z-order of video vs frame might be incorrect here, but acceptable for single screenshots

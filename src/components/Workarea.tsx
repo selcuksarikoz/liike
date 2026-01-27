@@ -359,7 +359,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
               <div
                 ref={animatedDeviceRef}
                 data-device-animation
-                className="w-full h-full flex items-center justify-center transition-all duration-300 ease-out"
+                className="w-full h-full flex items-center justify-center"
                 style={{
                   opacity: (() => {
                     const baseOpacity = animationStyle.opacity ?? 1;
