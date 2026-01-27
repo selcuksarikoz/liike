@@ -602,18 +602,21 @@ fn start_streaming_encode(
         }
     });
 
-    // Create a bounded channel (size 10) for frame streaming
-    // This allows the UI thread to push ahead of encoding by up to 10 frames,
-    // maximizing parallelism without consuming infinite memory.
-    // If buffer fills, send_frame() will block gracefully (backpressure).
-    let (tx, rx): (SyncSender<Option<Vec<u8>>>, Receiver<Option<Vec<u8>>>) = sync_channel(10);
+    // Create a bounded channel (size 60) for frame streaming
+    // Increased to 60 (approx 2s at 30fps) to decouple frontend generation from encoding speed.
+    // This prevents the frontend from stalling if ffmpeg has micro-stutters.
+    let (tx, rx): (SyncSender<Option<Vec<u8>>>, Receiver<Option<Vec<u8>>>) = sync_channel(60);
     
     // Spawn worker thread for writing frames
     let worker_thread = thread::spawn(move || -> Result<(), String> {
+        // Use BufWriter to reduce syscalls for large raw frames
+        // 1080p RGBA is ~8MB per frame. 
+        let mut writer = std::io::BufWriter::with_capacity(1024 * 1024, stdin); // 1MB buffer
+
         while let Ok(msg) = rx.recv() {
             match msg {
                 Some(frame_data) => {
-                    if let Err(e) = stdin.write_all(&frame_data) {
+                    if let Err(e) = writer.write_all(&frame_data) {
                         return Err(format!("Failed to write to ffmpeg stdin: {}", e));
                     }
                 }
@@ -623,8 +626,8 @@ fn start_streaming_encode(
                 }
             }
         }
-        // explicit flush might be good practice, but drop() handles cleanup
-        drop(stdin); 
+        // Explicit flush
+        let _ = writer.flush();
         Ok(())
     });
 
