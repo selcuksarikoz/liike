@@ -259,82 +259,87 @@ export const TEXT_ANIMATIONS: TextAnimationConfig[] = [
 export const generateTextKeyframes = (
   type: TextAnimationType,
   progress: number
-): { opacity: number; transform: string; filter?: string; clipPath?: string; letterSpacing?: string; backgroundPosition?: string; backgroundImage?: string; color?: string; backgroundClip?: string; WebkitBackgroundClip?: string; } => {
+): { opacity: number; transform: string; filter?: string; clipPath?: string; letterSpacing?: string; backgroundPosition?: string; backgroundImage?: string; color?: string; backgroundClip?: string; WebkitBackgroundClip?: string; willChange?: string; } => {
   const p = Math.min(1, Math.max(0, progress));
   const ease = easeOutCubic(p);
   const easeExpo = easeOutExpo(p);
   const easeQuart = easeOutQuart(p);
+
+  // Common reduced motion/performance check could go here
+  // For now, we enforce GPU compositing
+  const gpu = 'translateZ(0)';
 
   switch (type) {
     // --- APPLE STYLE ANIMATIONS ---
     case 'apple-reveal':
       return {
         opacity: easeQuart,
-        transform: `translateY(${(1 - easeQuart) * 40}px) scale(${0.95 + easeQuart * 0.05})`,
-        filter: `blur(${(1 - easeQuart) * 10}px)`,
-        letterSpacing: `${(1 - easeQuart) * -1}px`, // Slight expansion
+        transform: `translateY(${(1 - easeQuart) * 30}px) scale(${0.98 + easeQuart * 0.02}) ${gpu}`,
+        filter: `blur(${(1 - easeQuart) * 5}px)`, // Reduced blur
+        willChange: 'transform, opacity, filter',
       };
       
     case 'hero-text':
-      // Big, bold entrance typical of product reveals
       return {
         opacity: easeExpo,
-        transform: `scale(${1.1 - easeExpo * 0.1}) translateY(${(1 - easeExpo) * 20}px)`,
-        filter: `blur(${(1 - easeExpo) * 4}px)`,
+        transform: `scale(${1.1 - easeExpo * 0.1}) translateY(${(1 - easeExpo) * 20}px) ${gpu}`,
+        filter: `blur(${(1 - easeExpo) * 2}px)`, // Reduced blur
+        willChange: 'transform, opacity, filter',
       };
 
     case 'gradient-flow':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * 10}px)`,
-        filter: `brightness(${0.8 + ease * 0.4}) saturate(${ease * 1.2})`,
+        transform: `translateY(${(1 - ease) * 10}px) ${gpu}`,
+        // Removed heavy saturate/brightness animations
+        willChange: 'transform, opacity',
       };
 
     case 'cinematic-fade':
       return {
-        opacity: p < 0.2 ? p * 5 : 1, // fast fade in
-        transform: `translateY(${(1 - easeQuart) * 15}px)`,
-        letterSpacing: `${(1 - easeQuart) * 2}px`, // expanding spacing
-        filter: `blur(${(1 - p) * 4}px)`,
+        opacity: p < 0.2 ? p * 5 : 1,
+        transform: `translateY(${(1 - easeQuart) * 15}px) scale(${1.05 - easeQuart * 0.05}) ${gpu}`, // Use scale instead of letter-spacing
+        filter: `blur(${(1 - p) * 3}px)`,
+        willChange: 'transform, opacity, filter',
       };
 
     // --- STANDARD ANIMATIONS ---
     case 'fade':
       return {
         opacity: ease,
-        transform: 'none',
+        transform: `none`,
       };
 
     case 'slide-up':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * 40}px)`,
+        transform: `translateY(${(1 - ease) * 40}px) ${gpu}`,
       };
 
     case 'slide-down':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * -40}px)`,
+        transform: `translateY(${(1 - ease) * -40}px) ${gpu}`,
       };
 
     case 'scale':
       return {
         opacity: ease,
-        transform: `scale(${0.7 + ease * 0.3})`,
+        transform: `scale(${0.7 + ease * 0.3}) ${gpu}`,
       };
 
     case 'blur':
       return {
         opacity: ease,
-        transform: `scale(${0.98 + ease * 0.02})`,
-        filter: `blur(${(1 - ease) * 8}px)`,
+        transform: `scale(${0.98 + ease * 0.02}) ${gpu}`,
+        filter: `blur(${(1 - ease) * 6}px)`,
       };
 
     case 'bounce': {
       const bounceEase = easeOutBounce(p);
       return {
         opacity: Math.min(1, p * 3),
-        transform: `translateY(${(1 - bounceEase) * -60}px) scale(${0.8 + bounceEase * 0.2})`,
+        transform: `translateY(${(1 - bounceEase) * -60}px) scale(${0.8 + bounceEase * 0.2})`, // No GPU on bounce usually ok, but can add
       };
     }
 
@@ -346,11 +351,12 @@ export const generateTextKeyframes = (
       };
 
     case 'glitch': {
-      const glitchOffset = p < 0.9 ? Math.sin(p * 50) * (1 - p) * 3 : 0;
+      // Simplified glitch math
+      const glitchOffset = p < 0.9 ? Math.sin(p * 20) * (1 - p) * 2 : 0;
       return {
         opacity: p < 0.1 ? p * 10 : 1,
-        transform: `translateX(${glitchOffset}px) skewX(${glitchOffset}deg)`,
-        filter: p < 0.8 ? `hue-rotate(${(1 - p) * 90}deg)` : 'none',
+        transform: `translateX(${glitchOffset}px) skewX(${glitchOffset}deg) ${gpu}`,
+        filter: p < 0.8 ? `hue-rotate(${(1 - p) * 45}deg)` : 'none', // Reduced hue rotation frequency
       };
     }
 
@@ -358,7 +364,7 @@ export const generateTextKeyframes = (
       const waveY = Math.sin(p * Math.PI * 2) * (1 - p) * 20;
       return {
         opacity: ease,
-        transform: `translateY(${waveY}px) rotate(${(1 - ease) * 5}deg)`,
+        transform: `translateY(${waveY}px) rotate(${(1 - ease) * 5}deg) ${gpu}`,
       };
     }
 
@@ -372,8 +378,9 @@ export const generateTextKeyframes = (
       const zoomScale = 0.5 + ease * 0.5;
       return {
         opacity: ease,
-        transform: `scale(${zoomScale})`,
-        filter: `blur(${(1 - ease) * 15}px)`,
+        transform: `scale(${zoomScale}) ${gpu}`,
+        filter: `blur(${(1 - ease) * 10}px)`, // Reduced from 15
+        willChange: 'transform, opacity, filter',
       };
     }
 
@@ -389,11 +396,11 @@ export const generateTextKeyframes = (
       return {
         opacity: ease,
         transform: 'none',
-        filter: `brightness(${1 + Math.sin(p * Math.PI * 4) * 0.5})`,
+        filter: `brightness(${1 + Math.sin(p * Math.PI * 2) * 0.3})`, // Reduced freq and intensity
       };
 
     case 'glitch-rgb':
-      const gOffset = Math.sin(p * 40) * (1 - p) * 10;
+      const gOffset = Math.sin(p * 20) * (1 - p) * 5; // Reduced frequency and offset
       return {
         opacity: ease,
         transform: `translateX(${gOffset}px) translateZ(0)`,
@@ -417,34 +424,35 @@ export const generateTextKeyframes = (
     case 'perspective-3d':
       return {
         opacity: ease,
-        transform: `perspective(1000px) rotateY(${(1 - ease) * 45}deg) rotateX(${(1 - ease) * 15}deg) translateZ(${(1 - ease) * -200}px)`,
+        transform: `perspective(1000px) rotateY(${(1 - ease) * 45}deg) rotateX(${(1 - ease) * 15}deg) translateZ(${(1 - ease) * -100}px)`,
       };
 
     case 'blur-reveal':
       return {
         opacity: ease,
-        transform: `scale(${0.9 + ease * 0.1})`,
-        filter: `blur(${(1 - ease) * 20}px)`,
+        transform: `scale(${0.95 + ease * 0.05}) ${gpu}`,
+        filter: `blur(${(1 - ease) * 10}px)`, // Reduced from 20
+        willChange: 'transform, opacity, filter',
       };
 
     case 'expand-letter':
       return {
         opacity: ease,
-        transform: 'none',
-        letterSpacing: `${(1 - p) * 20}px`,
+        transform: `scaleX(${0.5 + ease * 0.5}) ${gpu}`, // Use scaleX instead of letter-spacing
+        // letterSpacing: removed
+        willChange: 'transform, opacity',
       };
 
     case 'strobe':
-      const strobeOpacity = p < 0.9 ? (Math.sin(p * 100) > 0 ? 1 : 0.2) : 1;
+      const strobeOpacity = p < 0.9 ? (Math.sin(p * 50) > 0 ? 1 : 0.2) : 1; // Reduced freq
       return {
         opacity: strobeOpacity,
         transform: 'none',
-        // color: strobeOpacity === 1 ? undefined : '#000', // Optional flash
       };
 
     case 'float-drift':
-      const driftX = Math.sin(p * Math.PI) * 50;
-      const driftY = Math.cos(p * Math.PI) * 20;
+      const driftX = Math.sin(p * Math.PI) * 30;
+      const driftY = Math.cos(p * Math.PI) * 10;
       return {
         opacity: ease,
         transform: `translate3d(${driftX}px, ${driftY}px, 0)`,
@@ -454,32 +462,32 @@ export const generateTextKeyframes = (
     case 'soft-blur-up':
       return {
         opacity: easeQuart,
-        transform: `translateY(${(1 - easeQuart) * 20}px)`,
-        filter: `blur(${(1 - easeQuart) * 8}px)`,
+        transform: `translateY(${(1 - easeQuart) * 20}px) ${gpu}`,
+        filter: `blur(${(1 - easeQuart) * 5}px)`, // Reduced from 8
       };
     case 'clean-fade-scale':
       return {
         opacity: ease,
-        transform: `scale(${0.92 + ease * 0.08})`,
-        filter: `blur(${(1 - ease) * 4}px)`,
+        transform: `scale(${0.96 + ease * 0.04}) ${gpu}`,
+        filter: `blur(${(1 - ease) * 3}px)`,
       };
     case 'ios-slide-in':
       return {
         opacity: easeExpo,
-        transform: `translateX(${(1 - easeExpo) * 30}px)`,
+        transform: `translateX(${(1 - easeExpo) * 30}px) ${gpu}`,
       };
     case 'cupertino-reveal':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * 40}px) scale(${0.95 + ease * 0.05})`,
-        letterSpacing: `${(1 - ease) * -2}px`,
+        transform: `translateY(${(1 - ease) * 30}px) scale(${0.98 + ease * 0.02}) ${gpu}`,
+        // letterSpacing removed
       };
     case 'dynamic-island-expand': {
       const islandBounce = easeOutBack(p);
       return {
         opacity: p < 0.1 ? p * 10 : 1,
-        transform: `scale(${islandBounce}) translateY(${(1 - islandBounce) * -20}px)`,
-        filter: `blur(${(1 - islandBounce) * 10}px)`,
+        transform: `scale(${islandBounce}) translateY(${(1 - islandBounce) * -20}px) ${gpu}`,
+        filter: `blur(${(1 - islandBounce) * 5}px)`, // Reduced from 10
       };
     }
     case 'apple-bounce': {
@@ -492,14 +500,14 @@ export const generateTextKeyframes = (
     case 'siri-wave':
       return {
         opacity: ease,
-        transform: `scale(${0.8 + ease * 0.2})`,
-        filter: `hue-rotate(${p * 360}deg) blur(${(1 - ease) * 5}px)`,
+        transform: `scale(${0.8 + ease * 0.2}) ${gpu}`,
+        filter: `blur(${(1 - ease) * 4}px)`, // Removed hue-rotate for perf
       };
     case 'spotlight-reveal':
       return {
         opacity: easeExpo,
-        transform: `scale(${1.2 - easeExpo * 0.2})`,
-        filter: `brightness(${0.5 + easeExpo * 0.5}) contrast(${1 + (1 - easeExpo)})`,
+        transform: `scale(${1.2 - easeExpo * 0.2}) ${gpu}`,
+        filter: `brightness(${0.5 + easeExpo * 0.5})`, // Removed contrast
       };
 
     // --- PREMIUM / APP ---
@@ -507,13 +515,13 @@ export const generateTextKeyframes = (
       const pop = easeOutElastic(p);
       return {
         opacity: Math.min(1, p * 3),
-        transform: `scale(${pop})`,
+        transform: `scale(${pop}) translateZ(0)`,
       };
     }
     case 'card-entry-slide':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * 100}px) scale(${0.9 + ease * 0.1})`,
+        transform: `translateY(${(1 - ease) * 80}px) scale(${0.95 + ease * 0.05}) ${gpu}`,
       };
     case 'sheet-slide-up':
       return {
@@ -524,47 +532,47 @@ export const generateTextKeyframes = (
       const modalScale = 0.5 + easeOutBack(p) * 0.5;
       return {
         opacity: ease,
-        transform: `scale(${modalScale})`,
+        transform: `scale(${modalScale}) ${gpu}`,
       };
     }
     case 'notification-slide':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * -50}px)`,
+        transform: `translateY(${(1 - ease) * -50}px) ${gpu}`,
       };
 
     // --- TYPOGRAPHY ---
     case 'tracking-in-expand':
       return {
         opacity: ease,
-        transform: 'none',
-        letterSpacing: `${(1 - ease) * -0.5}em`,
+        transform: `scaleX(${0.8 + ease * 0.2}) ${gpu}`, // Fake tracking with scale
         filter: `blur(${(1 - ease) * 4}px)`,
+        // letterSpacing removed
       };
     case 'blur-in-expand':
       return {
         opacity: ease,
-        transform: 'scale(1.2)',
-        filter: `blur(${(1 - ease) * 12}px)`,
+        transform: 'scale(1.1)',
+        filter: `blur(${(1 - ease) * 8}px)`, // Reduced from 12
       };
     case 'focus-in-expand':
       return {
         opacity: ease,
-        transform: `scale(${1.2 - ease * 0.2})`,
-        filter: `blur(${(1 - ease) * 8}px)`,
+        transform: `scale(${1.1 - ease * 0.1})`,
+        filter: `blur(${(1 - ease) * 6}px)`,
       };
     case 'text-focus-contract':
       return {
         opacity: ease,
-        transform: 'none',
-        letterSpacing: `${(1 - ease) * 10}px`,
-        filter: `blur(${(1 - ease) * 8}px)`,
+        transform: `scaleX(${1.2 - ease * 0.2}) ${gpu}`, // Fake tracking with scale
+        // letterSpacing removed
+        filter: `blur(${(1 - ease) * 5}px)`,
       };
     case 'letter-shuffling':
-      const shuffleY = (Math.random() - 0.5) * (1-p) * 20;
+      const shuffleY = (Math.random() - 0.5) * (1-p) * 10;
       return {
         opacity: ease,
-        transform: `translateY(${shuffleY}px)`,
+        transform: `translateY(${shuffleY}px) ${gpu}`,
       };
 
     // --- 3D / CREATIVE ---
@@ -2307,6 +2315,9 @@ export const generateDeviceKeyframes = (
   const p = Math.min(1, Math.max(0, progress));
   const ease = easeOutCubic(p);
 
+  // Force GPU acceleration
+  const gpu = 'translateZ(0)';
+
   switch (type) {
     case 'none':
       return { opacity: 1, transform: 'none' };
@@ -2317,64 +2328,64 @@ export const generateDeviceKeyframes = (
     case 'tilt-reveal':
       return {
         opacity: ease,
-        transform: `perspective(1000px) rotateX(${(1 - ease) * 45}deg) rotateY(${(1 - ease) * -45}deg) scale(${0.8 + ease * 0.2}) translateY(${(1 - ease) * 100}px)`,
+        transform: `perspective(1000px) rotateX(${(1 - ease) * 45}deg) rotateY(${(1 - ease) * -45}deg) scale(${0.8 + ease * 0.2}) translateY(${(1 - ease) * 100}px) ${gpu}`,
       };
 
     case 'swing-in':
       return {
         opacity: ease,
-        transform: `perspective(1000px) rotateY(${(1 - Math.sin(p * Math.PI)) * 30}deg) translateX(${(1 - ease) * -100}px)`,
+        transform: `perspective(1000px) rotateY(${(1 - Math.sin(p * Math.PI)) * 30}deg) translateX(${(1 - ease) * -100}px) ${gpu}`,
       };
 
     case 'spiral-in':
       return {
         opacity: ease,
-        transform: `scale(${0.2 + ease * 0.8}) rotate(${(1 - ease) * 720}deg) translateY(${(1 - ease) * 200}px)`,
+        transform: `scale(${0.2 + ease * 0.8}) rotate(${(1 - ease) * 720}deg) translateY(${(1 - ease) * 200}px) ${gpu}`,
       };
 
     case 'zoom-in':
       return {
         opacity: ease,
-        transform: `scale(${0.5 + ease * 0.5})`,
+        transform: `scale(${0.5 + ease * 0.5}) ${gpu}`,
       };
 
     case 'zoom-out':
       return {
         opacity: ease,
-        transform: `scale(${1.5 - ease * 0.5})`,
+        transform: `scale(${1.5 - ease * 0.5}) ${gpu}`,
       };
 
     case 'rise':
       return {
         opacity: ease,
-        transform: `translateY(${(1 - ease) * 50}%) scale(${0.9 + ease * 0.1})`,
+        transform: `translateY(${(1 - ease) * 50}%) scale(${0.9 + ease * 0.1}) ${gpu}`,
       };
 
     case 'drop': {
       const dropBounce = easeOutBounce(p);
       return {
         opacity: Math.min(1, p * 3),
-        transform: `translateY(${(1 - dropBounce) * -80}%)`,
+        transform: `translateY(${(1 - dropBounce) * -80}%) ${gpu}`,
       };
     }
 
     case 'flip-up':
       return {
         opacity: p > 0.3 ? 1 : p * 3,
-        transform: `perspective(1000px) rotateX(${(1 - ease) * 90}deg)`,
+        transform: `perspective(1000px) rotateX(${(1 - ease) * 90}deg) ${gpu}`,
       };
 
     case 'rotate-in':
       return {
         opacity: ease,
-        transform: `rotate(${(1 - ease) * -15}deg) scale(${0.8 + ease * 0.2})`,
+        transform: `rotate(${(1 - ease) * -15}deg) scale(${0.8 + ease * 0.2}) ${gpu}`,
       };
 
     case 'bounce-in': {
       const bounceEase = easeOutElastic(p);
       return {
         opacity: Math.min(1, p * 2),
-        transform: `scale(${bounceEase})`,
+        transform: `scale(${bounceEase}) translateZ(0)`,
       };
     }
 
