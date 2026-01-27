@@ -38,6 +38,7 @@ export const TrioRowLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
@@ -104,6 +105,7 @@ export const TrioColumnLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
@@ -169,6 +171,7 @@ export const FanLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 transform: `${animStyle.transform} translateZ(0)`,
@@ -230,6 +233,7 @@ export const MasonryLayout = ({
         }}
       >
         <div
+          data-layout-animation="true"
           className={`relative row-span-2 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
           style={{
             transform: getStaggeredAnimationStyle(animationInfo, 0, 3).transform,
@@ -253,6 +257,7 @@ export const MasonryLayout = ({
         </div>
         <div
           className="relative"
+          data-layout-animation="true"
           style={{
             transform: `${getStaggeredAnimationStyle(animationInfo, 1, 3).transform} translateZ(0)`,
             opacity: getStaggeredAnimationStyle(animationInfo, 1, 3).opacity,
@@ -276,6 +281,7 @@ export const MasonryLayout = ({
         </div>
         <div
           className="relative"
+          data-layout-animation="true"
           style={{
             transform: `${getStaggeredAnimationStyle(animationInfo, 2, 3).transform} translateZ(0)`,
             opacity: getStaggeredAnimationStyle(animationInfo, 2, 3).opacity,
@@ -338,6 +344,7 @@ export const MosaicLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className={`relative flex items-center justify-center ${isHero ? 'col-span-2 row-span-1' : 'col-span-1 row-span-1'} ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 transform: animStyle.transform,
@@ -403,6 +410,7 @@ export const FilmStripLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className="flex-1 overflow-hidden relative"
               style={{
                 borderRadius: `${effectiveCornerRadius}px`,
@@ -481,6 +489,7 @@ export const SpotlightLayout = ({
       >
         <div
           className="flex-[2]"
+          data-layout-animation="true"
           style={{
             transform: `${getStaggeredAnimationStyle(animationInfo, 0, 3).transform} translateZ(0)`,
             opacity: getStaggeredAnimationStyle(animationInfo, 0, 3).opacity,
@@ -508,6 +517,7 @@ export const SpotlightLayout = ({
             return (
               <div
                 key={index}
+                data-layout-animation="true"
                 className={`flex-1 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
                 style={{
                   transform: `${animStyle.transform} translateZ(0)`,
@@ -571,6 +581,7 @@ export const AsymmetricLayout = ({
         }}
       >
         <div
+          data-layout-animation="true"
           className={`row-span-2 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
           style={{
             transform: `${getStaggeredAnimationStyle(animationInfo, 0, 3).transform} translateZ(0)`,
@@ -598,6 +609,7 @@ export const AsymmetricLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               style={{
                 transform: `${animStyle.transform} translateZ(0)`,
                 opacity: animStyle.opacity,

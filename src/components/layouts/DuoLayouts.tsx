@@ -38,6 +38,7 @@ export const SideBySideLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
@@ -104,6 +105,7 @@ export const StackedLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className={`flex-1 min-w-0 min-h-0 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 aspectRatio: aspectValue ? aspectValue : undefined,
@@ -170,6 +172,7 @@ export const DiagonalLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className={`absolute flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 width: '55%',
@@ -238,6 +241,7 @@ export const PolaroidLayout = ({
           return (
             <div
               key={index}
+              data-layout-animation="true"
               className={`absolute bg-white p-2 pb-8 flex items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
               style={{
                 width: '45%',

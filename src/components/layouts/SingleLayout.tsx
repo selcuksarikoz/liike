@@ -1,4 +1,5 @@
 import { MediaContainer } from '../MediaContainer';
+import { getStaggeredAnimationStyle, getLayoutTransition } from '../../utils/animationHelpers';
 import type { LayoutBaseProps } from './types';
 
 export const SingleLayout = ({
@@ -14,6 +15,7 @@ export const SingleLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  animationInfo,
 }: LayoutBaseProps) => {
   const mediaContent = (
     <MediaContainer
@@ -58,6 +60,8 @@ export const SingleLayout = ({
     };
   };
 
+  const animStyle = getStaggeredAnimationStyle(animationInfo, 0, 1);
+
   return (
     <div
       className={`flex h-full w-full items-center justify-center ${hasMockup ? '' : 'overflow-hidden'}`}
@@ -65,10 +69,14 @@ export const SingleLayout = ({
       <div
         ref={containerRef}
         className="relative flex items-center justify-center transition-all duration-300 ease-out"
+        data-layout-animation="true"
         style={{
           ...getContainerStyle(),
-          willChange: 'transform',
+          willChange: 'transform, opacity',
           WebkitFontSmoothing: 'antialiased',
+          transform: `${getContainerStyle().transform || ''} ${animStyle.transform}`.trim(),
+          opacity: animStyle.opacity,
+          transition: getLayoutTransition(!!animationInfo),
         }}
       >
         {renderWithMockup(mediaContent)}

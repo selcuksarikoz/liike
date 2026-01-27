@@ -556,12 +556,13 @@ export const prepareExportContext = async (
   // Simultanously walk both trees to build mapping
   const walkAndMap = (source: HTMLElement, target: HTMLElement) => {
     const isDeviceAnim = source.hasAttribute('data-device-animation');
+    const isLayoutAnim = source.hasAttribute('data-layout-animation');
     const hasWebAnim = animatedSourceElements.has(source);
     const isTextChild = source.parentElement && 
                         source.parentElement.style.zIndex === '50' && 
                         source.parentElement.style.pointerEvents === 'none';
 
-    if (isDeviceAnim || hasWebAnim || isTextChild) {
+    if (isDeviceAnim || isLayoutAnim || hasWebAnim || isTextChild) {
       animatedElements.push({ source, target });
     }
 
