@@ -905,6 +905,9 @@ interface CachedExportContext {
   // ImageBitmap cache for faster rendering (used when available)
   bgBitmap: ImageBitmap | null;
   deviceBitmap: ImageBitmap | null;
+  // FAST PATH: Pre-rendered device at final animation state (opacity=1, no transform)
+  // Used with canvas transforms instead of re-rendering SVG each frame
+  deviceStaticBitmap: ImageBitmap | null;
   svgPrefix: string;
   svgSuffix: string;
   bgIsStatic: boolean;      // Optimization: if true, only render BG once
@@ -1217,7 +1220,25 @@ export const prepareExportContext = async (
     deviceRendered: false, // Track if rendered
     deviceAnimationComplete: false,  // Track when entrance animation is done
     lastDeviceAnimProgress: -1,      // Track animation progress to detect changes
+    deviceStaticBitmap: null,  // Pre-rendered device at full opacity (for fast canvas transform)
   };
+
+  // FAST PATH: Pre-render device layer at final state (progress=1) for canvas-based animation
+  // This allows us to apply animation via canvas transforms instead of re-rendering SVG each frame
+  try {
+    // Set device wrapper to final animation state (fully visible)
+    const deviceWrapper = deviceClone.querySelector('[data-device-animation]') as HTMLElement;
+    if (deviceWrapper) {
+      deviceWrapper.style.opacity = '1';
+      deviceWrapper.style.transform = 'none';
+    }
+
+    // Pre-render to bitmap
+    cachedExportContext.deviceStaticBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
+    console.log('[Export] Pre-rendered static device layer for fast animation');
+  } catch (e) {
+    console.warn('[Export] Failed to pre-render device layer:', e);
+  }
 
   console.log(
     `[Export] Context prepared. BG Static: ${!bgHasAnimations}, Device Static: ${!deviceHasAnimations}`
@@ -1232,6 +1253,9 @@ export const clearExportContext = () => {
   }
   if (cachedExportContext?.deviceBitmap) {
     cachedExportContext.deviceBitmap.close();
+  }
+  if (cachedExportContext?.deviceStaticBitmap) {
+    cachedExportContext.deviceStaticBitmap.close();
   }
   cachedExportContext = null;
   // Clear reusable elements
@@ -1968,22 +1992,11 @@ export const captureFrame = async (
     // Use locked dimensions to prevent jitter from DOM changes
     const lockedScale = outputWidth / cachedExportContext.sourceWidth;
 
-    // 1. Sync base styles from source (non-animated properties)
-    syncFrameAnimations();
+    // FAST PATH: Skip SVG animation sync - we apply animation via canvas transforms instead
+    // This eliminates the slow SVG re-rendering on every frame
 
-    // 2. Apply time-based animation values (AFTER sync to override stale values)
-    // This ensures entrance animations start at correct state (opacity=0)
-    let animProgress = 1;
-    if (_playheadMs !== undefined) {
-      animProgress = updateExportAnimations(_playheadMs, _durationMs || 3000);
-    }
-
-    // 3. Render Layers to ImageBitmaps (much faster than base64 data URLs)
-    // Smart caching: cache device layer once animation completes
-    const { bgClone, deviceClone, bgIsStatic, lockedNodeRect, deviceAnimationComplete } = cachedExportContext;
-
-    // Check if we can reuse cached device layer (animation done + already rendered)
-    const canReuseDeviceCache = deviceAnimationComplete && cachedExportContext.deviceBitmap;
+    // Render Layers to ImageBitmaps (background renders once, device is pre-rendered)
+    const { bgClone, deviceClone, bgIsStatic, lockedNodeRect } = cachedExportContext;
 
     // Use ImageBitmap for faster rendering (fallback to HTMLImageElement if needed)
     let bgSource: ImageBitmap | HTMLImageElement;
@@ -2000,15 +2013,12 @@ export const captureFrame = async (
       }
       bgSource = cachedExportContext.bgBitmap!;
 
-      // Device: reuse cache if animation is complete, otherwise re-render
-      if (canReuseDeviceCache) {
-        // Animation done - reuse cached bitmap (FAST PATH)
-        deviceSource = cachedExportContext.deviceBitmap!;
-      } else {
-        // Animation in progress - must re-render
-        if (cachedExportContext.deviceBitmap) {
-          cachedExportContext.deviceBitmap.close();
-        }
+      // FAST PATH: Use pre-rendered static device + canvas transforms for animation
+      // This is MUCH faster than re-rendering SVG each frame
+      deviceSource = cachedExportContext.deviceStaticBitmap || cachedExportContext.deviceBitmap!;
+
+      if (!deviceSource) {
+        // Fallback: render if no pre-rendered bitmap
         cachedExportContext.deviceBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
         deviceSource = cachedExportContext.deviceBitmap;
       }
@@ -2048,8 +2058,53 @@ export const captureFrame = async (
     );
     captureVideoFrames(node, context, lockedDOMRect, lockedScale, 0, 0);
 
-    // C. Device Layer (Transparent frame on top)
+    // C. Device Layer with FAST canvas-based animation
+    // Instead of re-rendering SVG, we apply animation via canvas transforms
+    context.save();
+
+    // Get animation values from the device wrapper in source DOM
+    const { textOverlay, animationSpeed } = useRenderStore.getState();
+    const speedMultiplier = ANIMATION_SPEED_MULTIPLIERS[animationSpeed] || 1;
+    const deviceAnim = textOverlay.deviceAnimation;
+
+    let deviceOpacity = 1;
+    let deviceTransform = { translateX: 0, translateY: 0, scale: 1, rotate: 0 };
+
+    if (deviceAnim && deviceAnim !== 'none' && textOverlay.enabled && _playheadMs !== undefined) {
+      const startDelay = 400 / speedMultiplier;
+      const animDuration = 800 / speedMultiplier;
+      const delayedPlayhead = Math.max(0, _playheadMs - startDelay);
+      const progress = Math.min(1, delayedPlayhead / animDuration);
+
+      // Get animation style
+      const style = generateDeviceKeyframes(deviceAnim as DeviceAnimationType, progress);
+      deviceOpacity = style.opacity;
+
+      // Parse transform string to extract values
+      if (style.transform && style.transform !== 'none') {
+        const scaleMatch = style.transform.match(/scale\(([^)]+)\)/);
+        const translateYMatch = style.transform.match(/translateY\(([^)]+)\)/);
+        const translateXMatch = style.transform.match(/translateX\(([^)]+)\)/);
+        const rotateMatch = style.transform.match(/rotate\(([^)]+)\)/);
+
+        if (scaleMatch) deviceTransform.scale = parseFloat(scaleMatch[1]);
+        if (translateYMatch) deviceTransform.translateY = parseFloat(translateYMatch[1]);
+        if (translateXMatch) deviceTransform.translateX = parseFloat(translateXMatch[1]);
+        if (rotateMatch) deviceTransform.rotate = parseFloat(rotateMatch[1]);
+      }
+    }
+
+    // Apply transforms via canvas API (FAST - no SVG re-rendering)
+    context.globalAlpha = deviceOpacity;
+    const centerX = outputWidth / 2;
+    const centerY = outputHeight / 2;
+    context.translate(centerX + deviceTransform.translateX * lockedScale, centerY + deviceTransform.translateY * lockedScale);
+    context.rotate((deviceTransform.rotate * Math.PI) / 180);
+    context.scale(deviceTransform.scale, deviceTransform.scale);
+    context.translate(-centerX, -centerY);
+
     context.drawImage(deviceSource, 0, 0);
+    context.restore();
 
     // D. Text Overlay (Rendered directly to canvas)
     renderTextOverlay(context, outputWidth, outputHeight, scale, _durationMs, _playheadMs);
