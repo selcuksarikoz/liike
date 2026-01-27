@@ -5,9 +5,10 @@ import { Command } from '@tauri-apps/plugin-shell';
 import { fetch } from '@tauri-apps/plugin-http';
 import { type as osType } from '@tauri-apps/plugin-os';
 import { ChevronDown, Download, Film, Image as ImageIcon, RefreshCw } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRenderStore } from '../store/renderStore';
 import type { ExportFormat } from '../store/renderStore';
+import { RenderOverlay } from './RenderOverlay';
 
 type ExportOption = {
   id: ExportFormat;
@@ -77,7 +78,12 @@ type RemoteVersionInfo = {
 };
 
 export const Header = ({ onRender }: HeaderProps) => {
-  const { renderStatus, fps, setFps, renderQuality, setRenderQuality } = useRenderStore();
+  // Only subscribe to isRendering to prevent re-renders during export progress updates
+  const isRendering = useRenderStore((state) => state.renderStatus.isRendering);
+  const fps = useRenderStore((state) => state.fps);
+  const setFps = useRenderStore((state) => state.setFps);
+  const renderQuality = useRenderStore((state) => state.renderQuality);
+  const setRenderQuality = useRenderStore((state) => state.setRenderQuality);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -237,24 +243,6 @@ export const Header = ({ onRender }: HeaderProps) => {
     }
   };
 
-  const statusLabel = useMemo(() => {
-    if (renderStatus.error) return 'ERROR';
-    if (renderStatus.isRendering) {
-      if (renderStatus.phase === 'capturing')
-        return `CAPTURING ${renderStatus.currentFrame}/${renderStatus.totalFrames}`;
-      if (renderStatus.phase === 'encoding')
-        return `ENCODING ${Math.round(renderStatus.progress * 100)}%`;
-      return 'RENDERING';
-    }
-    return 'READY';
-  }, [renderStatus]);
-
-  const statusColor = useMemo(() => {
-    if (renderStatus.error) return 'bg-red-500';
-    if (renderStatus.isRendering) return 'bg-amber-500';
-    return 'bg-accent';
-  }, [renderStatus]);
-
   const handleExport = (format: ExportFormat) => {
     setIsDropdownOpen(false);
     onRender(format);
@@ -304,42 +292,8 @@ export const Header = ({ onRender }: HeaderProps) => {
         </div>
       )}
 
-      {/* Full Screen Render Overlay */}
-      {renderStatus.isRendering && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/100 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="w-full max-w-md p-8 flex flex-col items-center gap-8">
-            {/* Progress Circle or Bar */}
-            <div className="relative flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-4 border-ui-border opacity-30"></div>
-              <div className="w-32 h-32 rounded-full border-4 border-accent border-t-transparent animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <span className="text-3xl font-bold text-white font-mono">
-                  {Math.round(renderStatus.progress * 100)}%
-                </span>
-                <span className="text-[10px] text-ui-muted uppercase tracking-widest mt-1">
-                  {renderStatus.phase === 'encoding' ? 'Encoding' : 'Capturing'}
-                </span>
-              </div>
-            </div>
-
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-bold text-white">Exporting Video</h2>
-              <p className="text-sm text-ui-muted max-w-xs mx-auto">
-                Please keep this window in the foreground while we capture your masterpiece.
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('cancel-render'));
-              }}
-              className="mt-8 px-8 py-3 rounded-full bg-ui-panel border border-ui-border text-ui-muted hover:bg-ui-highlight hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
-            >
-              Cancel Export
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Full Screen Render Overlay - separate component to prevent Header re-renders */}
+      <RenderOverlay />
 
       <header className="col-span-3 flex h-14 items-center justify-between border-b border-ui-border bg-ui-bg px-6">
         <div className="flex items-center gap-6">
@@ -404,8 +358,8 @@ export const Header = ({ onRender }: HeaderProps) => {
         </div>
         <div className="flex items-center gap-4">
           {/* <div className="flex items-center gap-2 rounded-lg border border-ui-highlight/40 bg-ui-highlight/20 px-3 py-1.5">
-          <div className={`w-2 h-2 rounded-full ${statusColor} ${renderStatus.isRendering ? 'animate-pulse' : ''}`} />
-          <span className={`text-[10px] font-mono ${renderStatus.error ? 'text-red-400' : renderStatus.isRendering ? 'text-amber-400' : 'text-accent'}`}>
+          <div className={`w-2 h-2 rounded-full ${statusColor} ${isRendering ? 'animate-pulse' : ''}`} />
+          <span className={`text-[10px] font-mono ${renderStatus.error ? 'text-red-400' : isRendering ? 'text-amber-400' : 'text-accent'}`}>
             {statusLabel}
           </span>
         </div> */}
@@ -413,10 +367,10 @@ export const Header = ({ onRender }: HeaderProps) => {
             <button
               className="flex h-9 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-bold text-black hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              disabled={renderStatus.isRendering}
+              disabled={isRendering}
             >
-              {renderStatus.isRendering ? 'Rendering…' : 'Export'}
-              {!renderStatus.isRendering && <ChevronDown className="w-4 h-4" />}
+              {isRendering ? 'Rendering…' : 'Export'}
+              {!isRendering && <ChevronDown className="w-4 h-4" />}
             </button>
             {isDropdownOpen && (
               <div className="absolute top-full right-0 mt-2 w-56 z-50 overflow-hidden rounded-xl border border-ui-border bg-ui-bg/95 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200">

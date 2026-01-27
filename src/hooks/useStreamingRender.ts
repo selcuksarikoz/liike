@@ -298,9 +298,12 @@ export const useStreamingRender = () => {
         console.log(`[StreamRender] Starting frame loop: ${totalFrames} frames, hasVideos: ${hasVideos}`);
         const loopStart = performance.now();
 
-        // Batch size for yielding - process multiple frames before yielding
-        // This improves throughput while still allowing UI updates
-        const BATCH_SIZE = 3;
+        // OPTIMIZED: Pipeline capture and encode
+        // While FFmpeg encodes frame N, we capture frame N+1
+        const UI_UPDATE_INTERVAL = 5;
+
+        // Track pending encode for pipelining
+        let pendingEncode: Promise<number> | null = null;
 
         for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
           if (abortController.signal.aborted) {
@@ -311,23 +314,15 @@ export const useStreamingRender = () => {
 
           const timeMs = (frameIndex / fps) * 1000;
 
-          // Direct-Drive Animation Loop
-          // We do NOT update React state or seek the timeline here.
-          // We manually drive the cloned DOM elements using `updateExportAnimations`.
-
+          // Update animations (must be sequential - shared DOM state)
           updateExportAnimations(timeMs, effectiveDuration);
 
-          // Only sync videos (they are native elements)
+          // Seek videos if present
           if (hasVideos) {
             await pauseAndSeekVideos(node, timeMs);
           }
 
-          if (abortController.signal.aborted) {
-            clearExportContext();
-            return;
-          }
-
-          // Capture frame to raw RGBA (high quality)
+          // Capture current frame
           const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);
 
           if (abortController.signal.aborted) {
@@ -335,40 +330,30 @@ export const useStreamingRender = () => {
             return;
           }
 
-          // Send to Rust encoder (Uint8Array serializes properly, Uint8ClampedArray doesn't)
-          const progress = await invoke<number>('send_frame', {
+          // Wait for previous encode to complete (pipelining)
+          if (pendingEncode) {
+            await pendingEncode;
+          }
+
+          // Start encoding this frame (don't await - pipeline with next capture)
+          pendingEncode = invoke<number>('send_frame', {
             encoderId,
             frameData: new Uint8Array(rgbaData.buffer),
           });
 
-          // Update progress - every frame for accurate progress tracking
-          // But batch React state updates for performance
-          const shouldUpdateUI = frameIndex % BATCH_SIZE === 0 || frameIndex === totalFrames - 1;
+          // Update progress periodically
+          const shouldUpdateUI = frameIndex % UI_UPDATE_INTERVAL === 0 || frameIndex === totalFrames - 1;
           if (shouldUpdateUI) {
-            setState((prev) => ({
-              ...prev,
-              currentFrame: frameIndex + 1,
-              progress,
-            }));
-            setRenderStatus({
-              currentFrame: frameIndex + 1,
-              progress,
-            });
+            const progress = (frameIndex + 1) / totalFrames;
+            setState((prev) => ({ ...prev, currentFrame: frameIndex + 1, progress }));
+            setRenderStatus({ currentFrame: frameIndex + 1, progress });
+            await yieldToMain();
           }
+        }
 
-          // Yield to main thread periodically to prevent UI freezing
-          // Use requestAnimationFrame for smoother yielding when possible
-          if (shouldUpdateUI) {
-            await new Promise<void>(resolve => {
-              if (typeof requestAnimationFrame !== 'undefined') {
-                requestAnimationFrame(() => {
-                  setTimeout(resolve, 0);
-                });
-              } else {
-                setTimeout(resolve, 0);
-              }
-            });
-          }
+        // Wait for final encode to complete
+        if (pendingEncode) {
+          await pendingEncode;
         }
 
         console.log(`[StreamRender] Frame loop completed in ${((performance.now() - loopStart) / 1000).toFixed(1)}s`);
