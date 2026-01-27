@@ -181,54 +181,24 @@ export const useStreamingRender = () => {
            await preloadResources(node);
            await preloadFonts(node);
 
-           // Capture frame logic (Inline here because we need Blob, captureFrame returns RGBA)
+           // Prepare export context for correct layered rendering (Background -> Video -> Device)
+           const nodeRect = node.getBoundingClientRect();
+           await prepareExportContext(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
+
+           // captureFrame(node, outputWidth, outputHeight, DURATION, TIME)
+           // Passing effectiveDuration ensures text animations match what is seen on timeline
+           const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, playheadMs);
+
+           // Put data back onto canvas for saving
            const canvas = document.createElement('canvas');
            canvas.width = outputWidth;
            canvas.height = outputHeight;
-           const ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true })!;
-           
-           // High quality smoothing
-           ctx.imageSmoothingEnabled = true;
-           ctx.imageSmoothingQuality = 'high';
-           
-           // Background & Clipping
-           const computedStyle = window.getComputedStyle(node);
-           ctx.clearRect(0, 0, outputWidth, outputHeight);
-           
-           // Content
-           const nodeRect = node.getBoundingClientRect();
-           const scaleX = outputWidth / nodeRect.width;
-           const scaleY = outputHeight / nodeRect.height;
-           const scale = Math.min(scaleX, scaleY);
-           const offsetX = (outputWidth - nodeRect.width * scale) / 2;
-           const offsetY = (outputHeight - nodeRect.height * scale) / 2;
+           const ctx = canvas.getContext('2d')!;
+           const imageData = new ImageData(rgbaData, outputWidth, outputHeight);
+           ctx.putImageData(imageData, 0, 0);
 
-           ctx.save();
-           ctx.translate(offsetX, offsetY);
-           ctx.scale(scale, scale);
-
-           // Apply clipping for rounded corners
-           const radius = parseFloat(computedStyle.borderRadius) || 0;
-           if (radius > 0) {
-               ctx.beginPath();
-               if ((ctx as any).roundRect) {
-                   (ctx as any).roundRect(0, 0, nodeRect.width, nodeRect.height, radius);
-               } else {
-                   ctx.rect(0, 0, nodeRect.width, nodeRect.height);
-               }
-               ctx.clip();
-           }
-
-           // Fill background inside the clipped area
-           ctx.fillStyle = computedStyle.backgroundColor || '#000000';
-           ctx.fillRect(0, 0, nodeRect.width, nodeRect.height);
-
-           const svgData = await nodeToSvgDataUrl(node, nodeRect.width, nodeRect.height);
-           const img = await loadImage(svgData);
-           ctx.drawImage(img, 0, 0, nodeRect.width, nodeRect.height);
-           ctx.restore();
-
-           // Text is already rendered in the DOM/SVG capture - no need to render again
+           // Clean up context immediately
+           clearExportContext();
 
            // Convert to blob and write to disk
            const blob = await new Promise<Blob | null>(resolve => 
@@ -307,6 +277,11 @@ export const useStreamingRender = () => {
         seekTimeline(0);
         pauseAndSeekAnimations(node, 0);
         await pauseAndSeekVideos(node, 0);
+
+        // CRITICAL: Yield to allow React to re-render with playhead=0
+        // This ensures initial animation states (opacity=0, etc.) are applied before cloning
+        await yieldToMain();
+        await waitForRender(16); // Extra frame for React to settle
 
         // Preload resources (images, videos) and fonts for text overlay
         await preloadResources(node);

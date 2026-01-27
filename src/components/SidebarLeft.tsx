@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useRenderStore, type MediaAsset } from '../store/renderStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { CameraStylePanel } from './CameraStylePanel';
+import { ShadowGlowPanel } from './ShadowGlowPanel';
 import {
   SidebarContainer,
   SidebarContent,
@@ -17,6 +17,7 @@ import { AnimationsTab } from './sidebar/AnimationsTab';
 import { BackgroundModal } from './BackgroundModal';
 import { FrameSelectorModal } from './modals/FrameSelectorModal';
 import type { LayoutFilter } from './AnimationsPanel';
+import { SliderControl } from './ui/SliderControl';
 import {
   X,
   Image,
@@ -31,11 +32,12 @@ import {
   Tablet,
   Watch,
   Check,
+  Box,
+  Maximize2,
 } from 'lucide-react';
 import { DEVICES } from '../constants/devices';
 import { getFrameLabel } from '../constants/styles';
 import { DropdownTrigger } from './ui/Dropdown';
-import { SliderControl } from './ui/SliderControl';
 
 const getVideoDuration = (url: string): Promise<number> => {
   return new Promise((resolve) => {
@@ -94,6 +96,10 @@ export const SidebarLeft = () => {
     setDeviceType,
     frameMode,
     setFrameMode,
+    deviceScale,
+    setDeviceScale,
+    cornerRadius,
+    setCornerRadius,
   } = useRenderStore();
 
   const [deviceCategory, setDeviceCategory] = useState<string>('phone');
@@ -348,6 +354,37 @@ export const SidebarLeft = () => {
                 )}
               </ControlGroup>
             </SidebarSection>
+
+            {/* Shadow & Glow */}
+            <SidebarSection padded>
+              <ShadowGlowPanel />
+            </SidebarSection>
+
+            {/* Mockup Constraints */}
+            <SidebarSection padded>
+              <SidebarHeader icon={<Box className="w-4 h-4" />}>Mockup Constraints</SidebarHeader>
+              <ControlGroup>
+                <SliderControl
+                  label="Scale"
+                  icon={<Maximize2 className="w-3.5 h-3.5" />}
+                  value={deviceScale}
+                  min={0.5}
+                  max={1.5}
+                  step={0.05}
+                  unit="x"
+                  onChange={setDeviceScale}
+                />
+                <SliderControl
+                  label="Corner Radius"
+                  icon={<SquareIcon className="w-3.5 h-3.5" />}
+                  value={cornerRadius}
+                  min={0}
+                  max={60}
+                  unit="px"
+                  onChange={setCornerRadius}
+                />
+              </ControlGroup>
+            </SidebarSection>
           </div>
         )}
 
@@ -434,10 +471,6 @@ export const SidebarLeft = () => {
             </SidebarSection>
 
             <AnimationsTab layoutFilter={layoutFilter} onFilterChange={handleFilterChange} />
-            <div className="h-px bg-ui-border mx-4 my-2" />
-            <SidebarSection>
-              <CameraStylePanel />
-            </SidebarSection>
           </div>
         )}
       </SidebarContent>

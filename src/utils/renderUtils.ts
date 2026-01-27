@@ -9,11 +9,9 @@ import {
 } from '../services/fontService';
 import {
   generateTextKeyframes,
-  generateDeviceKeyframes,
   ANIMATION_SPEED_MULTIPLIERS,
   TEXT_ANIMATIONS,
   type TextAnimationType,
-  type DeviceAnimationType,
 } from '../constants/layoutAnimationPresets';
 
 // Seek timeline - no flushSync needed, animations are calculated directly from store
@@ -483,7 +481,7 @@ const convertBackgroundImagesToDataUrls = async (node: HTMLElement) => {
       if (value && value !== 'none' && value.includes('url(')) {
         const convertedValue = await convertCssUrlToDataUrl(value);
         if (convertedValue !== value) {
-          (el.style as Record<string, string>)[prop] = convertedValue;
+          el.style.setProperty(prop, convertedValue);
         }
       }
     }
@@ -699,10 +697,12 @@ interface ExportContext {
   outputHeight: number;
   scaleX: number;
   scaleY: number;
-  // Optimized rendering
-  exportClone: HTMLElement;
+  // Optimized rendering with layers
+  bgClone: HTMLElement;
+  deviceClone: HTMLElement;
   animatedElements: Array<{ source: HTMLElement; target: HTMLElement }>;
-  cachedImg: HTMLImageElement;
+  bgImg: HTMLImageElement;
+  deviceImg: HTMLImageElement;
   svgPrefix: string;
   svgSuffix: string;
 }
@@ -720,20 +720,62 @@ export const prepareExportContext = async (
   outputWidth: number,
   outputHeight: number
 ): Promise<void> => {
-  console.log('[Export] Preparing optimized export context...');
+  console.log('[Export] Preparing optimized export context (layered)...');
   const startTime = performance.now();
 
   const scaleX = outputWidth / sourceWidth;
   const scaleY = outputHeight / sourceHeight;
 
-  // 1. Clone the node ONCE
-  const clone = node.cloneNode(true) as HTMLElement;
-  clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+  // 1. Master Clone - Clone and Clean once
+  const masterClone = node.cloneNode(true) as HTMLElement;
+  masterClone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
 
-  // 6. Map animated elements between source and clone
-  // We identify elements that have animations or specific animation markers
+  // Remove skip elements early
+  const skipElements = masterClone.querySelectorAll('[data-export-skip]');
+  skipElements.forEach((el) => el.remove());
+
+  // Remove problematic elements
+  masterClone.querySelectorAll('link, script, iframe, object, embed').forEach((el) => el.remove());
+
+  // 2. Convert Images & Inline Styles on Master
+  // Convert images to data URLs FIRST
+  await convertImagesToDataUrls(masterClone);
+  await convertBackgroundImagesToDataUrls(masterClone);
+
+  // Inline all computed styles ONCE
+  inlineStyles(node, masterClone);
+  masterClone.style.margin = '0';
+
+  // Convert AGAIN in case inlineStyles copied URLs
+  await convertImagesToDataUrls(masterClone);
+  await convertBackgroundImagesToDataUrls(masterClone);
+
+  // 3. Create Layers
+  const bgClone = masterClone.cloneNode(true) as HTMLElement;
+  const deviceClone = masterClone.cloneNode(true) as HTMLElement;
+
+  // Prepare Background Clone: Hide Device Layer
+  const deviceLayerInBg = bgClone.querySelector('[data-layer="device"]') as HTMLElement;
+  if (deviceLayerInBg) deviceLayerInBg.style.display = 'none';
+
+  // Prepare Device Clone: Hide Background Layer & Make Transparent
+  const bgLayerInDevice = deviceClone.querySelector('[data-layer="background"]') as HTMLElement;
+  if (bgLayerInDevice) bgLayerInDevice.style.display = 'none';
+
+  // Set root transparent
+  deviceClone.style.backgroundColor = 'transparent';
+  deviceClone.style.backgroundImage = 'none';
+
+  // Make screen container transparent so video shows through
+  const screenContainer = deviceClone.querySelector('[data-screen-container]') as HTMLElement;
+  if (screenContainer) {
+    screenContainer.style.backgroundColor = 'transparent';
+    screenContainer.style.backgroundImage = 'none';
+  }
+
+  // 4. Map Animated Elements (for both clones)
   const animatedElements: Array<{ source: HTMLElement; target: HTMLElement }> = [];
-  
+
   // Get all animated elements from source to build a fast lookup
   const animations = node.getAnimations({ subtree: true });
   const animatedSourceElements = new Set(
@@ -742,7 +784,7 @@ export const prepareExportContext = async (
       .filter((el): el is HTMLElement => el !== null)
   );
 
-  // Simultanously walk both trees to build mapping
+  // Simultanously walk trees to build mapping
   const walkAndMap = (source: HTMLElement, target: HTMLElement) => {
     const isDeviceAnim = source.hasAttribute('data-device-animation');
     const isLayoutAnim = source.hasAttribute('data-layout-animation');
@@ -767,29 +809,10 @@ export const prepareExportContext = async (
     }
   };
 
-  walkAndMap(node, clone);
+  walkAndMap(node, bgClone);
+  walkAndMap(node, deviceClone);
 
-  // 7. Remove elements marked for export skip (doing this AFTER mapping)
-  const skipElements = clone.querySelectorAll('[data-export-skip]');
-  skipElements.forEach((el) => el.remove());
-
-  // Also remove link/script elements that could taint canvas
-  const problematicElements = clone.querySelectorAll('link, script, iframe, object, embed');
-  problematicElements.forEach((el) => el.remove());
-
-  // 8. Convert images to data URLs FIRST (before inlining styles that might copy URLs)
-  await convertImagesToDataUrls(clone);
-  await convertBackgroundImagesToDataUrls(clone);
-
-  // 9. Inline all computed styles ONCE (after URLs are converted)
-  inlineStyles(node, clone);
-  clone.style.margin = '0';
-
-  // 10. Convert AGAIN after inlineStyles in case it copied any external URLs
-  await convertImagesToDataUrls(clone);
-  await convertBackgroundImagesToDataUrls(clone);
-
-  // 10. Get font CSS ONCE
+  // 5. Get font CSS ONCE
   const usedFonts = extractUsedFonts(node);
   let fontCss = '';
   for (const fontName of usedFonts) {
@@ -801,16 +824,17 @@ export const prepareExportContext = async (
     }
   }
 
-  // Pre-create reusable Image object
-  const cachedImg = new Image();
-  cachedImg.crossOrigin = 'anonymous';
+  // Pre-create reusable Image objects
+  const bgImg = new Image();
+  bgImg.crossOrigin = 'anonymous';
+  const deviceImg = new Image();
+  deviceImg.crossOrigin = 'anonymous';
 
   // Pre-compute static SVG parts
-  // Include perspective and transform-style for 3D transforms to work
   const svgPrefix = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
 <defs><style type="text/css">${fontCss}</style></defs>
 <foreignObject width="${outputWidth}" height="${outputHeight}">
-<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;perspective:1000px;transform-style:preserve-3d;">`;
+<div xmlns="http://www.w3.org/1999/xhtml" style="transform:scale(${scaleX},${scaleY});transform-origin:top left;width:${sourceWidth}px;height:${sourceHeight}px;">`;
   const svgSuffix = `</div>
 </foreignObject>
 </svg>`;
@@ -823,9 +847,11 @@ export const prepareExportContext = async (
     outputHeight,
     scaleX,
     scaleY,
-    exportClone: clone,
+    bgClone,
+    deviceClone,
     animatedElements,
-    cachedImg,
+    bgImg,
+    deviceImg,
     svgPrefix,
     svgSuffix,
   };
@@ -844,15 +870,12 @@ export const clearExportContext = () => {
 };
 
 // Accelerated SVG rendering using Blob URLs and direct style synchronization
-const loadSvgImageFast = async (): Promise<HTMLImageElement> => {
-  if (!cachedExportContext) {
-    throw new Error('Export context not prepared');
-  }
+// Helper: Sync animation styles from real DOM to clone(s)
+const syncFrameAnimations = () => {
+  if (!cachedExportContext) return;
 
-  const { exportClone, animatedElements, cachedImg, svgPrefix, svgSuffix } = cachedExportContext;
+  const { animatedElements } = cachedExportContext;
 
-  // 1. Sync all animated styles from real DOM to clone
-  // This handles device animations, text animations, and any layout transitions
   for (const { source, target } of animatedElements) {
     target.style.transition = 'none'; // DISABLE TRANSITIONS to ensure immediate update
 
@@ -876,20 +899,30 @@ const loadSvgImageFast = async (): Promise<HTMLImageElement> => {
     if (filterVal && filterVal !== 'none') target.style.filter = filterVal;
     if (clipPathVal && clipPathVal !== 'none') target.style.clipPath = clipPathVal;
   }
+};
+
+// accelerated SVG rendering using Blob URLs and direct style synchronization
+const renderCloneToImage = async (
+  clone: HTMLElement,
+  outputImg: HTMLImageElement
+): Promise<HTMLImageElement> => {
+  if (!cachedExportContext) {
+    throw new Error('Export context not prepared');
+  }
+
+  const { svgPrefix, svgSuffix } = cachedExportContext;
 
   // Final check: Ensure ALL images in clone are data URLs
   // Note: blob: URLs also cause taint when serialized to SVG
   const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  const allImages = exportClone.querySelectorAll('img');
+  const allImages = clone.querySelectorAll('img');
   for (const img of allImages) {
     if (img.src && !img.src.startsWith('data:')) {
-      console.warn('[loadSvgImageFast] Image still has external URL:', img.src);
       // Try to convert inline
       try {
         if (imageCache.has(img.src)) {
           img.src = imageCache.get(img.src)!;
         } else {
-          // Last resort: use a transparent pixel
           img.src = transparentPixel;
         }
       } catch {
@@ -899,11 +932,10 @@ const loadSvgImageFast = async (): Promise<HTMLImageElement> => {
   }
 
   // Also handle SVG <image> elements
-  const svgImages = exportClone.querySelectorAll('image');
+  const svgImages = clone.querySelectorAll('image');
   for (const svgImg of svgImages) {
     const href = svgImg.getAttribute('href') || svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
     if (href && !href.startsWith('data:')) {
-      console.warn('[loadSvgImageFast] SVG image has external URL:', href);
       svgImg.setAttribute('href', transparentPixel);
       svgImg.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
     }
@@ -911,13 +943,7 @@ const loadSvgImageFast = async (): Promise<HTMLImageElement> => {
 
   // 2. Fast serialization (Use XMLSerializer for well-formed XML)
   const serializer = new XMLSerializer();
-  let nodeString = serializer.serializeToString(exportClone);
-
-  // Debug: Check for ANY non-data URLs in the serialized HTML
-  const allUrlMatches = nodeString.match(/(?:src|href|url\()=['"]?(?!data:)([^'")\s>]+)/gi);
-  if (allUrlMatches && allUrlMatches.length > 0) {
-    console.warn('[loadSvgImageFast] WARNING: Found non-data URLs in SVG:', allUrlMatches.slice(0, 10));
-  }
+  let nodeString = serializer.serializeToString(clone);
 
   // AGGRESSIVE FIX: Replace ALL non-data URL src/href with empty (transparent pixel for images)
   // This prevents ANY external resource from tainting the canvas
@@ -956,29 +982,20 @@ const loadSvgImageFast = async (): Promise<HTMLImageElement> => {
     '$1poster=""'
   );
 
-  // 3. Build SVG as data URL (more compatible than blob URL for cross-origin)
+  // 3. Build SVG as data URL
   const svg = svgPrefix + nodeString + svgSuffix;
-
-  // Debug: Log a snippet of the SVG
-  console.log('[loadSvgImageFast] SVG length:', svg.length);
-  console.log('[loadSvgImageFast] SVG snippet:', svg.slice(0, 500));
 
   // Use data URL instead of blob URL for better cross-origin compatibility
   const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
-  // 4. Load using NEW Image object (don't reuse - can cause issues)
+  // 4. Load into reused Image object
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      resolve(img);
-    };
-    img.onerror = (e) => {
+    outputImg.onload = () => resolve(outputImg);
+    outputImg.onerror = (e) => {
       console.error('[StreamRender] SVG load failed:', e);
-      console.error('[StreamRender] SVG content (first 1000 chars):', svg.slice(0, 1000));
       reject(new Error('SVG render failed: The content contains invalid characters or structure for video export.'));
     };
-    img.src = svgDataUrl;
+    outputImg.src = svgDataUrl;
   });
 };
 
@@ -1017,20 +1034,31 @@ export const nodeToSvgDataUrl = async (
   const syncAnimationStyles = (selector: string) => {
     const sourceElements = node.querySelectorAll(selector);
     const targetElements = clone.querySelectorAll(selector);
-    
+
     if (sourceElements.length === targetElements.length) {
       for (let i = 0; i < sourceElements.length; i++) {
         const source = sourceElements[i] as HTMLElement;
         const target = targetElements[i] as HTMLElement;
-        
+
         // Force sync critical animation properties from the "live" authorized source
         target.style.transition = 'none'; // Critical: Disable transitions to prevent SVG capture interpolation
-        
+
         const computed = window.getComputedStyle(source);
+
+        // Sync all animation-related properties
         target.style.transform = source.style.transform || computed.transform;
         target.style.opacity = source.style.opacity || computed.opacity;
-        
-        if (source.style.filter) target.style.filter = source.style.filter;
+        target.style.transformStyle = source.style.transformStyle || computed.transformStyle;
+        target.style.perspective = source.style.perspective || computed.perspective;
+        target.style.backfaceVisibility = source.style.backfaceVisibility || computed.backfaceVisibility;
+
+        // Conditional properties
+        if (source.style.filter || computed.filter !== 'none') {
+          target.style.filter = source.style.filter || computed.filter;
+        }
+        if (source.style.clipPath || computed.clipPath !== 'none') {
+          target.style.clipPath = source.style.clipPath || computed.clipPath;
+        }
       }
     }
   };
@@ -1068,10 +1096,7 @@ export const nodeToSvgDataUrl = async (
     );
 
     // Find text elements in clone (they are direct children of the text overlay container)
-    // Text overlay container has pointerEvents: 'none' and zIndex: 50
-    const textContainer = clone.querySelector(
-      '[style*="pointer-events: none"][style*="z-index: 50"]'
-    ) as HTMLElement | null;
+    const textContainer = clone.querySelector('[data-text-overlay]') as HTMLElement | null;
     if (textContainer) {
       const textElements = textContainer.children;
       // First child is headline, second is tagline
@@ -1143,7 +1168,6 @@ export const nodeToSvgDataUrl = async (
 
   // SVG with embedded fonts and foreignObject
   // Apply scale transform to render at output resolution
-  // Include perspective and transform-style for 3D transforms
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${finalWidth}" height="${finalHeight}">
       <defs>
@@ -1152,7 +1176,7 @@ export const nodeToSvgDataUrl = async (
         </style>
       </defs>
       <foreignObject width="${finalWidth}" height="${finalHeight}">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="transform: scale(${scaleX}, ${scaleY}); transform-origin: top left; width: ${sourceWidth}px; height: ${sourceHeight}px; perspective: 1000px; transform-style: preserve-3d;">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="transform: scale(${scaleX}, ${scaleY}); transform-origin: top left; width: ${sourceWidth}px; height: ${sourceHeight}px;">
           ${nodeString}
         </div>
       </foreignObject>
@@ -1284,11 +1308,17 @@ export const renderTextOverlay = (
     textAlign = 'right';
   }
 
+  // Calculate text dimensions
+  const headlineHeight = headline ? fontSize * scale * 1.1 : 0;
+  const gap = headline && tagline ? 12 * scale : 0;
+  const taglineHeight = tagline ? taglineFontSize * scale * 1.3 : 0;
+  const totalTextHeight = headlineHeight + gap + taglineHeight;
+
   // Vertical position
   if (pos.startsWith('center')) {
-    textY = canvasHeight / 2 - (fontSize * scale) / 2;
+    textY = (canvasHeight - totalTextHeight) / 2;
   } else if (pos.startsWith('bottom')) {
-    textY = canvasHeight - padding * 1.5 - taglineFontSize * scale - 12;
+    textY = canvasHeight - padding * 1.5 - totalTextHeight;
   }
 
   ctx.save();
@@ -1381,7 +1411,7 @@ export const renderTextOverlay = (
   renderAnimatedText(headline, headlineAnim, textX, textY, fontSize * scale, fontWeight);
 
   // Render tagline
-  const taglineY = textY + fontSize * scale + 12 * scale;
+  const taglineY = textY + headlineHeight + gap;
   renderAnimatedText(tagline, taglineAnim, textX, taglineY, taglineFontSize * scale, 400, 0.9);
 
   ctx.restore();
@@ -1569,21 +1599,41 @@ export const captureFrame = async (
     ctx.clip();
   }
 
-  // Fill background first
+  // Fill background first (fallback color)
   ctx.fillStyle = computedStyle.backgroundColor || '#000000';
   ctx.fillRect(0, 0, outputWidth, outputHeight);
 
-  // Use fast path if export context is prepared
-  let img: HTMLImageElement;
+  // Use fast path if export context is prepared and matches size
   if (
     cachedExportContext &&
     cachedExportContext.outputWidth === outputWidth &&
     cachedExportContext.outputHeight === outputHeight
   ) {
-    // Fast path: use cached context and Blob URL
-    img = await loadSvgImageFast();
+    // Fast path: Layered Rendering
+
+    // 1. Sync Animation State
+    syncFrameAnimations();
+
+    // 2. Render Layers (Background & Device)
+    const { bgClone, deviceClone, bgImg, deviceImg } = cachedExportContext;
+    await Promise.all([
+      renderCloneToImage(bgClone, bgImg),
+      renderCloneToImage(deviceClone, deviceImg)
+    ]);
+
+    // 3. Draw Background Layer
+    ctx.drawImage(bgImg, 0, 0, outputWidth, outputHeight);
+
+    // 4. Draw Video Frames (Sandwiched between Background and Device)
+    const displayToOutputScale = outputWidth / nodeRect.width;
+    captureVideoFrames(node, ctx, nodeRect, displayToOutputScale, 0, 0);
+
+    // 5. Draw Device Layer (On top of video, includes Frame/Glare)
+    ctx.drawImage(deviceImg, 0, 0, outputWidth, outputHeight);
+
   } else {
-    // Slow path: full SVG generation (for single image export)
+    // Slow path: Full single-pass SVG generation (no layering optimization)
+    // Z-order of video vs frame might be incorrect here, but acceptable for single screenshots
     const svgUrl = await nodeToSvgDataUrl(
       node,
       nodeRect.width,
@@ -1591,38 +1641,25 @@ export const captureFrame = async (
       outputWidth,
       outputHeight
     );
-    img = await loadImage(svgUrl);
+    const img = await loadImage(svgUrl);
+    ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
+
+    // Draw videos on top (fallback)
+    const displayToOutputScale = outputWidth / nodeRect.width;
+    captureVideoFrames(node, ctx, nodeRect, displayToOutputScale, 0, 0);
   }
 
-  // Draw SVG at full output size (already scaled internally)
-  ctx.drawImage(img, 0, 0, outputWidth, outputHeight);
-
-  // Check if canvas is tainted after SVG draw
+  // Check valid rendering (taint check)
   try {
     ctx.getImageData(0, 0, 1, 1);
   } catch (e) {
-    console.error('[captureFrame] Canvas tainted after SVG draw! SVG may contain external URLs.');
-    throw new Error('Canvas tainted by SVG content. Check that all images are converted to data URLs.');
+    console.error('[captureFrame] Canvas tainted! SVG or Video may contain external URLs.');
+    throw new Error('Canvas tainted. Check that all resources are converted to data URLs.');
   }
 
-  ctx.restore();
+  ctx.restore(); // Remove global clip
 
-  // Draw video frames DIRECTLY on top of SVG render
-  ctx.save();
-  if (radius > 0) {
-    ctx.beginPath();
-    if (ctx.roundRect) {
-      ctx.roundRect(0, 0, outputWidth, outputHeight, radius);
-    } else {
-      ctx.rect(0, 0, outputWidth, outputHeight);
-    }
-    ctx.clip();
-  }
-  const displayToOutputScale = outputWidth / nodeRect.width;
-  captureVideoFrames(node, ctx, nodeRect, displayToOutputScale, 0, 0);
-  ctx.restore();
-
-  // Render text overlay AFTER videos so text appears on top
+  // Render text overlay AFTER everything (TextOverlayRenderer draws directly to canvas)
   renderTextOverlay(ctx, outputWidth, outputHeight, scale, _durationMs, _playheadMs);
 
   // Get raw RGBA pixel data

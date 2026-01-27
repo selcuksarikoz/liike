@@ -300,6 +300,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
         >
           {/* Canvas Background with Crossfade */}
           <div
+            data-layer="background"
             className="absolute inset-0 overflow-hidden"
             style={{ borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px` }}
           >
@@ -337,6 +338,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           {/* Dynamic Mockup Render - Centered in Canvas */}
           <div
             ref={deviceContainerRef}
+            data-layer="device"
             className="relative z-10 w-full h-full flex items-center justify-center overflow-hidden"
             style={{
               borderRadius: `${Math.max(0, canvasCornerRadius - canvasBorderWidth)}px`,
@@ -356,6 +358,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
               {/* Animation wrapper - handles entry and layout animations */}
               <div
                 ref={animatedDeviceRef}
+                data-device-animation
                 className="w-full h-full flex items-center justify-center transition-all duration-300 ease-out"
                 style={{
                   opacity: (() => {

@@ -61,6 +61,7 @@ export const GenericDeviceMockup = ({
 
         {/* Screen Area - Precisely positioned inside the frame using padding/inset */}
         <div
+          data-screen-container
           className="absolute z-10 overflow-hidden bg-black"
           style={{
             inset: screenConfig.padding,
