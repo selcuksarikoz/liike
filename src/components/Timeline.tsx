@@ -36,17 +36,11 @@ const PIXELS_PER_SECOND = 200;
 
 // Animation preview keyframes for hover effects
 const ANIMATION_KEYFRAMES: Record<string, string> = {
-  float: 'animate-float',
   bounce: 'animate-bounce',
   pulse: 'animate-pulse',
   shake: 'animate-shake',
   rotate: 'animate-spin',
   'zoom-in': 'animate-zoom-pulse',
-  'zoom-out': 'animate-zoom-out-pulse',
-  'slide-left': 'animate-slide-left',
-  'slide-right': 'animate-slide-right',
-  'slide-up': 'animate-slide-up',
-  'slide-down': 'animate-slide-down',
   glitch: 'animate-glitch',
   swing: 'animate-swing',
   'elastic-rotate': 'animate-elastic-rotate',
