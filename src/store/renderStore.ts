@@ -122,6 +122,7 @@ type RenderStore = RenderSettings & {
   // Render status
   renderStatus: RenderStatus;
   renderQuality: '1080p' | '4k';
+  fastExport: boolean;
   // Setters
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
@@ -140,6 +141,7 @@ type RenderStore = RenderSettings & {
   setDurationMs: (durationMs: number) => void;
   setFps: (fps: number) => void;
   setRenderQuality: (quality: '1080p' | '4k') => void;
+  setFastExport: (fast: boolean) => void;
   setOutputName: (outputName: string) => void;
   setStylePreset: (preset: StylePreset) => void;
   setShadowType: (type: ShadowType) => void;
@@ -209,6 +211,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   animationSpeed: 'normal',
   renderStatus: initialRenderStatus,
   renderQuality: '1080p',
+  fastExport: false,
   
   frameMode: 'device',
   deviceType: 'iphone',
@@ -267,6 +270,7 @@ export const useRenderStore = create<RenderStore>((set) => ({
   }),
   setFps: (fps) => set({ fps }),
   setRenderQuality: (renderQuality) => set({ renderQuality }),
+  setFastExport: (fastExport) => set({ fastExport }),
   setOutputName: (outputName) => set({ outputName }),
   setStylePreset: (stylePreset) => set({ stylePreset }),
   setShadowType: (shadowType) => set({ shadowType }),

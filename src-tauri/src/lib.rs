@@ -21,8 +21,8 @@ struct StreamingEncoder {
     process: Option<Child>, // Wrapped in Option to take ownership during finish
     sender: Option<SyncSender<Option<Vec<u8>>>>, // Send None to signal EOF
     worker_thread: Option<thread::JoinHandle<Result<(), String>>>,
-    width: u32,
-    height: u32,
+    input_width: u32,
+    input_height: u32,
     total_frames: u32,
     current_frame: Arc<Mutex<u32>>, // Shared counter for progress
     last_error: Arc<Mutex<Option<String>>>, // Last ffmpeg/worker error for diagnostics
@@ -439,9 +439,18 @@ fn validate_ffmpeg_path(path: &PathBuf) -> bool {
 }
 
 // Get encoder arguments for rawvideo input (streaming mode)
-fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, use_hw: bool, audio_path: Option<&str>) -> Vec<String> {
-    let scale_w = if width % 2 == 0 { width } else { width + 1 };
-    let scale_h = if height % 2 == 0 { height } else { height + 1 };
+fn get_streaming_encoder_args(
+    format: &str,
+    input_width: u32,
+    input_height: u32,
+    output_width: u32,
+    output_height: u32,
+    fps: u32,
+    use_hw: bool,
+    audio_path: Option<&str>
+) -> Vec<String> {
+    let scale_w = if output_width % 2 == 0 { output_width } else { output_width + 1 };
+    let scale_h = if output_height % 2 == 0 { output_height } else { output_height + 1 };
     // Use bicubic for good quality/speed balance
     let scale_filter = format!("scale={}:{}:flags=bicubic", scale_w, scale_h);
 
@@ -458,7 +467,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
         "-pix_fmt".to_string(),
         "rgba".to_string(),
         "-s".to_string(),
-        format!("{}x{}", width, height),
+        format!("{}x{}", input_width, input_height),
         "-r".to_string(),
         fps.to_string(),
         "-i".to_string(),
@@ -608,9 +617,13 @@ fn start_streaming_encode(
     format: Option<String>,
     use_hw: Option<bool>,
     audio_path: Option<String>,
+    input_width: Option<u32>,
+    input_height: Option<u32>,
 ) -> Result<String, String> {
     let format = format.unwrap_or_else(|| "mp4".to_string());
     let use_hw = use_hw.unwrap_or(true);
+    let input_width = input_width.unwrap_or(width);
+    let input_height = input_height.unwrap_or(height);
     let audio_path = audio_path.and_then(|p| {
         let trimmed = p.strip_prefix("file://").unwrap_or(&p).to_string();
         match std::fs::metadata(&trimmed) {
@@ -633,7 +646,16 @@ fn start_streaming_encode(
             return Err("ffmpeg binary not found or not runnable".into());
         }
     }
-    let mut args = get_streaming_encoder_args(&format, width, height, fps, use_hw, audio_path.as_deref());
+    let mut args = get_streaming_encoder_args(
+        &format,
+        input_width,
+        input_height,
+        width,
+        height,
+        fps,
+        use_hw,
+        audio_path.as_deref(),
+    );
     args.push(output_path.clone());
 
     let log_path = std::env::temp_dir().join("liike_ffmpeg.log");
@@ -713,8 +735,8 @@ fn start_streaming_encode(
         process: Some(process),
         sender: Some(tx),
         worker_thread: Some(worker_thread),
-        width,
-        height,
+        input_width,
+        input_height,
         total_frames,
         current_frame: Arc::new(Mutex::new(0)),
         last_error,
@@ -744,7 +766,7 @@ fn send_frame(encoder_id: String, frame_data: Vec<u8>) -> Result<f32, String> {
             .get(&encoder_id)
             .ok_or_else(|| format!("Encoder not found: {}", encoder_id))?;
 
-        let expected_size = (encoder.width * encoder.height * 4) as usize;
+        let expected_size = (encoder.input_width * encoder.input_height * 4) as usize;
         let sender = encoder.sender.clone().ok_or("Encoder closed")?;
         
         (

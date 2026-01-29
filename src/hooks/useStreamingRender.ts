@@ -41,6 +41,7 @@ export type StreamingRenderOptions = {
   fps?: number;
   outputName?: string;
   format?: ExportFormat;
+  captureScale?: number;
 };
 
 export type StreamingRenderState = {
@@ -97,6 +98,7 @@ export const useStreamingRender = () => {
       fps = 30,
       outputName = 'liike_export',
       format = 'mp4',
+      captureScale,
     }: StreamingRenderOptions) => {
       console.log('[StreamRender] Starting streaming export:', { format, durationMs, fps, renderQuality });
 
@@ -128,6 +130,9 @@ export const useStreamingRender = () => {
       const qualityMultiplier = renderQuality === '4k' ? 2 : 1;
       const outputWidth = (canvasWidth || 1080) * qualityMultiplier;
       const outputHeight = (canvasHeight || 1080) * qualityMultiplier;
+      const effectiveCaptureScale = Math.min(1, Math.max(0.5, captureScale ?? 1));
+      const captureWidth = Math.max(2, Math.round(outputWidth * effectiveCaptureScale));
+      const captureHeight = Math.max(2, Math.round(outputHeight * effectiveCaptureScale));
       
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -273,6 +278,8 @@ export const useStreamingRender = () => {
           format,
           useHw: true,
           audioPath,
+          inputWidth: captureWidth,
+          inputHeight: captureHeight,
         });
         encoderIdRef.current = encoderId;
         console.log('[StreamRender] Encoder started:', encoderId);
@@ -293,7 +300,7 @@ export const useStreamingRender = () => {
 
         // Prepare export context - clones DOM at current state (should be time=0)
         const nodeRect = node.getBoundingClientRect();
-        await prepareExportContext(node, nodeRect.width, nodeRect.height, outputWidth, outputHeight);
+        await prepareExportContext(node, nodeRect.width, nodeRect.height, captureWidth, captureHeight);
 
         await waitForRender(16);
 
@@ -335,7 +342,7 @@ export const useStreamingRender = () => {
 
           // Capture current frame
           const captureStart = performance.now();
-          const rgbaData = await captureFrame(node, outputWidth, outputHeight, effectiveDuration, timeMs);
+          const rgbaData = await captureFrame(node, captureWidth, captureHeight, effectiveDuration, timeMs);
           captureTime += performance.now() - captureStart;
 
           if (abortController.signal.aborted) {

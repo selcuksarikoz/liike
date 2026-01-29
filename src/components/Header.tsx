@@ -84,6 +84,8 @@ export const Header = ({ onRender }: HeaderProps) => {
   const setFps = useRenderStore((state) => state.setFps);
   const renderQuality = useRenderStore((state) => state.renderQuality);
   const setRenderQuality = useRenderStore((state) => state.setRenderQuality);
+  const fastExport = useRenderStore((state) => state.fastExport);
+  const setFastExport = useRenderStore((state) => state.setFastExport);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -414,6 +416,34 @@ export const Header = ({ onRender }: HeaderProps) => {
                         {q.toUpperCase()}
                       </button>
                     ))}
+                  </div>
+                </div>
+                {/* Speed Selector */}
+                <div className="px-3 py-2.5 border-b border-ui-border">
+                  <div className="text-[10px] text-ui-muted uppercase tracking-wider mb-2">
+                    Speed
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setFastExport(false)}
+                      className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        !fastExport
+                          ? 'bg-accent text-black'
+                          : 'bg-ui-highlight/30 text-ui-muted hover:bg-ui-highlight/50 hover:text-white'
+                      }`}
+                    >
+                      Quality
+                    </button>
+                    <button
+                      onClick={() => setFastExport(true)}
+                      className={`flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        fastExport
+                          ? 'bg-accent text-black'
+                          : 'bg-ui-highlight/30 text-ui-muted hover:bg-ui-highlight/50 hover:text-white'
+                      }`}
+                    >
+                      Fast Export
+                    </button>
                   </div>
                 </div>
                 <div className="p-1">
