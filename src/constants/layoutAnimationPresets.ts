@@ -665,7 +665,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'center-left',
       headlineFontSize: 80,
       taglineFontSize: 32,
-      color: '#000'
+      color: '#ffffff'
     },
     animations: [{ type: 'fade', duration: 1500, easing: 'ease-out', intensity: 1, stagger: 0 }],
     device: {
@@ -697,7 +697,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'center-right',
       headlineFontSize: 80,
       taglineFontSize: 32,
-      color: '#000'
+      color: '#ffffff'
     },
     animations: [{ type: 'fade', duration: 1500, easing: 'ease-out', intensity: 1, stagger: 0 }],
     device: {
@@ -793,7 +793,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'top-left',
       headlineFontSize: 120,
       taglineFontSize: 40,
-      color: '#000'
+      color: '#ffffff'
     },
     animations: [{ type: 'zoom-in', duration: 1500, easing: 'ease-out', intensity: 5, stagger: 0.1 }],
     device: {
@@ -825,7 +825,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'top-right',
       headlineFontSize: 100,
       taglineFontSize: 36,
-      color: '#1e293b'
+      color: '#ffffff'
     },
     animations: [{ type: 'zoom-in', duration: 1500, easing: 'ease-out', intensity: 5, stagger: 0.1 }],
     device: {
@@ -889,7 +889,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'bottom-right',
       headlineFontSize: 80,
       taglineFontSize: 24,
-      color: '#be185d'
+      color: '#ffffff'
     },
     animations: [{ type: 'fade', duration: 2000, easing: 'ease-in-out', intensity: 1, stagger: 0.1 }],
     device: {
@@ -921,7 +921,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'center-left',
       headlineFontSize: 80,
       taglineFontSize: 28,
-      color: '#6d28d9'
+      color: '#ffffff'
     },
     animations: [{ type: 'elastic-enter', duration: 1500, easing: 'elastic', intensity: 50, stagger: 0.1 }],
     device: {
@@ -953,7 +953,7 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       position: 'center-left',
       headlineFontSize: 100,
       taglineFontSize: 28,
-      color: '#18181b'
+      color: '#ffffff'
     },
     animations: [{ type: 'fade', duration: 1000, easing: 'ease-out', intensity: 1, stagger: 0 }],
     device: {

@@ -42,8 +42,20 @@ const ANIMATION_KEYFRAMES: Record<string, string> = {
   shake: 'animate-shake',
   rotate: 'animate-spin',
   'zoom-in': 'animate-zoom-pulse',
+  'zoom-out': 'animate-zoom-out-pulse',
+  'slide-left': 'animate-slide-left',
+  'slide-right': 'animate-slide-right',
+  'slide-up': 'animate-slide-up',
+  'slide-down': 'animate-slide-down',
   glitch: 'animate-glitch',
   swing: 'animate-swing',
+  'elastic-rotate': 'animate-elastic-rotate',
+  converge: 'animate-converge',
+  diverge: 'animate-diverge',
+  'wobble-3d': 'animate-wobble-3d',
+  'rotate-3d': 'animate-rotate-3d',
+  elevator: 'animate-elevator',
+  'skew-slide': 'animate-skew-slide',
 };
 
 const getPresetIcon = (iconName: string, className?: string) => {
@@ -198,6 +210,8 @@ const AnimationPresetItem = ({
   onDoubleClick: (preset: AnimationPreset) => void;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const iconRef = useRef<HTMLDivElement>(null);
+  const leaveAnimRef = useRef<Animation | null>(null);
 
   const getAnimationClass = () => {
     if (!isHovered) return '';
@@ -210,8 +224,28 @@ const AnimationPresetItem = ({
       draggable
       onDragStart={(e) => onDragStart(e, preset)}
       onDoubleClick={() => onDoubleClick(preset)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        leaveAnimRef.current?.cancel();
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        const iconEl = iconRef.current;
+        if (iconEl) {
+          const computed = window.getComputedStyle(iconEl);
+          const startTransform = computed.transform === 'none' ? 'none' : computed.transform;
+          const startOpacity = computed.opacity;
+          const startFilter = computed.filter === 'none' ? 'none' : computed.filter;
+          leaveAnimRef.current?.cancel();
+          leaveAnimRef.current = iconEl.animate(
+            [
+              { transform: startTransform, opacity: startOpacity, filter: startFilter },
+              { transform: 'none', opacity: '1', filter: 'none' },
+            ],
+            { duration: 180, easing: 'ease-out', fill: 'forwards' }
+          );
+        }
+        setIsHovered(false);
+      }}
       className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-ui-panel/80 hover:bg-ui-highlight border border-transparent hover:border-ui-border/50 cursor-grab active:cursor-grabbing transition-all duration-200 group relative overflow-hidden"
     >
       {/* Glow effect on hover */}
@@ -223,6 +257,7 @@ const AnimationPresetItem = ({
       />
 
       <div
+        ref={iconRef}
         className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-hover:shadow-lg ${getAnimationClass()}`}
         style={{
           backgroundColor: preset.color,

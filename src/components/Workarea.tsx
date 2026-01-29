@@ -82,6 +82,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   const backgroundRef = useRef<HTMLDivElement>(null);
   const prevBackgroundRef = useRef<HTMLDivElement>(null);
   const [prevGradient, setPrevGradient] = useState<string>(backgroundGradient);
+  const [smoothTransition, setSmoothTransition] = useState(false);
+  const transitionTimeoutRef = useRef<number | null>(null);
+  const prevActiveCountRef = useRef<number>(0);
+  const prevHadAnimationRef = useRef<boolean>(false);
 
   // Calculate animation info for DeviceRenderer (staggered animations for duo/trio)
   const animationInfo = useMemo(() => {
@@ -115,6 +119,27 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     };
   }, [activeClips]);
 
+  // Smoothly ease at animation boundaries to avoid snapping
+  useEffect(() => {
+    const currentCount = activeClips.length;
+    if (currentCount !== prevActiveCountRef.current) {
+      setSmoothTransition(true);
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
+      }
+      transitionTimeoutRef.current = window.setTimeout(() => {
+        setSmoothTransition(false);
+      }, transitionDuration);
+    }
+    prevActiveCountRef.current = currentCount;
+    return () => {
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
+        transitionTimeoutRef.current = null;
+      }
+    };
+  }, [activeClips.length, transitionDuration]);
+
   // Calculate animation transform for single layout (no stagger)
   const animationStyle = useMemo(() => {
     if (!animationInfo) {
@@ -126,6 +151,9 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
       animationInfo.easing
     );
   }, [animationInfo]);
+
+  const hasAnimation = !!animationInfo;
+  const shouldSmoothTransition = !hasAnimation && prevHadAnimationRef.current;
 
   // Apply layout preset from active clip if it has one
   useEffect(() => {
@@ -152,6 +180,20 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
       });
     });
   }, [playheadMs, tracks, isPlaying, applyPreset]);
+
+  // Ensure exit from animations eases back to rest state (no snap)
+  useEffect(() => {
+    if (shouldSmoothTransition) {
+      setSmoothTransition(true);
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
+      }
+      transitionTimeoutRef.current = window.setTimeout(() => {
+        setSmoothTransition(false);
+      }, transitionDuration);
+    }
+    prevHadAnimationRef.current = hasAnimation;
+  }, [shouldSmoothTransition, hasAnimation, transitionDuration]);
 
   const handleScreenClick = (index: number) => {
     setActiveMediaIndex(index);
@@ -361,6 +403,9 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 data-device-animation
                 className="w-full h-full flex items-center justify-center"
                 style={{
+                  transition: smoothTransition || shouldSmoothTransition
+                    ? `transform ${transitionDuration}ms ease, opacity ${transitionDuration}ms ease`
+                    : 'none',
                   opacity: (() => {
                     const baseOpacity = animationStyle.opacity ?? 1;
                     const deviceOpacity = deviceAnimationStyle.opacity;
