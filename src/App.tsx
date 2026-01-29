@@ -8,11 +8,12 @@ import { Workarea } from './components/Workarea';
 import { Timeline } from './components/Timeline';
 import { initializeFonts } from './services/fontService';
 import { preloadDeviceImages } from './constants/devices';
+import { getExportFolder } from './utils/renderUtils';
 
 const App = () => {
   const stageRef = useRef<HTMLDivElement>(null);
 
-  // Initialize fonts and preload device images on app startup
+  // Initialize fonts, preload device images, and prompt export folder access on startup
   useEffect(() => {
     // Preload in parallel for faster startup
     Promise.all([
@@ -20,6 +21,7 @@ const App = () => {
         console.log(`[Fonts] ${Math.round(progress * 100)}% - ${fontName}`);
       }),
       preloadDeviceImages(),
+      getExportFolder(),
     ]).catch(console.error);
   }, []);
 

@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Liike",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "identifier": "com.kuulto.liike",
   "build": {
     "frontendDist": "../dist",
@@ -15,7 +15,8 @@
         "title": "Liike",
         "width": 1280,
         "height": 800,
-        "resizable": true,
+        "resizable": false,
+        "maximized": true,
         "fullscreen": false
       }
     ],

@@ -1957,8 +1957,9 @@ export const captureFrame = async (
     // Use locked dimensions to prevent jitter from DOM changes
     const lockedScale = outputWidth / cachedExportContext.sourceWidth;
 
-    // FAST PATH: Skip SVG animation sync - we apply animation via canvas transforms instead
-    // This eliminates the slow SVG re-rendering on every frame
+    // Sync animation styles from live DOM to clones before rendering
+    // This ensures layout/device animations are captured in export frames.
+    syncFrameAnimations();
 
     // Render Layers to ImageBitmaps (background renders once, device is pre-rendered)
     const { bgClone, deviceClone, bgIsStatic, lockedNodeRect } = cachedExportContext;
@@ -1978,12 +1979,20 @@ export const captureFrame = async (
       }
       bgSource = cachedExportContext.bgBitmap!;
 
-      // FAST PATH: Use pre-rendered static device + canvas transforms for animation
-      // This is MUCH faster than re-rendering SVG each frame
-      deviceSource = cachedExportContext.deviceStaticBitmap || cachedExportContext.deviceBitmap!;
-
-      if (!deviceSource) {
-        // Fallback: render if no pre-rendered bitmap
+      // Device: render once if static, otherwise re-render each frame for animations
+      if (cachedExportContext.deviceIsStatic) {
+        if (!cachedExportContext.deviceRendered) {
+          if (cachedExportContext.deviceBitmap) {
+            cachedExportContext.deviceBitmap.close();
+          }
+          cachedExportContext.deviceBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
+          cachedExportContext.deviceRendered = true;
+        }
+        deviceSource = cachedExportContext.deviceStaticBitmap || cachedExportContext.deviceBitmap!;
+      } else {
+        if (cachedExportContext.deviceBitmap) {
+          cachedExportContext.deviceBitmap.close();
+        }
         cachedExportContext.deviceBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
         deviceSource = cachedExportContext.deviceBitmap;
       }
@@ -2035,7 +2044,14 @@ export const captureFrame = async (
     let deviceOpacity = 1;
     let deviceTransform = { translateX: 0, translateY: 0, scale: 1, rotate: 0 };
 
-    if (deviceAnim && deviceAnim !== 'none' && textOverlay.enabled && _playheadMs !== undefined) {
+    // Apply canvas-based device animation only when using static device bitmap
+    if (
+      cachedExportContext.deviceIsStatic &&
+      deviceAnim &&
+      deviceAnim !== 'none' &&
+      textOverlay.enabled &&
+      _playheadMs !== undefined
+    ) {
       const startDelay = 400 / speedMultiplier;
       const animDuration = 800 / speedMultiplier;
       const delayedPlayhead = Math.max(0, _playheadMs - startDelay);

@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { dirname, join } from '@tauri-apps/api/path';
+import { appDataDir, dirname, join } from '@tauri-apps/api/path';
 import { platform } from '@tauri-apps/plugin-os';
 import { Command } from '@tauri-apps/plugin-shell';
 import { useCallback, useRef, useState } from 'react';
@@ -227,6 +227,9 @@ export const useStreamingRender = () => {
       // Video Export Logic
       const filename = getVideoFilename(outputName, outputWidth, outputHeight, ext);
       const outputPath = await join(exportFolder, filename);
+      const tempBase = await appDataDir();
+      const tempFolder = await join(tempBase, 'exports');
+      const tempOutputPath = await join(tempFolder, filename);
 
       // Pause playback
       useTimelineStore.getState().setIsPlaying(false);
@@ -259,8 +262,10 @@ export const useStreamingRender = () => {
 
         // Start the streaming encoder in Rust
         console.log('[StreamRender] Starting streaming encoder...', { audioPath });
+        const { mkdir } = await import('@tauri-apps/plugin-fs');
+        await mkdir(tempFolder, { recursive: true });
         const encoderId = await invoke<string>('start_streaming_encode', {
-          outputPath,
+          outputPath: tempOutputPath,
           width: outputWidth,
           height: outputHeight,
           fps,
@@ -379,6 +384,10 @@ export const useStreamingRender = () => {
         // Clear export context
         clearExportContext();
 
+        const { copyFile, remove } = await import('@tauri-apps/plugin-fs');
+        await copyFile(tempOutputPath, outputPath);
+        await remove(tempOutputPath);
+
         console.log('[StreamRender] Export complete:', outputPath);
         setState((prev) => ({
           ...prev,
@@ -407,6 +416,13 @@ export const useStreamingRender = () => {
             // Ignore cleanup errors
           }
           encoderIdRef.current = null;
+        }
+
+        try {
+          const { remove } = await import('@tauri-apps/plugin-fs');
+          await remove(tempOutputPath);
+        } catch {
+          // Ignore cleanup errors
         }
       }
     },

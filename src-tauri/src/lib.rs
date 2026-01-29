@@ -25,6 +25,8 @@ struct StreamingEncoder {
     height: u32,
     total_frames: u32,
     current_frame: Arc<Mutex<u32>>, // Shared counter for progress
+    last_error: Arc<Mutex<Option<String>>>, // Last ffmpeg/worker error for diagnostics
+    log_path: PathBuf,
 }
 
 // Global encoder registry for managing multiple concurrent encoders
@@ -91,30 +93,28 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
         ],
         "mov" => {
             if use_hw && is_macos {
-                // HEVC VideoToolbox - macOS (fastest, excellent quality)
+                // H.264 VideoToolbox - macOS (fast and widely compatible)
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "hevc_videotoolbox".to_string(),
+                    "h264_videotoolbox".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-q:v".to_string(),
-                    "65".to_string(), // Quality-based (0-100, higher=better)
-                    "-realtime".to_string(),
-                    "1".to_string(),
+                    "70".to_string(), // Quality-based (0-100, higher=better)
                     "-tag:v".to_string(),
-                    "hvc1".to_string(),
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                 ]
             } else if use_hw && is_windows {
-                // HEVC NVENC - Windows NVIDIA
+                // H.264 NVENC - Windows NVIDIA
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "hevc_nvenc".to_string(),
+                    "h264_nvenc".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
@@ -126,25 +126,25 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
                     "-cq".to_string(),
                     "24".to_string(),
                     "-tag:v".to_string(),
-                    "hvc1".to_string(),
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                 ]
             } else {
-                // Software HEVC - fast preset with good quality
+                // Software H.264 - fast preset with good quality
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "libx265".to_string(),
+                    "libx264".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
-                    "fast".to_string(), // Better quality than ultrafast
+                    "fast".to_string(),
                     "-crf".to_string(),
-                    "22".to_string(), // Better quality (lower = better)
+                    "21".to_string(),
                     "-tag:v".to_string(),
-                    "hvc1".to_string(),
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                 ]
@@ -160,34 +160,31 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
                 "0".to_string(),
             ]
         }
-        // MP4 - H.264 for universal compatibility
-        // MP4 - User requested HEVC (H.265) for speed/quality
+        // MP4 - H.264 for speed + compatibility
         _ => {
             if use_hw && is_macos {
-                // HEVC VideoToolbox - macOS
+                // H.264 VideoToolbox - macOS
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "hevc_videotoolbox".to_string(),
+                    "h264_videotoolbox".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-q:v".to_string(),
-                    "65".to_string(), // High quality
-                    "-realtime".to_string(),
-                    "1".to_string(),
+                    "70".to_string(), // High quality
                     "-tag:v".to_string(),
-                    "hvc1".to_string(), // Essential for MP4 HEVC compatibility in QuickTime/Finder
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                 ]
             } else if use_hw && is_windows {
-                // HEVC NVENC - Windows NVIDIA
+                // H.264 NVENC - Windows NVIDIA
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "hevc_nvenc".to_string(),
+                    "h264_nvenc".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
@@ -199,25 +196,25 @@ fn get_encoder_args(format: &str, width: u32, height: u32, use_hw: bool) -> Vec<
                     "-cq".to_string(),
                     "24".to_string(),
                     "-tag:v".to_string(),
-                    "hvc1".to_string(),
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                 ]
             } else {
-                // Software HEVC - fast preset with good quality
+                // Software H.264 - fast preset with good quality
                 vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "libx265".to_string(),
+                    "libx264".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
                     "fast".to_string(), // Better quality than ultrafast
                     "-crf".to_string(),
-                    "22".to_string(), // Better quality (lower = better)
+                    "21".to_string(), // Better quality (lower = better)
                     "-tag:v".to_string(),
-                    "hvc1".to_string(),
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                     "-color_primaries".to_string(), "bt709".to_string(),
@@ -385,28 +382,50 @@ fn get_ffmpeg_path() -> Result<PathBuf, String> {
     let os = std::env::consts::OS;
     let arch = std::env::consts::ARCH;
 
-    let binary_name = if os == "windows" {
-        format!("ffmpeg-{}-{}.exe", arch, os)
+    let mut binary_names = Vec::new();
+    // Tauri externalBin uses target-triple naming (e.g., ffmpeg-aarch64-apple-darwin).
+    if os == "windows" {
+        binary_names.push(format!("ffmpeg-{}-pc-windows-msvc.exe", arch));
+        binary_names.push(format!("ffmpeg-{}-pc-windows-gnu.exe", arch));
+        binary_names.push(format!("ffmpeg-{}-{}.exe", arch, os));
+        binary_names.push("ffmpeg.exe".to_string());
+    } else if os == "macos" {
+        binary_names.push(format!("ffmpeg-{}-apple-darwin", arch));
+        binary_names.push("ffmpeg-universal-apple-darwin".to_string());
+        binary_names.push(format!("ffmpeg-{}-{}", arch, os));
+        binary_names.push("ffmpeg".to_string());
     } else {
-        format!("ffmpeg-{}-{}", arch, os)
-    };
+        binary_names.push(format!("ffmpeg-{}-unknown-linux-gnu", arch));
+        binary_names.push(format!("ffmpeg-{}-unknown-linux-musl", arch));
+        binary_names.push(format!("ffmpeg-{}-{}", arch, os));
+        binary_names.push("ffmpeg".to_string());
+    }
 
     // Try different locations based on dev vs production
-    let possible_paths = vec![
-        exe_dir.join(&binary_name),
-        exe_dir.join("../Resources").join(&binary_name), // macOS bundle
-        exe_dir.join("bin").join(&binary_name),
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bin").join(&binary_name),
+    let possible_dirs = vec![
+        exe_dir.clone(),
+        exe_dir.join("../Resources"), // macOS bundle
+        exe_dir.join("bin"),
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bin"),
     ];
 
-    for path in &possible_paths {
-        if path.exists() {
-            return Ok(path.clone());
+    for name in &binary_names {
+        for dir in &possible_dirs {
+            let path = dir.join(name);
+            if path.exists() {
+                return Ok(path);
+            }
         }
     }
 
     // Fallback to system ffmpeg
     Ok(PathBuf::from("ffmpeg"))
+}
+
+fn append_ffmpeg_log(path: &PathBuf, line: &str) {
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+        let _ = writeln!(file, "{}", line);
+    }
 }
 
 // Get encoder arguments for rawvideo input (streaming mode)
@@ -492,19 +511,19 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
             ]);
         }
         _ => {
-            // MP4/MOV - use hardware encoding when available - HIGH QUALITY
+            // MP4/MOV - H.264 for speed + compatibility
             if use_hw && is_macos {
                 args.extend(vec![
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "hevc_videotoolbox".to_string(),
+                    "h264_videotoolbox".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-q:v".to_string(),
-                    "80".to_string(), // High quality (0-100 scale, 80+ is excellent)
+                    "75".to_string(), // High quality (0-100 scale)
                     "-tag:v".to_string(),
-                    "hvc1".to_string(),
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                     // Color space for accurate reproduction
@@ -517,7 +536,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "hevc_nvenc".to_string(),
+                    "h264_nvenc".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
@@ -527,11 +546,11 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-rc".to_string(),
                     "vbr".to_string(),
                     "-cq".to_string(),
-                    "18".to_string(), // High quality (lower = better, 18-22 is excellent)
+                    "19".to_string(), // High quality (lower = better)
                     "-b:v".to_string(),
                     "0".to_string(),
                     "-tag:v".to_string(),
-                    "hvc1".to_string(),
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                     "-color_primaries".to_string(), "bt709".to_string(),
@@ -544,7 +563,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-vf".to_string(),
                     scale_filter,
                     "-c:v".to_string(),
-                    "libx265".to_string(),
+                    "libx264".to_string(),
                     "-pix_fmt".to_string(),
                     "yuv420p".to_string(),
                     "-preset".to_string(),
@@ -552,7 +571,7 @@ fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, u
                     "-crf".to_string(),
                     "20".to_string(), // High quality (18-22 is excellent)
                     "-tag:v".to_string(),
-                    "hvc1".to_string(),
+                    "avc1".to_string(),
                     "-movflags".to_string(),
                     "+faststart".to_string(),
                     "-threads".to_string(),
@@ -582,11 +601,23 @@ fn start_streaming_encode(
 ) -> Result<String, String> {
     let format = format.unwrap_or_else(|| "mp4".to_string());
     let use_hw = use_hw.unwrap_or(true);
+    let audio_path = audio_path.and_then(|p| {
+        let trimmed = p.strip_prefix("file://").unwrap_or(&p).to_string();
+        match std::fs::metadata(&trimmed) {
+            Ok(_) => Some(trimmed),
+            Err(e) => {
+                log::warn!("[StreamEncode] Audio path not accessible, skipping audio: {} ({})", trimmed, e);
+                None
+            }
+        }
+    });
 
     let ffmpeg_path = get_ffmpeg_path()?;
     let mut args = get_streaming_encoder_args(&format, width, height, fps, use_hw, audio_path.as_deref());
     args.push(output_path.clone());
 
+    let log_path = std::env::temp_dir().join("liike_ffmpeg.log");
+    append_ffmpeg_log(&log_path, &format!("[StreamEncode] Starting ffmpeg with audio={:?}: {:?} {:?}", audio_path, ffmpeg_path, args));
     log::info!("[StreamEncode] Starting ffmpeg with audio={:?}: {:?} {:?}", audio_path, ffmpeg_path, args);
 
     let mut process = Command::new(&ffmpeg_path)
@@ -603,6 +634,9 @@ fn start_streaming_encode(
         .ok_or("Failed to get ffmpeg stdin")?;
 
     let stderr = process.stderr.take().ok_or("Failed to get ffmpeg stderr")?;
+    let last_error: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+    let stderr_error = last_error.clone();
+    let stderr_log_path = log_path.clone();
 
     // Spawn a thread to drain stderr and prevent deadlock, and log messages
     thread::spawn(move || {
@@ -610,6 +644,8 @@ fn start_streaming_encode(
         let reader = BufReader::new(stderr);
         for line in reader.lines() {
             if let Ok(l) = line {
+                *stderr_error.lock().unwrap() = Some(l.clone());
+                append_ffmpeg_log(&stderr_log_path, &format!("[FFmpeg] {}", l));
                 log::info!("[FFmpeg] {}", l);
             }
         }
@@ -621,6 +657,8 @@ fn start_streaming_encode(
     let (tx, rx): (SyncSender<Option<Vec<u8>>>, Receiver<Option<Vec<u8>>>) = sync_channel(60);
     
     // Spawn worker thread for writing frames
+    let worker_error = last_error.clone();
+    let worker_log_path = log_path.clone();
     let worker_thread = thread::spawn(move || -> Result<(), String> {
         // Use BufWriter to reduce syscalls for large raw frames
         // 1080p RGBA is ~8MB per frame. 
@@ -630,6 +668,8 @@ fn start_streaming_encode(
             match msg {
                 Some(frame_data) => {
                     if let Err(e) = writer.write_all(&frame_data) {
+                        append_ffmpeg_log(&worker_log_path, &format!("[StreamEncode] Worker write error: {}", e));
+                        *worker_error.lock().unwrap() = Some(format!("Failed to write to ffmpeg stdin: {}", e));
                         return Err(format!("Failed to write to ffmpeg stdin: {}", e));
                     }
                 }
@@ -657,6 +697,8 @@ fn start_streaming_encode(
         height,
         total_frames,
         current_frame: Arc::new(Mutex::new(0)),
+        last_error,
+        log_path,
     };
 
     ENCODERS
@@ -673,7 +715,7 @@ fn start_streaming_encode(
 #[tauri::command]
 fn send_frame(encoder_id: String, frame_data: Vec<u8>) -> Result<f32, String> {
     // 1. Lock: Short critical section just to get the sender
-    let (sender, counter, total_frames, expected_size) = {
+    let (sender, counter, total_frames, expected_size, last_error, log_path) = {
         let encoders = ENCODERS
             .lock()
             .map_err(|e| format!("Failed to lock encoders: {e}"))?;
@@ -685,7 +727,14 @@ fn send_frame(encoder_id: String, frame_data: Vec<u8>) -> Result<f32, String> {
         let expected_size = (encoder.width * encoder.height * 4) as usize;
         let sender = encoder.sender.clone().ok_or("Encoder closed")?;
         
-        (sender, encoder.current_frame.clone(), encoder.total_frames, expected_size)
+        (
+            sender,
+            encoder.current_frame.clone(),
+            encoder.total_frames,
+            expected_size,
+            encoder.last_error.clone(),
+            encoder.log_path.clone(),
+        )
     };
 
     // 2. Validation (outside lock)
@@ -695,7 +744,14 @@ fn send_frame(encoder_id: String, frame_data: Vec<u8>) -> Result<f32, String> {
 
     // 3. Send: Push to channel (may block if buffer full, but releases Mutex first!)
     // This allows other interactions to proceed.
-    sender.send(Some(frame_data)).map_err(|_| "Failed to send frame to worker thread")?;
+    sender.send(Some(frame_data)).map_err(|_| {
+        let err = last_error.lock().unwrap();
+        if let Some(msg) = err.as_ref() {
+            format!("Failed to send frame to worker thread: {} (log: {})", msg, log_path.display())
+        } else {
+            format!("Failed to send frame to worker thread (log: {})", log_path.display())
+        }
+    })?;
 
     // 4. Update progress
     let mut current = counter.lock().unwrap();
@@ -733,7 +789,11 @@ fn finish_streaming_encode(encoder_id: String) -> Result<(), String> {
             .map_err(|e| format!("Failed to wait for ffmpeg: {e}"))?;
 
         if !status.success() {
-            return Err(format!("ffmpeg exited with status: {}", status));
+            let err = encoder.last_error.lock().unwrap();
+            if let Some(msg) = err.as_ref() {
+                return Err(format!("ffmpeg exited with status: {} ({}) (log: {})", status, msg, encoder.log_path.display()));
+            }
+            return Err(format!("ffmpeg exited with status: {} (log: {})", status, encoder.log_path.display()));
         }
     }
 
