@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "prepare-ffmpeg": "node scripts/prepare_ffmpeg.mjs",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
+    "tauri:build": "pnpm prepare-ffmpeg && tauri build",
     "lint": "prettier --check \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {

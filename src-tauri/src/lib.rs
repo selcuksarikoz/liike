@@ -419,8 +419,8 @@ fn get_ffmpeg_path() -> Result<PathBuf, String> {
         }
     }
 
-    // Fallback to system ffmpeg
-    Ok(PathBuf::from("ffmpeg"))
+    // Do not fall back to system ffmpeg in release; require bundled binary
+    Err("ffmpeg binary not found in app bundle".into())
 }
 
 fn append_ffmpeg_log(path: &PathBuf, line: &str) {
@@ -636,16 +636,9 @@ fn start_streaming_encode(
         }
     });
 
-    let mut ffmpeg_path = get_ffmpeg_path()?;
+    let ffmpeg_path = get_ffmpeg_path()?;
     if !validate_ffmpeg_path(&ffmpeg_path) {
-        log::warn!(
-            "[StreamEncode] ffmpeg binary is not runnable, falling back to system ffmpeg: {}",
-            ffmpeg_path.display()
-        );
-        ffmpeg_path = PathBuf::from("ffmpeg");
-        if !validate_ffmpeg_path(&ffmpeg_path) {
-            return Err("ffmpeg binary not found or not runnable".into());
-        }
+        return Err("ffmpeg binary not found or not runnable".into());
     }
     let mut args = get_streaming_encoder_args(
         &format,

@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
-    "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeDevCommand": "pnpm prepare-ffmpeg && pnpm dev",
+    "beforeBuildCommand": "pnpm build && pnpm prepare-ffmpeg"
   },
   "app": {
     "windows": [

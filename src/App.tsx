@@ -9,7 +9,6 @@ import { Timeline } from './components/Timeline';
 import { initializeFonts } from './services/fontService';
 import { preloadDeviceImages } from './constants/devices';
 import { getExportFolder } from './utils/renderUtils';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const App = () => {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -29,16 +28,6 @@ const App = () => {
       preloadDeviceImages(),
       getExportFolder(),
     ]).catch(console.error);
-  }, []);
-
-  // Keep devtools open in release builds for inspection
-  useEffect(() => {
-    if (!import.meta.env.PROD) return;
-    getCurrentWindow()
-      .openDevtools()
-      .catch(() => {
-        // Ignore if devtools not available
-      });
   }, []);
 
   // Global error modal for runtime errors (shows error code if present)
@@ -81,7 +70,7 @@ const App = () => {
     return () => window.removeEventListener('cancel-render', handleCancelRender);
   }, [loop.cancel]);
 
-  const { durationMs, fps, outputName, fastExport } = useRenderStore();
+  const { durationMs, fps, outputName, fastExport, renderStatus, setRenderStatus } = useRenderStore();
 
   const handleRender = (format: ExportFormat) => {
     loop.render({
@@ -112,6 +101,22 @@ const App = () => {
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => setErrorInfo(null)}
+                className="px-3 py-1.5 rounded-md bg-ui-highlight/40 text-white text-xs hover:bg-ui-highlight/60"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {renderStatus.error && (
+        <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-full max-w-lg bg-ui-panel border border-ui-border rounded-xl p-5 shadow-2xl">
+            <div className="text-sm font-bold text-red-400">Export Error</div>
+            <div className="mt-2 text-sm text-white/90">{renderStatus.error}</div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setRenderStatus({ error: null })}
                 className="px-3 py-1.5 rounded-md bg-ui-highlight/40 text-white text-xs hover:bg-ui-highlight/60"
               >
                 Close
