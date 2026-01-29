@@ -13,7 +13,11 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const App = () => {
   const stageRef = useRef<HTMLDivElement>(null);
-  const [errorInfo, setErrorInfo] = useState<{ message: string; code?: string; stack?: string } | null>(null);
+  const [errorInfo, setErrorInfo] = useState<{
+    message: string;
+    code?: string;
+    stack?: string;
+  } | null>(null);
 
   // Initialize fonts, preload device images, and prompt export folder access on startup
   useEffect(() => {
@@ -86,7 +90,7 @@ const App = () => {
       fps,
       outputName,
       format,
-      captureScale: fastExport ? 0.8 : 0.1,
+      captureScale: fastExport ? 0.8 : 1,
     });
   };
 

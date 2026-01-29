@@ -405,6 +405,7 @@ fn get_ffmpeg_path() -> Result<PathBuf, String> {
     let possible_dirs = vec![
         exe_dir.clone(),
         exe_dir.join("../Resources"), // macOS bundle
+        exe_dir.join("../Resources/bin"), // macOS externalBin location
         exe_dir.join("bin"),
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bin"),
     ];
