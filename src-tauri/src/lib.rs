@@ -428,6 +428,16 @@ fn append_ffmpeg_log(path: &PathBuf, line: &str) {
     }
 }
 
+fn validate_ffmpeg_path(path: &PathBuf) -> bool {
+    Command::new(path)
+        .arg("-version")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
 // Get encoder arguments for rawvideo input (streaming mode)
 fn get_streaming_encoder_args(format: &str, width: u32, height: u32, fps: u32, use_hw: bool, audio_path: Option<&str>) -> Vec<String> {
     let scale_w = if width % 2 == 0 { width } else { width + 1 };
@@ -612,7 +622,17 @@ fn start_streaming_encode(
         }
     });
 
-    let ffmpeg_path = get_ffmpeg_path()?;
+    let mut ffmpeg_path = get_ffmpeg_path()?;
+    if !validate_ffmpeg_path(&ffmpeg_path) {
+        log::warn!(
+            "[StreamEncode] ffmpeg binary is not runnable, falling back to system ffmpeg: {}",
+            ffmpeg_path.display()
+        );
+        ffmpeg_path = PathBuf::from("ffmpeg");
+        if !validate_ffmpeg_path(&ffmpeg_path) {
+            return Err("ffmpeg binary not found or not runnable".into());
+        }
+    }
     let mut args = get_streaming_encoder_args(&format, width, height, fps, use_hw, audio_path.as_deref());
     args.push(output_path.clone());
 
