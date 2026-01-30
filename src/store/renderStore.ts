@@ -30,6 +30,7 @@ export type MediaAsset = {
   url: string;
   type: 'image' | 'video';
   duration?: number; // Video duration in milliseconds
+  relativePlayheadMs?: number; // Added for timeline sync
 };
 
 export type TextPosition =
@@ -133,6 +134,8 @@ type RenderStore = RenderSettings & {
   renderStatus: RenderStatus;
   renderQuality: '1080p' | '4k';
   fastExport: boolean;
+  includeAudio: boolean;
+  cameraAudioEnabled: boolean;
   // Setters
   setRotationX: (deg: number) => void;
   setRotationY: (deg: number) => void;
@@ -152,6 +155,8 @@ type RenderStore = RenderSettings & {
   setFps: (fps: number) => void;
   setRenderQuality: (quality: '1080p' | '4k') => void;
   setFastExport: (fast: boolean) => void;
+  setIncludeAudio: (include: boolean) => void;
+  setCameraAudioEnabled: (enabled: boolean) => void;
   setOutputName: (outputName: string) => void;
   setStylePreset: (preset: StylePreset) => void;
   setShadowType: (type: ShadowType) => void;
@@ -233,6 +238,8 @@ export const useRenderStore = create<RenderStore>((set) => ({
   renderStatus: initialRenderStatus,
   renderQuality: '1080p',
   fastExport: false,
+  includeAudio: true,
+  cameraAudioEnabled: true,
   
   frameMode: 'device',
   deviceType: 'iphone',
@@ -292,6 +299,8 @@ export const useRenderStore = create<RenderStore>((set) => ({
   setFps: (fps) => set({ fps }),
   setRenderQuality: (renderQuality) => set({ renderQuality }),
   setFastExport: (fastExport) => set({ fastExport }),
+  setIncludeAudio: (includeAudio) => set({ includeAudio }),
+  setCameraAudioEnabled: (cameraAudioEnabled) => set({ cameraAudioEnabled }),
   setOutputName: (outputName) => set({ outputName }),
   setStylePreset: (stylePreset) => set({ stylePreset }),
   setShadowType: (shadowType) => set({ shadowType }),

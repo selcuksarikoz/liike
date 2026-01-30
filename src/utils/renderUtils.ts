@@ -350,10 +350,11 @@ const getCachedDataUrl = async (url: string): Promise<string> => {
 
   try {
     // Use native fetch for localhost/local assets, tauriFetch for external URLs
-    const isLocalUrl = url.startsWith('http://localhost') ||
-                       url.startsWith('http://127.0.0.1') ||
-                       url.startsWith('/') ||
-                       url.startsWith('./');
+    const isLocalUrl =
+      url.startsWith('http://localhost') ||
+      url.startsWith('http://127.0.0.1') ||
+      url.startsWith('/') ||
+      url.startsWith('./');
 
     let response: Response;
     if (isLocalUrl) {
@@ -550,7 +551,10 @@ const convertImagesToDataUrls = async (node: HTMLElement) => {
         try {
           dataUrl = await getCachedDataUrl(originalSrc);
         } catch {
-          console.log('[convertImages] Fetch failed, trying fresh load for:', originalSrc.slice(0, 50));
+          console.log(
+            '[convertImages] Fetch failed, trying fresh load for:',
+            originalSrc.slice(0, 50)
+          );
           try {
             // Create a new image and load it fresh
             dataUrl = await loadAndConvertImage(originalSrc);
@@ -592,7 +596,8 @@ const convertImagesToDataUrls = async (node: HTMLElement) => {
   // Convert SVG <image> elements (xlink:href or href)
   const svgImages = node.querySelectorAll('image');
   for (const svgImg of svgImages) {
-    const href = svgImg.getAttribute('href') || svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+    const href =
+      svgImg.getAttribute('href') || svgImg.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
     if (href && !href.startsWith('data:')) {
       console.log('[convertImages] Converting SVG image:', href.slice(0, 100));
       try {
@@ -902,8 +907,8 @@ interface CachedExportContext {
   deviceStaticBitmap: ImageBitmap | null;
   svgPrefix: string;
   svgSuffix: string;
-  bgIsStatic: boolean;      // Optimization: if true, only render BG once
-  deviceIsStatic: boolean;  // Optimization: if true, only render Device once (except video)
+  bgIsStatic: boolean; // Optimization: if true, only render BG once
+  deviceIsStatic: boolean; // Optimization: if true, only render Device once (except video)
   bgRendered: boolean;
   deviceRendered: boolean;
   // Animation completion tracking for smart caching
@@ -965,7 +970,8 @@ export const prepareExportContext = async (
 
   // Sanitize external URLs that could cause security issues or canvas taint
   // BUT preserve local/bundled assets that are already loaded
-  const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  const transparentPixel =
+    'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
   // Check if URL is external (http/https) and not converted
   const isProblematicUrl = (url: string): boolean => {
@@ -994,7 +1000,8 @@ export const prepareExportContext = async (
     // 2. Sanitize SVG <image>
     const svgImages = root.querySelectorAll('image');
     for (const img of svgImages) {
-      const href = img.getAttribute('href') || img.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+      const href =
+        img.getAttribute('href') || img.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
       if (href && isProblematicUrl(href)) {
         img.setAttribute('href', transparentPixel);
         img.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
@@ -1012,14 +1019,14 @@ export const prepareExportContext = async (
     // 4. Sanitize Styles (Background Images) - only external URLs
     const allElements = root.querySelectorAll('*');
     for (const el of allElements) {
-       const htmlEl = el as HTMLElement;
-       const bg = htmlEl.style.backgroundImage;
-       if (bg && bg.includes('url(')) {
-          const urlMatch = bg.match(/url\(['"]?(.*?)['"]?\)/);
-          if (urlMatch && urlMatch[1] && isProblematicUrl(urlMatch[1])) {
-             htmlEl.style.backgroundImage = 'none';
-          }
-       }
+      const htmlEl = el as HTMLElement;
+      const bg = htmlEl.style.backgroundImage;
+      if (bg && bg.includes('url(')) {
+        const urlMatch = bg.match(/url\(['"]?(.*?)['"]?\)/);
+        if (urlMatch && urlMatch[1] && isProblematicUrl(urlMatch[1])) {
+          htmlEl.style.backgroundImage = 'none';
+        }
+      }
     }
   };
 
@@ -1053,7 +1060,11 @@ export const prepareExportContext = async (
   // The device layer is now rendered directly via renderCloneToImage like other layers.
 
   // 4. Map Animated Elements & Detect Static Layers
-  const animatedElements: Array<{ source: HTMLElement; target: HTMLElement; layer: 'bg' | 'device' }> = [];
+  const animatedElements: Array<{
+    source: HTMLElement;
+    target: HTMLElement;
+    layer: 'bg' | 'device';
+  }> = [];
   let bgHasAnimations = false;
   let deviceHasAnimations = false;
 
@@ -1071,9 +1082,9 @@ export const prepareExportContext = async (
     // Since we are walking source/target in parallel, we can check target's parents
     let current: HTMLElement | null = el;
     while (current) {
-        if (current.getAttribute('data-layer') === 'background') return 'bg';
-        if (current.getAttribute('data-layer') === 'device') return 'device';
-        current = current.parentElement;
+      if (current.getAttribute('data-layer') === 'background') return 'bg';
+      if (current.getAttribute('data-layer') === 'device') return 'device';
+      current = current.parentElement;
     }
     return 'unknown';
   };
@@ -1083,18 +1094,22 @@ export const prepareExportContext = async (
     const isDeviceAnim = source.hasAttribute('data-device-animation');
     const isLayoutAnim = source.hasAttribute('data-layout-animation');
     const hasWebAnim = animatedSourceElements.has(source);
-    const isTextChild = source.parentElement &&
-                        source.parentElement.style.zIndex === '50' &&
-                        source.parentElement.style.pointerEvents === 'none';
-    
+    const isTextChild =
+      source.parentElement &&
+      source.parentElement.style.zIndex === '50' &&
+      source.parentElement.style.pointerEvents === 'none';
+
     // Check for inline animated styles (React state-driven)
     // Note: We only care if these change over time, but for safety we track them all.
-    const hasAnimatedStyle = source.style.transform || source.style.opacity ||
-                             source.style.filter || source.style.clipPath;
+    const hasAnimatedStyle =
+      source.style.transform ||
+      source.style.opacity ||
+      source.style.filter ||
+      source.style.clipPath;
 
     if (isDeviceAnim || isLayoutAnim || hasWebAnim || isTextChild || hasAnimatedStyle) {
       animatedElements.push({ source, target, layer: rootLayer });
-      
+
       if (rootLayer === 'bg') bgHasAnimations = true;
       if (rootLayer === 'device') deviceHasAnimations = true;
     }
@@ -1102,9 +1117,9 @@ export const prepareExportContext = async (
     const sourceChildren = source.children;
     const targetChildren = target.children;
     for (let i = 0; i < sourceChildren.length; i++) {
-        if (sourceChildren[i] instanceof HTMLElement && targetChildren[i] instanceof HTMLElement) {
-            walkAndMap(sourceChildren[i] as HTMLElement, targetChildren[i] as HTMLElement, rootLayer);
-        }
+      if (sourceChildren[i] instanceof HTMLElement && targetChildren[i] instanceof HTMLElement) {
+        walkAndMap(sourceChildren[i] as HTMLElement, targetChildren[i] as HTMLElement, rootLayer);
+      }
     }
   };
 
@@ -1113,58 +1128,68 @@ export const prepareExportContext = async (
   // Actually, wait. bgClone has 'device' layer HIDDEN (display:none).
   // But the DOM nodes still exist inside it.
   // We want to map animations relevant to the visible part.
-  
+
   // Correction: We should only map animations that are VISIBLE in that layer.
   // Since we hide the other layer's container, effectively those animations don't matter for that clone.
   // The 'target' in walkAndMap is the clone node.
   // If we are in bgClone, we shouldn't map into the hidden device layer.
-  // But traversing the whole tree is simpler. 
+  // But traversing the whole tree is simpler.
   // Optimization: Stop traversal at hidden layers?
-  
+
   // Let's refine walkAndMap to stop at data-layer boundary of the OTHER type.
-  const walkAndMapIdeally = (source: HTMLElement, target: HTMLElement, layerType: 'bg' | 'device') => {
-      // If we hit the OTHER layer's container, stop traversing down
-      const targetLayerAttr = target.getAttribute('data-layer');
-      if (layerType === 'bg' && targetLayerAttr === 'device') return; 
-      if (layerType === 'device' && targetLayerAttr === 'background') return;
+  const walkAndMapIdeally = (
+    source: HTMLElement,
+    target: HTMLElement,
+    layerType: 'bg' | 'device'
+  ) => {
+    // If we hit the OTHER layer's container, stop traversing down
+    const targetLayerAttr = target.getAttribute('data-layer');
+    if (layerType === 'bg' && targetLayerAttr === 'device') return;
+    if (layerType === 'device' && targetLayerAttr === 'background') return;
 
-      const isDeviceAnim = source.hasAttribute('data-device-animation');
-      const isLayoutAnim = source.hasAttribute('data-layout-animation');
-      const hasWebAnim = animatedSourceElements.has(source);
-      // Text children usually overlay everything, treated separately or as top level?
-      // Actually text overlay is usually separate canvas now.
-      
-      const hasAnimatedStyle = source.style.transform || source.style.opacity ||
-                               source.style.filter || source.style.clipPath;
+    const isDeviceAnim = source.hasAttribute('data-device-animation');
+    const isLayoutAnim = source.hasAttribute('data-layout-animation');
+    const hasWebAnim = animatedSourceElements.has(source);
+    // Text children usually overlay everything, treated separately or as top level?
+    // Actually text overlay is usually separate canvas now.
 
-      if (isDeviceAnim || isLayoutAnim || hasWebAnim || hasAnimatedStyle) {
-          animatedElements.push({ source, target, layer: layerType });
-          if (layerType === 'bg') bgHasAnimations = true;
-          if (layerType === 'device') deviceHasAnimations = true;
+    const hasAnimatedStyle =
+      source.style.transform ||
+      source.style.opacity ||
+      source.style.filter ||
+      source.style.clipPath;
+
+    if (isDeviceAnim || isLayoutAnim || hasWebAnim || hasAnimatedStyle) {
+      animatedElements.push({ source, target, layer: layerType });
+      if (layerType === 'bg') bgHasAnimations = true;
+      if (layerType === 'device') deviceHasAnimations = true;
+    }
+
+    const sourceChildren = source.children;
+    const targetChildren = target.children;
+    // Use efficient loop
+    const len = sourceChildren.length;
+    for (let i = 0; i < len; i++) {
+      const sChild = sourceChildren[i];
+      const tChild = targetChildren[i];
+      if (sChild instanceof HTMLElement && tChild instanceof HTMLElement) {
+        walkAndMapIdeally(sChild, tChild, layerType);
       }
-
-      const sourceChildren = source.children;
-      const targetChildren = target.children;
-      // Use efficient loop
-      const len = sourceChildren.length;
-      for (let i = 0; i < len; i++) {
-          const sChild = sourceChildren[i];
-          const tChild = targetChildren[i];
-          if (sChild instanceof HTMLElement && tChild instanceof HTMLElement) {
-               walkAndMapIdeally(sChild, tChild, layerType);
-          }
-      }
+    }
   };
-  
+
   walkAndMapIdeally(node, bgClone, 'bg');
   walkAndMapIdeally(node, deviceClone, 'device');
-
 
   // 5. Get font CSS ONCE
   const usedFonts = extractUsedFonts(node);
   let fontCss = '';
   for (const fontName of usedFonts) {
-    if (fontName.startsWith('-apple') || fontName === 'system-ui' || fontName === 'BlinkMacSystemFont') {
+    if (
+      fontName.startsWith('-apple') ||
+      fontName === 'system-ui' ||
+      fontName === 'BlinkMacSystemFont'
+    ) {
       continue;
     }
     if (fontCssCache.has(fontName)) {
@@ -1177,7 +1202,7 @@ export const prepareExportContext = async (
   bgImg.crossOrigin = 'anonymous';
   const deviceImg = new Image();
   deviceImg.crossOrigin = 'anonymous';
-  
+
   // NEW: SVG Prefix
   const svgPrefix = `<svg xmlns="http://www.w3.org/2000/svg" width="${outputWidth}" height="${outputHeight}">
 <defs><style type="text/css">${fontCss}</style></defs>
@@ -1202,17 +1227,17 @@ export const prepareExportContext = async (
     animatedElements,
     bgImg,
     deviceImg,
-    bgBitmap: null,    // Will be populated on first render
+    bgBitmap: null, // Will be populated on first render
     deviceBitmap: null, // Will be populated on each frame
     svgPrefix,
     svgSuffix,
-    bgIsStatic: !bgHasAnimations,       // Flag for optimization
+    bgIsStatic: !bgHasAnimations, // Flag for optimization
     deviceIsStatic: !deviceHasAnimations, // Flag for optimization
-    bgRendered: false,     // Track if rendered
+    bgRendered: false, // Track if rendered
     deviceRendered: false, // Track if rendered
-    deviceAnimationComplete: false,  // Track when entrance animation is done
-    lastDeviceAnimProgress: -1,      // Track animation progress to detect changes
-    deviceStaticBitmap: null,  // Pre-rendered device at full opacity (for fast canvas transform)
+    deviceAnimationComplete: false, // Track when entrance animation is done
+    lastDeviceAnimProgress: -1, // Track animation progress to detect changes
+    deviceStaticBitmap: null, // Pre-rendered device at full opacity (for fast canvas transform)
   };
 
   // FAST PATH: Pre-render device layer at final state (progress=1) for canvas-based animation
@@ -1262,7 +1287,8 @@ export const clearExportContext = () => {
 const syncFrameAnimations = () => {
   if (!cachedExportContext) return;
 
-  const { animatedElements, bgIsStatic, deviceIsStatic, bgRendered, deviceRendered } = cachedExportContext;
+  const { animatedElements, bgIsStatic, deviceIsStatic, bgRendered, deviceRendered } =
+    cachedExportContext;
 
   for (const { source, target, layer } of animatedElements) {
     // OPTIMIZATION: Skip syncing if the target layer is static and already rendered
@@ -1291,7 +1317,7 @@ const syncFrameAnimations = () => {
     const transformOrigin = source.style.transformOrigin || computed.transformOrigin;
     const transformBox = source.style.transformBox || computed.transformBox;
     const perspectiveOrigin = source.style.perspectiveOrigin || computed.perspectiveOrigin;
-    
+
     if (transformOrigin) target.style.transformOrigin = transformOrigin;
     if (transformBox) target.style.transformBox = transformBox;
     if (perspectiveOrigin) target.style.perspectiveOrigin = perspectiveOrigin;
@@ -1329,9 +1355,8 @@ const renderCloneToImageBitmap = async (
   const dataUrl = await blobToDataUrl(blob);
 
   // 3. Load into Image element first (SVG needs to be rasterized before ImageBitmap)
-  const img = layerType === 'bg'
-    ? (reusableBgImg ||= new Image())
-    : (reusableDeviceImg ||= new Image());
+  const img =
+    layerType === 'bg' ? (reusableBgImg ||= new Image()) : (reusableDeviceImg ||= new Image());
 
   await new Promise<void>((resolve, reject) => {
     img.onload = () => resolve();
@@ -1419,7 +1444,8 @@ export const nodeToSvgDataUrl = async (
         target.style.opacity = source.style.opacity || computed.opacity;
         target.style.transformStyle = source.style.transformStyle || computed.transformStyle;
         target.style.perspective = source.style.perspective || computed.perspective;
-        target.style.backfaceVisibility = source.style.backfaceVisibility || computed.backfaceVisibility;
+        target.style.backfaceVisibility =
+          source.style.backfaceVisibility || computed.backfaceVisibility;
 
         // Conditional properties
         if (source.style.filter || computed.filter !== 'none') {
@@ -1953,16 +1979,19 @@ export const captureFrame = async (
     cachedExportContext.outputWidth === outputWidth &&
     cachedExportContext.outputHeight === outputHeight
   ) {
+    // Capture context locally to prevent race conditions if global context is cleared during async operations
+    const exportCtx = cachedExportContext;
+
     // Fast path: Layered Rendering
     // Use locked dimensions to prevent jitter from DOM changes
-    const lockedScale = outputWidth / cachedExportContext.sourceWidth;
+    const lockedScale = outputWidth / exportCtx.sourceWidth;
 
     // Sync animation styles from live DOM to clones before rendering
     // This ensures layout/device animations are captured in export frames.
     syncFrameAnimations();
 
     // Render Layers to ImageBitmaps (background renders once, device is pre-rendered)
-    const { bgClone, deviceClone, bgIsStatic, lockedNodeRect } = cachedExportContext;
+    const { bgClone, deviceClone, bgIsStatic, lockedNodeRect } = exportCtx;
 
     // Use ImageBitmap for faster rendering (fallback to HTMLImageElement if needed)
     let bgSource: ImageBitmap | HTMLImageElement;
@@ -1970,42 +1999,54 @@ export const captureFrame = async (
 
     try {
       // Background: render once if static
-      if (!bgIsStatic || !cachedExportContext.bgRendered) {
-        if (cachedExportContext.bgBitmap) {
-          cachedExportContext.bgBitmap.close();
+      if (!bgIsStatic || !exportCtx.bgRendered) {
+        if (exportCtx.bgBitmap) {
+          exportCtx.bgBitmap.close();
         }
-        cachedExportContext.bgBitmap = await renderCloneToImageBitmap(bgClone, 'bg');
-        cachedExportContext.bgRendered = true;
+        exportCtx.bgBitmap = await renderCloneToImageBitmap(bgClone, 'bg');
+        exportCtx.bgRendered = true;
       }
-      bgSource = cachedExportContext.bgBitmap!;
+
+      // Check if context was cleared during await
+      if (!cachedExportContext) throw new Error('Export cancelled');
+
+      bgSource = exportCtx.bgBitmap!;
 
       // Device: render once if static, otherwise re-render each frame for animations
-      if (cachedExportContext.deviceIsStatic) {
-        if (!cachedExportContext.deviceRendered) {
-          if (cachedExportContext.deviceBitmap) {
-            cachedExportContext.deviceBitmap.close();
+      if (exportCtx.deviceIsStatic) {
+        if (!exportCtx.deviceRendered) {
+          if (exportCtx.deviceBitmap) {
+            exportCtx.deviceBitmap.close();
           }
-          cachedExportContext.deviceBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
-          cachedExportContext.deviceRendered = true;
+          exportCtx.deviceBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
+          exportCtx.deviceRendered = true;
         }
-        deviceSource = cachedExportContext.deviceStaticBitmap || cachedExportContext.deviceBitmap!;
+        deviceSource = exportCtx.deviceStaticBitmap || exportCtx.deviceBitmap!;
       } else {
-        if (cachedExportContext.deviceBitmap) {
-          cachedExportContext.deviceBitmap.close();
+        if (exportCtx.deviceBitmap) {
+          exportCtx.deviceBitmap.close();
         }
-        cachedExportContext.deviceBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
-        deviceSource = cachedExportContext.deviceBitmap;
+        exportCtx.deviceBitmap = await renderCloneToImageBitmap(deviceClone, 'device');
+        deviceSource = exportCtx.deviceBitmap;
       }
+
+      // Check if context was cleared during await
+      if (!cachedExportContext) throw new Error('Export cancelled');
     } catch (e) {
+      // If context was cleared (cancelled), abort immediately to prevent crash
+      if (!cachedExportContext) {
+        return new Uint8ClampedArray(outputWidth * outputHeight * 4);
+      }
+
       // Fallback to HTMLImageElement if ImageBitmap fails
       console.warn('[captureFrame] ImageBitmap failed, using fallback:', e);
-      if (!bgIsStatic || !cachedExportContext.bgRendered) {
-        await renderCloneToImage(bgClone, cachedExportContext.bgImg);
-        cachedExportContext.bgRendered = true;
+      if (!bgIsStatic || !exportCtx.bgRendered) {
+        await renderCloneToImage(bgClone, exportCtx.bgImg);
+        exportCtx.bgRendered = true;
       }
-      bgSource = cachedExportContext.bgImg;
-      await renderCloneToImage(deviceClone, cachedExportContext.deviceImg);
-      deviceSource = cachedExportContext.deviceImg;
+      bgSource = exportCtx.bgImg;
+      await renderCloneToImage(deviceClone, exportCtx.deviceImg);
+      deviceSource = exportCtx.deviceImg;
     }
 
     // 3. Composite to Canvas (Sandwich: BG -> Video -> Device -> Text)
@@ -2020,7 +2061,7 @@ export const captureFrame = async (
     context.fillRect(0, 0, outputWidth, outputHeight);
 
     // A. Background Layer
-    context.drawImage(bgSource, 0, 0);
+    context.drawImage(bgSource!, 0, 0);
 
     // B. Video Layer (captured directly from source videos at full quality)
     // Use locked rect to prevent jitter from DOM position changes
@@ -2046,7 +2087,7 @@ export const captureFrame = async (
 
     // Apply canvas-based device animation only when using static device bitmap
     if (
-      cachedExportContext.deviceIsStatic &&
+      exportCtx.deviceIsStatic &&
       deviceAnim &&
       deviceAnim !== 'none' &&
       textOverlay.enabled &&
@@ -2079,12 +2120,15 @@ export const captureFrame = async (
     context.globalAlpha = deviceOpacity;
     const centerX = outputWidth / 2;
     const centerY = outputHeight / 2;
-    context.translate(centerX + deviceTransform.translateX * lockedScale, centerY + deviceTransform.translateY * lockedScale);
+    context.translate(
+      centerX + deviceTransform.translateX * lockedScale,
+      centerY + deviceTransform.translateY * lockedScale
+    );
     context.rotate((deviceTransform.rotate * Math.PI) / 180);
     context.scale(deviceTransform.scale, deviceTransform.scale);
     context.translate(-centerX, -centerY);
 
-    context.drawImage(deviceSource, 0, 0);
+    context.drawImage(deviceSource!, 0, 0);
     context.restore();
 
     // D. Text Overlay (Rendered directly to canvas)

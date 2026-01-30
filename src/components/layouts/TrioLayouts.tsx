@@ -17,6 +17,7 @@ export const TrioRowLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -58,6 +59,7 @@ export const TrioRowLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />,
                 index
               )}
@@ -84,6 +86,7 @@ export const TrioColumnLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -125,6 +128,7 @@ export const TrioColumnLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />,
                 index
               )}
@@ -150,6 +154,7 @@ export const FanLayout = ({
   renderWithMockup,
   sizePercent,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -190,6 +195,7 @@ export const FanLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />,
                 index
               )}
@@ -215,6 +221,7 @@ export const MasonryLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -251,6 +258,7 @@ export const MasonryLayout = ({
               onScreenClick={onScreenClick}
               styleCSS={styleCSS}
               playing={playing}
+              playheadMs={playheadMs}
             />,
             0
           )}
@@ -275,6 +283,7 @@ export const MasonryLayout = ({
               onScreenClick={onScreenClick}
               styleCSS={styleCSS}
               playing={playing}
+              playheadMs={playheadMs}
             />,
             1
           )}
@@ -299,6 +308,7 @@ export const MasonryLayout = ({
               onScreenClick={onScreenClick}
               styleCSS={styleCSS}
               playing={playing}
+              playheadMs={playheadMs}
             />,
             2
           )}
@@ -322,6 +332,7 @@ export const MosaicLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -362,6 +373,7 @@ export const MosaicLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />,
                 index
               )}
@@ -387,6 +399,7 @@ export const FilmStripLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps & { cornerRadius: number }) => {
   const containerCSS = getContainerCSS(styleCSS);
 
@@ -444,6 +457,7 @@ export const FilmStripLayout = ({
                       onScreenClick={onScreenClick}
                       styleCSS={styleCSS}
                       playing={playing}
+                      playheadMs={playheadMs}
                     />
                   </div>,
                   index
@@ -471,6 +485,7 @@ export const SpotlightLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -507,6 +522,7 @@ export const SpotlightLayout = ({
               onScreenClick={onScreenClick}
               styleCSS={styleCSS}
               playing={playing}
+              playheadMs={playheadMs}
             />,
             0
           )}
@@ -536,6 +552,7 @@ export const SpotlightLayout = ({
                     onScreenClick={onScreenClick}
                     styleCSS={styleCSS}
                     playing={playing}
+                    playheadMs={playheadMs}
                   />,
                   index
                 )}
@@ -562,6 +579,7 @@ export const AsymmetricLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -600,6 +618,7 @@ export const AsymmetricLayout = ({
               onScreenClick={onScreenClick}
               styleCSS={styleCSS}
               playing={playing}
+              playheadMs={playheadMs}
             />,
             0
           )}
@@ -627,6 +646,7 @@ export const AsymmetricLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />,
                 index
               )}

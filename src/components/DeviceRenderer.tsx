@@ -48,6 +48,7 @@ type ImageRendererProps = {
   playing?: boolean;
   frameMode?: 'basic' | 'device';
   deviceType?: string;
+  playheadMs?: number;
 };
 
 const DeviceRendererComponent = ({
@@ -72,6 +73,7 @@ const DeviceRendererComponent = ({
   playing = true,
   frameMode = 'basic',
   deviceType = 'iphone',
+  playheadMs,
 }: ImageRendererProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -218,6 +220,7 @@ const DeviceRendererComponent = ({
     renderWithMockup,
     cornerRadius,
     hasMockup: frameMode === 'device',
+    playheadMs,
   };
 
   // Wrapper to apply shadow filter at container level

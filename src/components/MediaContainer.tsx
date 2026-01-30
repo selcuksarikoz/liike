@@ -1,4 +1,5 @@
 import { memo, useRef, useEffect, useCallback } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { ImagePlus } from 'lucide-react';
 import { useRenderStore, type MediaAsset } from '../store/renderStore';
 
@@ -10,6 +11,7 @@ export type MediaContainerProps = {
   onScreenClick?: (index: number) => void;
   styleCSS: React.CSSProperties & { dropShadow?: string };
   playing?: boolean;
+  playheadMs?: number;
 };
 
 export const MediaContainer = memo(
@@ -21,6 +23,7 @@ export const MediaContainer = memo(
     onScreenClick,
     styleCSS,
     playing = true,
+    playheadMs,
   }: MediaContainerProps) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const {
@@ -32,17 +35,64 @@ export const MediaContainer = memo(
       mediaInnerHeight,
       mediaInnerAspectRatio,
       mediaInnerRadius,
-    } = useRenderStore();
+    } = useRenderStore(
+      useShallow((state) => ({
+        mediaFit: state.mediaFit,
+        mediaInnerScale: state.mediaInnerScale,
+        mediaInnerX: state.mediaInnerX,
+        mediaInnerY: state.mediaInnerY,
+        mediaInnerWidth: state.mediaInnerWidth,
+        mediaInnerHeight: state.mediaInnerHeight,
+        mediaInnerAspectRatio: state.mediaInnerAspectRatio,
+        mediaInnerRadius: state.mediaInnerRadius,
+      }))
+    );
+
+    const lastPlayheadRef = useRef<number | null>(null);
 
     useEffect(() => {
-      if (videoRef.current) {
-        if (playing) {
-          videoRef.current.play().catch(() => {});
-        } else {
-          videoRef.current.pause();
+      const video = videoRef.current;
+      if (!video) return;
+
+      const currentPlayhead = media?.relativePlayheadMs ?? playheadMs;
+      if (typeof currentPlayhead !== 'number') return;
+
+      const timeS = currentPlayhead / 1000;
+
+      if (!playing) {
+        // Scrubbing mode: follow playhead tightly
+        if (Math.abs(video.currentTime - timeS) > 0.03) {
+          video.currentTime = timeS;
         }
+        if (!video.paused) video.pause();
+        lastPlayheadRef.current = null;
+      } else {
+        // Playback mode: let the video play naturally
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+
+        // Only seek if the playhead jumped (manual user action)
+        // vs natural progression (frame-by-frame)
+        if (lastPlayheadRef.current !== null) {
+          const playheadJump = Math.abs(currentPlayhead - lastPlayheadRef.current);
+          // If playhead moved more than 200ms between effect runs, it's a jump
+          if (playheadJump > 200) {
+            video.currentTime = timeS;
+          }
+        } else {
+          // First sync when starting playback
+          video.currentTime = timeS;
+        }
+
+        // Fallback: stay within reasonable sync limit (1.5s)
+        if (Math.abs(video.currentTime - timeS) > 1.5) {
+          video.currentTime = timeS;
+        }
+
+        lastPlayheadRef.current = currentPlayhead;
       }
-    }, [playing]);
+    }, [playing, playheadMs, media?.relativePlayheadMs]);
 
     const handleClick = useCallback(() => {
       if (!isPreview) onScreenClick?.(index);

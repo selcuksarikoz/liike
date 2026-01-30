@@ -53,6 +53,7 @@ export type TimelineClip = {
     animationPreset?: AnimationPreset;
     mediaUrl?: string;
     volume?: number;
+    slotIndex?: number;
   };
 };
 

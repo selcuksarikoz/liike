@@ -439,6 +439,12 @@ fn validate_ffmpeg_path(path: &PathBuf) -> bool {
         .unwrap_or(false)
 }
 
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct AudioTrack {
+    pub path: String,
+    pub delay_ms: u64,
+}
+
 // Get encoder arguments for rawvideo input (streaming mode)
 fn get_streaming_encoder_args(
     format: &str,
@@ -448,7 +454,7 @@ fn get_streaming_encoder_args(
     output_height: u32,
     fps: u32,
     use_hw: bool,
-    audio_path: Option<&str>
+    audio_tracks: Vec<AudioTrack>
 ) -> Vec<String> {
     let scale_w = if output_width % 2 == 0 { output_width } else { output_width + 1 };
     let scale_h = if output_height % 2 == 0 { output_height } else { output_height + 1 };
@@ -475,20 +481,34 @@ fn get_streaming_encoder_args(
         "pipe:0".to_string(), // Read from stdin
     ];
 
-    // Add audio input if provided
-    if let Some(audio) = audio_path {
-        args.extend(vec![
-            "-i".to_string(),
-            audio.to_string(),
-        ]);
+    // Add all audio inputs
+    for track in &audio_tracks {
+        args.extend(vec!["-i".to_string(), track.path.clone()]);
     }
 
-    // Explicitly map streams if audio is present
-    if audio_path.is_some() {
-        args.extend(vec![
-            "-map".to_string(), "0:v:0".to_string(),
-            "-map".to_string(), "1:a:0".to_string(),
-        ]);
+    // Map video from stdin
+    args.extend(vec!["-map".to_string(), "0:v:0".to_string()]);
+
+    if !audio_tracks.is_empty() {
+        if audio_tracks.len() == 1 && audio_tracks[0].delay_ms == 0 {
+            // Single audio track with no delay - just map it
+            args.extend(vec!["-map".to_string(), "1:a:0".to_string()]);
+        } else {
+            // Multiple audio tracks or delay needed - mix them
+            let mut filter = String::new();
+            for (i, track) in audio_tracks.iter().enumerate() {
+                // Apply delay to each track: adelay=ms|ms (for stereo)
+                filter.push_str(&format!("[{}:a]adelay={}|{}[a{}];", i + 1, track.delay_ms, track.delay_ms, i + 1));
+            }
+            
+            for i in 0..audio_tracks.len() {
+                filter.push_str(&format!("[a{}]", i + 1));
+            }
+            
+            filter.push_str(&format!("amix=inputs={}:duration=first[aout]", audio_tracks.len()));
+            args.extend(vec!["-filter_complex".to_string(), filter]);
+            args.extend(vec!["-map".to_string(), "[aout]".to_string()]);
+        }
     }
 
     // Output encoding args based on format - PRIORITIZE QUALITY
@@ -617,7 +637,7 @@ fn start_streaming_encode(
     total_frames: u32,
     format: Option<String>,
     use_hw: Option<bool>,
-    audio_path: Option<String>,
+    audio_tracks: Option<Vec<AudioTrack>>,
     input_width: Option<u32>,
     input_height: Option<u32>,
 ) -> Result<String, String> {
@@ -625,16 +645,22 @@ fn start_streaming_encode(
     let use_hw = use_hw.unwrap_or(true);
     let input_width = input_width.unwrap_or(width);
     let input_height = input_height.unwrap_or(height);
-    let audio_path = audio_path.and_then(|p| {
-        let trimmed = p.strip_prefix("file://").unwrap_or(&p).to_string();
-        match std::fs::metadata(&trimmed) {
-            Ok(_) => Some(trimmed),
-            Err(e) => {
-                log::warn!("[StreamEncode] Audio path not accessible, skipping audio: {} ({})", trimmed, e);
-                None
+    let mut valid_audio_tracks = Vec::new();
+
+    if let Some(tracks) = audio_tracks {
+        for mut t in tracks {
+            let trimmed = t.path.strip_prefix("file://").unwrap_or(&t.path).to_string();
+            match std::fs::metadata(&trimmed) {
+                Ok(_) => {
+                    t.path = trimmed;
+                    valid_audio_tracks.push(t);
+                }
+                Err(e) => {
+                    log::warn!("[StreamEncode] Audio path not accessible, skipping: {} ({})", trimmed, e);
+                }
             }
         }
-    });
+    }
 
     let ffmpeg_path = get_ffmpeg_path()?;
     if !validate_ffmpeg_path(&ffmpeg_path) {
@@ -648,13 +674,13 @@ fn start_streaming_encode(
         height,
         fps,
         use_hw,
-        audio_path.as_deref(),
+        valid_audio_tracks.clone(),
     );
     args.push(output_path.clone());
 
     let log_path = std::env::temp_dir().join("liike_ffmpeg.log");
-    append_ffmpeg_log(&log_path, &format!("[StreamEncode] Starting ffmpeg with audio={:?}: {:?} {:?}", audio_path, ffmpeg_path, args));
-    log::info!("[StreamEncode] Starting ffmpeg with audio={:?}: {:?} {:?}", audio_path, ffmpeg_path, args);
+    append_ffmpeg_log(&log_path, &format!("[StreamEncode] Starting ffmpeg with audio={:?}: {:?} {:?}", valid_audio_tracks, ffmpeg_path, args));
+    log::info!("[StreamEncode] Starting ffmpeg with audio={:?}: {:?} {:?}", valid_audio_tracks, ffmpeg_path, args);
 
     let mut process = Command::new(&ffmpeg_path)
         .args(&args)

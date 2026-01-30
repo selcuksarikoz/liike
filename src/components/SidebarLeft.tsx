@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useRenderStore, type MediaAsset } from '../store/renderStore';
+import { useShallow } from 'zustand/react/shallow';
+import { useMediaUpload } from '../hooks/useMediaUpload';
 import { useTimelineStore } from '../store/timelineStore';
 import { ShadowGlowPanel } from './ShadowGlowPanel';
 import {
@@ -39,18 +41,7 @@ import { DEVICES } from '../constants/devices';
 import { getFrameLabel } from '../constants/styles';
 import { DropdownTrigger } from './ui/Dropdown';
 
-const getVideoDuration = (url: string): Promise<number> => {
-  return new Promise((resolve) => {
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => {
-      const durationMs = Math.round(video.duration * 1000);
-      resolve(durationMs);
-    };
-    video.onerror = () => resolve(0);
-    video.src = url;
-  });
-};
+// getVideoDuration moved to useMediaUpload / utils
 
 const getFilterFromLayout = (layout: string): LayoutFilter => {
   switch (layout) {
@@ -118,7 +109,52 @@ export const SidebarLeft = () => {
     setMediaInnerAspectRatio,
     mediaInnerRadius,
     setMediaInnerRadius,
-  } = useRenderStore();
+  } = useRenderStore(
+    useShallow((state) => ({
+      setMediaAssets: state.setMediaAssets,
+      mediaAssets: state.mediaAssets,
+      durationMs: state.durationMs,
+      setDurationMs: state.setDurationMs,
+      imageLayout: state.imageLayout,
+      setImageLayout: state.setImageLayout,
+      backgroundType: state.backgroundType,
+      backgroundGradient: state.backgroundGradient,
+      backgroundColor: state.backgroundColor,
+      backgroundImage: state.backgroundImage,
+      canvasWidth: state.canvasWidth,
+      canvasHeight: state.canvasHeight,
+      canvasCornerRadius: state.canvasCornerRadius,
+      setCanvasCornerRadius: state.setCanvasCornerRadius,
+      canvasBorderWidth: state.canvasBorderWidth,
+      setCanvasBorderWidth: state.setCanvasBorderWidth,
+      canvasBorderColor: state.canvasBorderColor,
+      setCanvasBorderColor: state.setCanvasBorderColor,
+      deviceType: state.deviceType,
+      setDeviceType: state.setDeviceType,
+      frameMode: state.frameMode,
+      setFrameMode: state.setFrameMode,
+      deviceScale: state.deviceScale,
+      setDeviceScale: state.setDeviceScale,
+      cornerRadius: state.cornerRadius,
+      setCornerRadius: state.setCornerRadius,
+      mediaFit: state.mediaFit,
+      setMediaFit: state.setMediaFit,
+      mediaInnerScale: state.mediaInnerScale,
+      setMediaInnerScale: state.setMediaInnerScale,
+      mediaInnerX: state.mediaInnerX,
+      setMediaInnerX: state.setMediaInnerX,
+      mediaInnerY: state.mediaInnerY,
+      setMediaInnerY: state.setMediaInnerY,
+      mediaInnerWidth: state.mediaInnerWidth,
+      setMediaInnerWidth: state.setMediaInnerWidth,
+      mediaInnerHeight: state.mediaInnerHeight,
+      setMediaInnerHeight: state.setMediaInnerHeight,
+      mediaInnerAspectRatio: state.mediaInnerAspectRatio,
+      setMediaInnerAspectRatio: state.setMediaInnerAspectRatio,
+      mediaInnerRadius: state.mediaInnerRadius,
+      setMediaInnerRadius: state.setMediaInnerRadius,
+    }))
+  );
 
   const [deviceCategory, setDeviceCategory] = useState<string>('phone');
 
@@ -131,52 +167,21 @@ export const SidebarLeft = () => {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { handleMediaUpload } = useMediaUpload();
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const filesToProcess = files.slice(0, 3);
-    const updatedAssets = [...mediaAssets];
+    await handleMediaUpload(files, selectedSlot);
 
-    if (selectedSlot !== null) {
-      // Single slot update
-      const file = files[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        const isVideo = file.type.startsWith('video/');
-        updatedAssets[selectedSlot] = isVideo
-          ? { url, type: 'video', duration: await getVideoDuration(url) }
-          : { url, type: 'image' };
-      }
-      setSelectedSlot(null);
-    } else {
-      // Multiple or sequential update
-      for (let i = 0; i < filesToProcess.length; i++) {
-        const file = filesToProcess[i];
-        const url = URL.createObjectURL(file);
-        const isVideo = file.type.startsWith('video/');
-        const asset: MediaAsset = isVideo
-          ? { url, type: 'video', duration: await getVideoDuration(url) }
-          : { url, type: 'image' };
-
-        const targetIdx = updatedAssets.indexOf(null);
-        if (targetIdx !== -1) {
-          updatedAssets[targetIdx] = asset;
-        } else if (i < 3) {
-          updatedAssets[i] = asset;
-        }
-      }
-    }
-
-    setMediaAssets(updatedAssets);
-
-    const maxVideoDuration = updatedAssets.reduce((max, asset) => {
-      if (asset?.type === 'video' && asset.duration) return Math.max(max, asset.duration);
-      return max;
-    }, 0);
-
-    if (maxVideoDuration > durationMs) setDurationMs(maxVideoDuration);
+    // Clear the input so the same file can be selected again
     e.target.value = '';
+
+    // If we were selecting for a specific slot, reset it
+    if (selectedSlot !== null) {
+      setSelectedSlot(null);
+    }
   };
 
   const handleSlotChange = (index: number) => {

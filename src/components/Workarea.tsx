@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { useRenderStore } from '../store/renderStore';
+import { useShallow } from 'zustand/react/shallow';
+import { useMediaUpload } from '../hooks/useMediaUpload';
 import { useTimelineStore } from '../store/timelineStore';
 import { DeviceRenderer } from './DeviceRenderer';
 import { TextOverlayRenderer } from './TextOverlay';
@@ -47,7 +49,42 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     mediaOffsetX,
     mediaOffsetY,
     animationSpeed,
-  } = useRenderStore();
+  } = useRenderStore(
+    useShallow((state) => ({
+      rotationX: state.rotationX,
+      rotationY: state.rotationY,
+      rotationZ: state.rotationZ,
+      backgroundGradient: state.backgroundGradient,
+      backgroundType: state.backgroundType,
+      backgroundColor: state.backgroundColor,
+      backgroundImage: state.backgroundImage,
+      setMediaAssets: state.setMediaAssets,
+      mediaAssets: state.mediaAssets,
+      setDurationMs: state.setDurationMs,
+      canvasWidth: state.canvasWidth,
+      canvasHeight: state.canvasHeight,
+      canvasCornerRadius: state.canvasCornerRadius,
+      canvasBorderWidth: state.canvasBorderWidth,
+      canvasBorderColor: state.canvasBorderColor,
+      shadowType: state.shadowType,
+      shadowOpacity: state.shadowOpacity,
+      shadowBlur: state.shadowBlur,
+      shadowColor: state.shadowColor,
+      shadowX: state.shadowX,
+      shadowY: state.shadowY,
+      stylePreset: state.stylePreset,
+      deviceScale: state.deviceScale,
+      imageLayout: state.imageLayout,
+      cornerRadius: state.cornerRadius,
+      applyPreset: state.applyPreset,
+      frameMode: state.frameMode,
+      deviceType: state.deviceType,
+      textOverlay: state.textOverlay,
+      mediaOffsetX: state.mediaOffsetX,
+      mediaOffsetY: state.mediaOffsetY,
+      animationSpeed: state.animationSpeed,
+    }))
+  );
 
   // Get CSS transition duration based on animation speed
   const transitionDuration = ANIMATION_SPEED_DURATIONS[animationSpeed];
@@ -55,6 +92,36 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
 
   const { tracks, playheadMs } = useTimelineStore();
   const { activeClips, isPlaying } = useTimelinePlayback();
+
+  // Resolve media assets from timeline - allows videos to have specific start times
+  const resolvedMediaAssets = useMemo(() => {
+    const assets = [...mediaAssets];
+    const visualTracks = tracks.filter((t) => t.type === 'visual');
+
+    // For each slot, find the last (top-most) active clip
+    for (let i = 0; i < assets.length; i++) {
+      for (const track of visualTracks) {
+        if (track.muted) continue;
+
+        const activeClip = track.clips.find(
+          (clip) =>
+            (clip.data?.slotIndex === i || (i === 0 && clip.data?.slotIndex === undefined)) &&
+            playheadMs >= clip.startMs &&
+            playheadMs < clip.startMs + clip.durationMs
+        );
+
+        if (activeClip && activeClip.data?.mediaUrl) {
+          assets[i] = {
+            url: activeClip.data.mediaUrl,
+            type: 'video' as const,
+            duration: activeClip.durationMs,
+            relativePlayheadMs: playheadMs - activeClip.startMs,
+          };
+        }
+      }
+    }
+    return assets;
+  }, [mediaAssets, tracks, playheadMs]);
 
   // Calculate device animation progress (similar to text animation)
   const deviceAnimationStyle = useMemo(() => {
@@ -200,33 +267,13 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      const isVideo = file.type.startsWith('video/');
+  const { handleMediaUpload } = useMediaUpload();
 
-      if (isVideo) {
-        // For video, wait for metadata to get duration before setting asset
-        const tempVideo = document.createElement('video');
-        tempVideo.preload = 'metadata';
-        tempVideo.onloadedmetadata = () => {
-          const duration = Math.round(tempVideo.duration * 1000);
-          if (duration > 0 && isFinite(duration)) {
-            // Set asset WITH duration so it's available for updateRenderDuration
-            const newAssets = [...mediaAssets];
-            newAssets[activeMediaIndex] = { url, type: 'video', duration };
-            setMediaAssets(newAssets);
-            setDurationMs(duration);
-          }
-        };
-        tempVideo.src = url;
-      } else {
-        // For images, set immediately
-        const newAssets = [...mediaAssets];
-        newAssets[activeMediaIndex] = { url, type: 'image' };
-        setMediaAssets(newAssets);
-      }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      await handleMediaUpload(files, activeMediaIndex);
+      e.target.value = '';
     }
   };
 
@@ -403,9 +450,10 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                 data-device-animation
                 className="w-full h-full flex items-center justify-center"
                 style={{
-                  transition: smoothTransition || shouldSmoothTransition
-                    ? `transform ${transitionDuration}ms ease, opacity ${transitionDuration}ms ease`
-                    : 'none',
+                  transition:
+                    smoothTransition || shouldSmoothTransition
+                      ? `transform ${transitionDuration}ms ease, opacity ${transitionDuration}ms ease`
+                      : 'none',
                   opacity: (() => {
                     const baseOpacity = animationStyle.opacity ?? 1;
                     const deviceOpacity = deviceAnimationStyle.opacity;
@@ -428,7 +476,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   rotationY={rotationY}
                   rotationZ={rotationZ}
                   cornerRadius={cornerRadius}
-                  mediaAssets={mediaAssets}
+                  mediaAssets={resolvedMediaAssets}
                   onScreenClick={handleScreenClick}
                   shadowType={shadowType}
                   shadowOpacity={shadowOpacity}
@@ -442,6 +490,8 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
                   animationInfo={animationInfo}
                   frameMode={frameMode}
                   deviceType={deviceType}
+                  playheadMs={playheadMs}
+                  playing={isPlaying}
                 />
               </div>
             </div>

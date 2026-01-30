@@ -17,6 +17,7 @@ export const SideBySideLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -58,6 +59,7 @@ export const SideBySideLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />,
                 index
               )}
@@ -84,6 +86,7 @@ export const StackedLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   return (
     <div
@@ -125,6 +128,7 @@ export const StackedLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />,
                 index
               )}
@@ -151,6 +155,7 @@ export const DiagonalLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   const diagonalConfigs = [
     { x: 5, y: 15, rotate: -12, zIndex: 20 },
@@ -196,6 +201,7 @@ export const DiagonalLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />,
                 index
               )}
@@ -220,6 +226,7 @@ export const PolaroidLayout = ({
   sizePercent,
   renderWithMockup,
   hasMockup,
+  playheadMs,
 }: LayoutBaseProps) => {
   const polaroidConfigs = [
     { x: 10, y: 20, rotate: -8 },
@@ -265,6 +272,7 @@ export const PolaroidLayout = ({
                   onScreenClick={onScreenClick}
                   styleCSS={styleCSS}
                   playing={playing}
+                  playheadMs={playheadMs}
                 />
               </div>
             </div>

@@ -16,6 +16,7 @@ export const SingleLayout = ({
   renderWithMockup,
   hasMockup,
   animationInfo,
+  playheadMs,
 }: LayoutBaseProps) => {
   const mediaContent = (
     <MediaContainer
@@ -26,6 +27,7 @@ export const SingleLayout = ({
       onScreenClick={onScreenClick}
       styleCSS={styleCSS}
       playing={playing}
+      playheadMs={playheadMs}
     />
   );
 

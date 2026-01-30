@@ -46,6 +46,7 @@ export type LayoutBaseProps = {
   isPreview: boolean;
   onScreenClick?: (index: number) => void;
   playing: boolean;
+  playheadMs?: number; // Added for video scrubbing sync
   animationInfo?: AnimationInfo;
   aspectValue: number | null;
   sizePercent: string;

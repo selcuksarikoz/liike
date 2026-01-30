@@ -63,7 +63,16 @@ export type StreamingRenderState = {
  * Helper functions have been moved to ../utils/renderUtils.ts
  */
 export const useStreamingRender = () => {
-  const { setRenderStatus, resetRenderStatus, canvasWidth, canvasHeight, renderQuality, mediaAssets } = useRenderStore();
+  const { 
+    setRenderStatus, 
+    resetRenderStatus, 
+    canvasWidth, 
+    canvasHeight, 
+    renderQuality, 
+    mediaAssets,
+    includeAudio,
+    cameraAudioEnabled
+  } = useRenderStore();
   const [state, setState] = useState<StreamingRenderState>({
     isRendering: false,
     progress: 0,
@@ -258,15 +267,44 @@ export const useStreamingRender = () => {
       });
 
       try {
-        // Get audio file from timeline if available (skip if muted)
-        const { tracks } = useTimelineStore.getState();
-        const audioTrack = tracks.find((t) => t.type === 'audio');
-        const audioClip = audioTrack?.clips[0];
-        const isAudioMuted = audioTrack?.muted ?? false;
-        const audioPath = (!isAudioMuted && audioClip?.data?.mediaUrl) || null;
+        const audioTracks: { path: string; delay_ms: number }[] = [];
+        
+        if (includeAudio) {
+          // 1. Get audio file from dedicated audio track if available
+          const { tracks } = useTimelineStore.getState();
+          const audioTrack = tracks.find((t) => t.type === 'audio');
+          const isAudioTrackMuted = audioTrack?.muted ?? false;
+          
+          if (!isAudioTrackMuted) {
+            audioTrack?.clips.forEach(clip => {
+              if (clip.data?.mediaUrl) {
+                audioTracks.push({
+                  path: clip.data.mediaUrl,
+                  delay_ms: Math.round(clip.startMs)
+                });
+              }
+            });
+          }
+
+          // 2. Get audio from video clips if cameraAudioEnabled is true
+          if (cameraAudioEnabled) {
+            const visualTracks = tracks.filter((t) => t.type === 'visual');
+            visualTracks.forEach((track) => {
+              if (track.muted) return;
+              track.clips.forEach((clip) => {
+                if (clip.data?.mediaUrl) {
+                  audioTracks.push({
+                    path: clip.data.mediaUrl,
+                    delay_ms: Math.round(clip.startMs)
+                  });
+                }
+              });
+            });
+          }
+        }
 
         // Start the streaming encoder in Rust
-        console.log('[StreamRender] Starting streaming encoder...', { audioPath });
+        console.log('[StreamRender] Starting streaming encoder...', { audioTracks });
         const { mkdir } = await import('@tauri-apps/plugin-fs');
         await mkdir(tempFolder, { recursive: true });
         const encoderId = await invoke<string>('start_streaming_encode', {
@@ -277,7 +315,7 @@ export const useStreamingRender = () => {
           totalFrames,
           format,
           useHw: true,
-          audioPath,
+          audio_tracks: audioTracks,
           inputWidth: captureWidth,
           inputHeight: captureHeight,
         });
