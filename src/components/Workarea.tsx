@@ -116,6 +116,7 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             type: 'video' as const,
             duration: activeClip.durationMs,
             relativePlayheadMs: playheadMs - activeClip.startMs,
+            clipStartMs: activeClip.startMs,
           };
         }
       }

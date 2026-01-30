@@ -54,10 +54,17 @@ export const MediaContainer = memo(
       const video = videoRef.current;
       if (!video) return;
 
-      const currentPlayhead = media?.relativePlayheadMs ?? playheadMs;
-      if (typeof currentPlayhead !== 'number') return;
+      const clipStartMs = media?.clipStartMs ?? 0;
+      const durationMs = media?.duration ?? 0;
+      const relativePlayhead = typeof media?.relativePlayheadMs === 'number'
+        ? media.relativePlayheadMs
+        : Math.max(0, playheadMs - clipStartMs);
+      if (typeof relativePlayhead !== 'number') return;
 
-      const timeS = currentPlayhead / 1000;
+      const currentPlayhead = durationMs > 0
+        ? Math.min(relativePlayhead, durationMs)
+        : relativePlayhead;
+      const timeS = Math.max(0, currentPlayhead) / 1000;
 
       if (!playing) {
         // Scrubbing mode: follow playhead tightly
@@ -90,9 +97,9 @@ export const MediaContainer = memo(
           video.currentTime = timeS;
         }
 
-        lastPlayheadRef.current = currentPlayhead;
+          lastPlayheadRef.current = currentPlayhead;
       }
-    }, [playing, playheadMs, media?.relativePlayheadMs]);
+    }, [playing, playheadMs, media?.relativePlayheadMs, media?.duration, media?.clipStartMs]);
 
     const handleClick = useCallback(() => {
       if (!isPreview) onScreenClick?.(index);
@@ -123,17 +130,19 @@ export const MediaContainer = memo(
       >
         {media ? (
           media.type === 'video' ? (
-            <video
-              ref={videoRef}
-              src={media.url}
-              className="block"
-              style={contentStyle}
-              autoPlay={playing}
-              loop
-              muted
-              playsInline
-              crossOrigin="anonymous"
-            />
+        <video
+          ref={videoRef}
+          src={media.url}
+          className="block"
+          style={contentStyle}
+          autoPlay={playing}
+          loop
+          muted
+          playsInline
+          crossOrigin="anonymous"
+          data-clip-start-ms={media?.clipStartMs ?? 0}
+          data-clip-duration-ms={media?.duration ?? 0}
+        />
           ) : (
             <img
               src={media.url}

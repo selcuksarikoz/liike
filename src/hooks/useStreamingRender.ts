@@ -119,8 +119,7 @@ export const useStreamingRender = () => {
         return;
       }
 
-      // Calculate effective duration - VIDEO ALWAYS TAKES PRIORITY
-      // Animation duration should NOT cut the video short
+      // Calculate effective duration - include animation length when videos are placed after it
       const maxVideoDuration = mediaAssets.reduce((max, asset) => {
         if (asset?.type === 'video' && asset.duration) {
           return Math.max(max, asset.duration);
@@ -128,11 +127,13 @@ export const useStreamingRender = () => {
         return max;
       }, 0);
 
-      // If there's a video, always use video duration (don't let animation cut it)
-      // If no video, use the passed durationMs (animation/timeline duration)
-      const effectiveDuration = maxVideoDuration > 0 ? maxVideoDuration : durationMs;
-      console.log('[StreamRender] Duration:', { video: maxVideoDuration, animation: durationMs, effective: effectiveDuration });
-
+      const animationDuration = durationMs;
+      const effectiveDuration = Math.max(animationDuration, maxVideoDuration);
+      console.log('[StreamRender] Duration:', {
+        animation: animationDuration,
+        video: maxVideoDuration,
+        effective: effectiveDuration,
+      });
       console.log('[StreamRender] Config:', { durationMs: effectiveDuration, fps, maxVideoDuration });
 
       const totalFrames = Math.max(1, Math.ceil((effectiveDuration / 1000) * fps));

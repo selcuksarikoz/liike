@@ -115,14 +115,19 @@ export const pauseAndSeekVideos = async (node: HTMLElement, timeMs: number): Pro
   const videos = node.querySelectorAll('video');
   if (videos.length === 0) return;
 
-  const seconds = timeMs / 1000;
-
   const seekPromises = Array.from(videos).map((video) => {
     return new Promise<void>((resolve) => {
       video.pause();
 
+      const clipStartMs = Number(video.dataset.clipStartMs) || 0;
+      const clipDurationMs = Number(video.dataset.clipDurationMs) || 0;
+      const relativeMs = Math.max(0, timeMs - clipStartMs);
+      const limitedMs =
+        clipDurationMs > 0 ? Math.min(relativeMs, clipDurationMs) : relativeMs;
+      const targetSeconds = Math.max(0, limitedMs) / 1000;
+
       // If already at target time and has data, resolve immediately (more tolerance)
-      if (Math.abs(video.currentTime - seconds) < 0.05 && video.readyState >= 2) {
+      if (Math.abs(video.currentTime - targetSeconds) < 0.05 && video.readyState >= 2) {
         resolve();
         return;
       }
@@ -142,11 +147,11 @@ export const pauseAndSeekVideos = async (node: HTMLElement, timeMs: number): Pro
 
         video.addEventListener('seeked', () => clearTimeout(timeout), { once: true });
         video.addEventListener('seeked', onSeeked, { once: true });
-        video.currentTime = seconds;
+        video.currentTime = targetSeconds;
       } else {
         // Video not ready - wait for canplay then seek
         const doSeek = () => {
-          video.currentTime = seconds;
+          video.currentTime = targetSeconds;
           resolve(); // Don't wait for seeked event if we had to wait for canplay
         };
 

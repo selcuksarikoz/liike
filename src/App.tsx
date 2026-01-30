@@ -80,7 +80,7 @@ const App = () => {
       fps,
       outputName,
       format,
-      captureScale: fastExport ? 0.75 : 0.9,
+      captureScale: fastExport ? 0.2 : 0.9,
     });
   };
 

@@ -31,6 +31,7 @@ export type MediaAsset = {
   type: 'image' | 'video';
   duration?: number; // Video duration in milliseconds
   relativePlayheadMs?: number; // Added for timeline sync
+  clipStartMs?: number; // Track where the clip begins on the timeline
 };
 
 export type TextPosition =
