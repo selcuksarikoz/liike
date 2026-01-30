@@ -100,6 +100,24 @@ export const SidebarLeft = () => {
     setDeviceScale,
     cornerRadius,
     setCornerRadius,
+
+    // Media Inner Constraints
+    mediaFit,
+    setMediaFit,
+    mediaInnerScale,
+    setMediaInnerScale,
+    mediaInnerX,
+    setMediaInnerX,
+    mediaInnerY,
+    setMediaInnerY,
+    mediaInnerWidth,
+    setMediaInnerWidth,
+    mediaInnerHeight,
+    setMediaInnerHeight,
+    mediaInnerAspectRatio,
+    setMediaInnerAspectRatio,
+    mediaInnerRadius,
+    setMediaInnerRadius,
   } = useRenderStore();
 
   const [deviceCategory, setDeviceCategory] = useState<string>('phone');
@@ -383,6 +401,98 @@ export const SidebarLeft = () => {
                   unit="px"
                   onChange={setCornerRadius}
                 />
+              </ControlGroup>
+            </SidebarSection>
+
+            <SidebarSection padded>
+              <SidebarHeader icon={<Image className="w-4 h-4" />}>Media Constraints</SidebarHeader>
+              <ControlGroup>
+                <div className="flex gap-2 mb-2 p-1 bg-ui-panel/40 rounded-lg">
+                  {['cover', 'contain', 'fill'].map((fit) => (
+                    <button
+                      key={fit}
+                      onClick={() => setMediaFit(fit as any)}
+                      className={`flex-1 py-1 text-[10px] uppercase font-bold rounded transition-colors ${
+                        mediaFit === fit ? 'bg-accent text-black' : 'text-ui-muted hover:text-white'
+                      }`}
+                    >
+                      {fit}
+                    </button>
+                  ))}
+                </div>
+
+                <SliderControl
+                  label="Media Scale"
+                  icon={<Maximize2 className="w-3.5 h-3.5" />}
+                  value={mediaInnerScale}
+                  min={0.1}
+                  max={3}
+                  step={0.05}
+                  unit="x"
+                  onChange={setMediaInnerScale}
+                />
+                <SliderControl
+                  label="Position X"
+                  icon={<Box className="w-3.5 h-3.5" />}
+                  value={mediaInnerX}
+                  min={-100}
+                  max={100}
+                  unit="%"
+                  onChange={setMediaInnerX}
+                />
+                <SliderControl
+                  label="Position Y"
+                  icon={<Box className="w-3.5 h-3.5" />}
+                  value={mediaInnerY}
+                  min={-100}
+                  max={100}
+                  unit="%"
+                  onChange={setMediaInnerY}
+                />
+                <SliderControl
+                  label="Width"
+                  icon={<Box className="w-3.5 h-3.5" />}
+                  value={mediaInnerWidth}
+                  min={10}
+                  max={200}
+                  step={5}
+                  unit="%"
+                  onChange={setMediaInnerWidth}
+                />
+                <SliderControl
+                  label="Height"
+                  icon={<Box className="w-3.5 h-3.5" />}
+                  value={mediaInnerHeight}
+                  min={10}
+                  max={200}
+                  step={5}
+                  unit="%"
+                  onChange={setMediaInnerHeight}
+                />
+                <SliderControl
+                  label="Radius"
+                  icon={<CircleDot className="w-3.5 h-3.5" />}
+                  value={mediaInnerRadius}
+                  min={0}
+                  max={100}
+                  unit="px"
+                  onChange={setMediaInnerRadius}
+                />
+                <div className="flex items-center justify-between pt-1">
+                  <label className="text-[10px] text-ui-muted">Aspect Ratio</label>
+                  <select
+                    value={mediaInnerAspectRatio}
+                    onChange={(e) => setMediaInnerAspectRatio(e.target.value)}
+                    className="bg-ui-panel/40 text-ui-text text-[10px] rounded px-2 py-1 border border-ui-border outline-none"
+                  >
+                    <option value="free">Free</option>
+                    <option value="original">Original</option>
+                    <option value="1/1">1:1</option>
+                    <option value="4/5">4:5</option>
+                    <option value="16/9">16:9</option>
+                    <option value="9/16">9:16</option>
+                  </select>
+                </div>
               </ControlGroup>
             </SidebarSection>
           </div>

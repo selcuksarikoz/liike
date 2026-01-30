@@ -117,6 +117,16 @@ type RenderStore = RenderSettings & {
   mediaPosition: MediaPosition;
   mediaOffsetX: number;
   mediaOffsetY: number;
+  // Media Inner Constraints (inside the device screen)
+  mediaFit: 'cover' | 'contain' | 'fill';
+  mediaInnerScale: number;
+  mediaInnerX: number; // percent
+  mediaInnerY: number; // percent
+  mediaInnerWidth: number; // percent
+  mediaInnerHeight: number; // percent
+  mediaInnerAspectRatio: string; // "free", "16/9", etc.
+  mediaInnerRadius: number;
+
   // Animation speed
   animationSpeed: AnimationSpeed;
   // Render status
@@ -154,6 +164,17 @@ type RenderStore = RenderSettings & {
   setMediaPosition: (position: MediaPosition) => void;
   setMediaOffsetX: (x: number) => void;
   setMediaOffsetY: (y: number) => void;
+  
+  // Media Inner Constraints Setters
+  setMediaFit: (fit: 'cover' | 'contain' | 'fill') => void;
+  setMediaInnerScale: (scale: number) => void;
+  setMediaInnerX: (x: number) => void;
+  setMediaInnerY: (y: number) => void;
+  setMediaInnerWidth: (w: number) => void;
+  setMediaInnerHeight: (h: number) => void;
+  setMediaInnerAspectRatio: (ratio: string) => void;
+  setMediaInnerRadius: (radius: number) => void;
+
   setAnimationSpeed: (speed: AnimationSpeed) => void;
   applyPreset: (preset: Partial<RenderStore>) => void;
   setRenderStatus: (status: Partial<RenderStatus>) => void;
@@ -286,6 +307,26 @@ export const useRenderStore = create<RenderStore>((set) => ({
   },
   setMediaOffsetX: (mediaOffsetX) => set({ mediaOffsetX }),
   setMediaOffsetY: (mediaOffsetY) => set({ mediaOffsetY }),
+  
+  // Media Inner Constraints Defaults
+  mediaFit: 'cover',
+  mediaInnerScale: 1,
+  mediaInnerX: 0,
+  mediaInnerY: 0,
+  mediaInnerWidth: 100,
+  mediaInnerHeight: 100,
+  mediaInnerAspectRatio: 'free',
+  mediaInnerRadius: 0,
+
+  setMediaFit: (mediaFit) => set({ mediaFit }),
+  setMediaInnerScale: (mediaInnerScale) => set({ mediaInnerScale }),
+  setMediaInnerX: (mediaInnerX) => set({ mediaInnerX }),
+  setMediaInnerY: (mediaInnerY) => set({ mediaInnerY }),
+  setMediaInnerWidth: (mediaInnerWidth) => set({ mediaInnerWidth }),
+  setMediaInnerHeight: (mediaInnerHeight) => set({ mediaInnerHeight }),
+  setMediaInnerAspectRatio: (mediaInnerAspectRatio) => set({ mediaInnerAspectRatio }),
+  setMediaInnerRadius: (mediaInnerRadius) => set({ mediaInnerRadius }),
+
   setAnimationSpeed: (animationSpeed) => set({ animationSpeed }),
   applyPreset: (preset) => set((state) => {
     // If preset has durationMs, respect video duration

@@ -1,6 +1,6 @@
 import { memo, useRef, useEffect, useCallback } from 'react';
 import { ImagePlus } from 'lucide-react';
-import type { MediaAsset } from '../store/renderStore';
+import { useRenderStore, type MediaAsset } from '../store/renderStore';
 
 export type MediaContainerProps = {
   index: number;
@@ -23,6 +23,16 @@ export const MediaContainer = memo(
     playing = true,
   }: MediaContainerProps) => {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const {
+      mediaFit,
+      mediaInnerScale,
+      mediaInnerX,
+      mediaInnerY,
+      mediaInnerWidth,
+      mediaInnerHeight,
+      mediaInnerAspectRatio,
+      mediaInnerRadius,
+    } = useRenderStore();
 
     useEffect(() => {
       if (videoRef.current) {
@@ -38,9 +48,26 @@ export const MediaContainer = memo(
       if (!isPreview) onScreenClick?.(index);
     }, [isPreview, onScreenClick, index]);
 
+    // Apply inner constraints
+    const contentStyle: React.CSSProperties = {
+      width: `${mediaInnerWidth}%`,
+      height: `${mediaInnerHeight}%`,
+      objectFit: mediaFit,
+      aspectRatio:
+        mediaInnerAspectRatio === 'free'
+          ? undefined
+          : mediaInnerAspectRatio === 'original'
+            ? undefined
+            : mediaInnerAspectRatio,
+      transform: `scale(${mediaInnerScale}) translate(${mediaInnerX}%, ${mediaInnerY}%)`,
+      transition: 'all 0.2s ease-out',
+      // Apply user-controlled radius
+      borderRadius: `${mediaInnerRadius}px`,
+    };
+
     return (
       <div
-        className={`relative w-full h-full overflow-hidden ${isPreview ? '' : 'cursor-pointer group'}`}
+        className={`relative w-full h-full overflow-hidden flex items-center justify-center ${isPreview ? '' : 'cursor-pointer group'}`}
         onClick={handleClick}
         style={{ borderRadius: `${cornerRadius}px` }}
       >
@@ -49,7 +76,8 @@ export const MediaContainer = memo(
             <video
               ref={videoRef}
               src={media.url}
-              className="w-full h-full object-cover block"
+              className="block"
+              style={contentStyle}
               autoPlay={playing}
               loop
               muted
@@ -59,7 +87,8 @@ export const MediaContainer = memo(
           ) : (
             <img
               src={media.url}
-              className="w-full h-full object-cover block"
+              className="block"
+              style={contentStyle}
               alt="Media"
               loading="eager"
               decoding="sync"

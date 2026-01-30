@@ -39,7 +39,7 @@ export const GenericDeviceMockup = ({
       <div
         className="relative flex items-center justify-center"
         style={{
-          height: '100%',
+          height: 'auto',
           maxHeight: `${100 * scale}%`,
           maxWidth: `${100 * scale}%`,
           width: 'auto',
@@ -62,13 +62,31 @@ export const GenericDeviceMockup = ({
         {/* Screen Area - Precisely positioned inside the frame using padding/inset */}
         <div
           data-screen-container
-          className="absolute z-10 overflow-hidden bg-black"
+          className="absolute z-10 overflow-hidden"
           style={{
             inset: screenConfig.padding,
-            borderRadius: screenConfig.radius,
+            // Positioning only in the wrapper
+            zIndex: 10,
           }}
         >
-          <div className="w-full h-full flex items-center justify-center">{children}</div>
+          {/* Clipping Container - strictly handles masking */}
+          <div
+            className="w-full h-full overflow-hidden"
+            style={{
+              backgroundColor: '#000',
+              borderRadius: screenConfig.radius,
+              // Vector clipping for 3D
+              clipPath: `inset(0px round ${screenConfig.radius})`,
+              // Force formatting context
+              transform: 'translateZ(0)',
+              willChange: 'transform',
+              // Strict containment
+              contain: 'paint',
+              backfaceVisibility: 'hidden',
+            }}
+          >
+            <div className="w-full h-full flex items-center justify-center">{children}</div>
+          </div>
         </div>
       </div>
     </div>

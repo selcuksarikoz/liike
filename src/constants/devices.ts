@@ -206,9 +206,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 800,
     aspectRatio: 800/370,
     screen: {
-      single: { padding: '8% 3% 8% 3%', radius: '20px' },
-      duo: { padding: '30% 2% 30% 2%', radius: '20px' },
-      trio: { padding: '37% 3% 37% 3%', radius: '20px' },
+      single: { padding: '3% 8% 3% 8%', radius: '20px' },
+      duo: { padding: '2% 30% 2% 30%', radius: '20px' },
+      trio: { padding: '3% 37% 3% 37%', radius: '20px' },
     }
   },
 
@@ -234,9 +234,9 @@ export const DEVICES: DeviceConfig[] = [
     width: 780,
     aspectRatio: 780/345,
     screen: {
-      single: { padding: '8% 3% 8% 3%', radius: '20px' },
-      duo: { padding: '30% 2% 30% 2%', radius: '20px' },
-      trio: { padding: '37% 3% 37% 3%', radius: '20px' },
+      single: { padding: '3% 8% 3% 8%', radius: '20px' },
+      duo: { padding: '2% 30% 2% 30%', radius: '20px' },
+      trio: { padding: '3% 37% 3% 37%', radius: '20px' },
     }
   },
 
