@@ -301,7 +301,7 @@ export const Header = ({ onRender }: HeaderProps) => {
       <header className="col-span-3 flex h-14 items-center justify-between border-b border-ui-border bg-ui-bg px-6">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="flex w-8 h-8 items-center justify-center rounded-md overflow-hidden bg-accent text-black font-bold">
+            <div className="flex w-8 h-8 items-center justify-center rounded-md overflow-hidden text-black font-bold">
               <img src={logo} alt="" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-sm font-bold tracking-tight uppercase text-white flex items-center gap-2">

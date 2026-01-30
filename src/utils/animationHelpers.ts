@@ -61,9 +61,6 @@ export const getStaggeredAnimationStyle = (
     ) {
       return { transform: 'scale(0)', opacity: 0 };
     }
-    if (isZoom) {
-      return { transform: 'scale(0.95)', opacity: 0 };
-    }
     return { transform: 'none', opacity: 1 };
   }
 
