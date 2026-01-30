@@ -141,6 +141,11 @@ export const applyEasing = (progress: number, easing: string): number => {
   }
 };
 
+const smoothStep = (p: number): number => {
+  const t = Math.min(1, Math.max(0, p));
+  return t * t * (3 - 2 * t);
+};
+
 // =============================================================================
 // WEB ANIMATIONS API HELPER
 // =============================================================================
@@ -604,6 +609,7 @@ export const calculateAnimationValue = (
   easing: string = 'ease-in-out'
 ): { transform: string; opacity?: number } => {
   const easedProgress = applyEasing(progress, easing);
+  const smoothProgress = smoothStep(easedProgress);
 
   // For looping animations, use sin wave
   const loopProgress = Math.sin(easedProgress * Math.PI * 2);
@@ -628,13 +634,17 @@ export const calculateAnimationValue = (
 
     case 'zoom-in':
     case 'zoom':
-      const scale = 1 + halfLoopProgress * (intensity - 1);
+      const zoomT = smoothStep(easedProgress);
+      const zoomWave = Math.sin(zoomT * Math.PI);
+      const scale = 1 + zoomWave * (intensity - 1);
       return {
         transform: `scale(${scale})`,
       };
 
     case 'zoom-out':
-      const scaleOut = 1 - halfLoopProgress * (1 - 1 / intensity);
+      const zoomOutT = smoothStep(easedProgress);
+      const zoomOutWave = Math.sin(zoomOutT * Math.PI);
+      const scaleOut = 1 - zoomOutWave * (1 - 1 / intensity);
       return {
         transform: `scale(${scaleOut})`,
       };
@@ -669,19 +679,19 @@ export const calculateAnimationValue = (
       };
 
     case 'zoom-up':
-      const zoomUpScale = 0.7 + easedProgress * 0.3;
-      const zoomUpY = (1 - easedProgress) * 30;
+      const zoomUpScale = 0.7 + smoothProgress * 0.3;
+      const zoomUpY = (1 - smoothProgress) * 30;
       return {
         transform: `scale(${zoomUpScale}) translateY(${zoomUpY}px)`,
-        opacity: easedProgress,
+        opacity: smoothProgress,
       };
 
     case 'zoom-down':
-      const zoomDownScale = 0.7 + easedProgress * 0.3;
-      const zoomDownY = (easedProgress - 1) * 30;
+      const zoomDownScale = 0.7 + smoothProgress * 0.3;
+      const zoomDownY = (smoothProgress - 1) * 30;
       return {
         transform: `scale(${zoomDownScale}) translateY(${zoomDownY}px)`,
-        opacity: easedProgress,
+        opacity: smoothProgress,
       };
 
     case 'pulse':
@@ -807,11 +817,11 @@ export const calculateAnimationValue = (
       };
 
     case 'reveal-zoom':
-      const rzScale = 0.2 + easedProgress * 0.8;
-      const rzRot = (1 - easedProgress) * 45;
+      const rzScale = 0.2 + smoothProgress * 0.8;
+      const rzRot = (1 - smoothProgress) * 45;
       return {
         transform: `scale(${rzScale}) rotateX(${rzRot}deg) translateZ(0)`,
-        opacity: easedProgress,
+        opacity: smoothProgress,
       };
 
     case 'elastic-enter': {

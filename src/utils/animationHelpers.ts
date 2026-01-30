@@ -37,10 +37,20 @@ export const getStaggeredAnimationStyle = (
   // If this image hasn't started animating yet
   if (adjustedProgress <= 0) {
     const firstAnim = animations[0]?.type;
+    if (firstAnim === 'zoom-up') {
+      return { transform: 'scale(0.7) translateY(30px)', opacity: 0 };
+    }
+    if (firstAnim === 'zoom-down') {
+      return { transform: 'scale(0.7) translateY(-30px)', opacity: 0 };
+    }
+    if (firstAnim === 'reveal-zoom') {
+      return { transform: 'scale(0.2) rotateX(45deg) translateZ(0)', opacity: 0 };
+    }
+    if (firstAnim === 'zoom' || firstAnim === 'zoom-in' || firstAnim === 'zoom-out') {
+      return { transform: 'scale(1)', opacity: 0 };
+    }
     if (
       firstAnim?.includes('slide') ||
-      firstAnim?.includes('zoom-up') ||
-      firstAnim?.includes('zoom-down') ||
       firstAnim === 'spiral' ||
       firstAnim === 'fan' ||
       firstAnim === 'domino' ||
@@ -50,6 +60,9 @@ export const getStaggeredAnimationStyle = (
       firstAnim === 'skew-slide'
     ) {
       return { transform: 'scale(0)', opacity: 0 };
+    }
+    if (isZoom) {
+      return { transform: 'scale(0.95)', opacity: 0 };
     }
     return { transform: 'none', opacity: 1 };
   }

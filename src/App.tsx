@@ -70,7 +70,8 @@ const App = () => {
     return () => window.removeEventListener('cancel-render', handleCancelRender);
   }, [loop.cancel]);
 
-  const { durationMs, fps, outputName, fastExport, renderStatus, setRenderStatus } = useRenderStore();
+  const { durationMs, fps, outputName, fastExport, renderStatus, setRenderStatus } =
+    useRenderStore();
 
   const handleRender = (format: ExportFormat) => {
     loop.render({
@@ -79,7 +80,7 @@ const App = () => {
       fps,
       outputName,
       format,
-      captureScale: fastExport ? 0.8 : 1,
+      captureScale: fastExport ? 0.75 : 0.9,
     });
   };
 

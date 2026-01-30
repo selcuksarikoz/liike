@@ -159,25 +159,25 @@ export const generateTextKeyframes = (
       return {
         opacity: 1,
         transform: 'translateZ(0)',
-        clipPath: `inset(0 ${(1 - p) * 100}% 0 0)`,
+        clipPath: `inset(0 ${(1 - ease) * 100}% 0 0)`,
       };
     case 'reveal-right':
       return {
         opacity: 1,
         transform: 'translateZ(0)',
-        clipPath: `inset(0 0 0 ${(1 - p) * 100}%)`,
+        clipPath: `inset(0 0 0 ${(1 - ease) * 100}%)`,
       };
     case 'reveal-top':
       return {
         opacity: 1,
         transform: 'translateZ(0)',
-        clipPath: `inset(0 0 ${(1 - p) * 100}% 0)`,
+        clipPath: `inset(0 0 ${(1 - ease) * 100}% 0)`,
       };
     case 'reveal-bottom':
       return {
         opacity: 1,
         transform: 'translateZ(0)',
-        clipPath: `inset(${(1 - p) * 100}% 0 0 0)`,
+        clipPath: `inset(${(1 - ease) * 100}% 0 0 0)`,
       };
 
     // --- BOUNCE ---
@@ -1066,7 +1066,7 @@ export const generateDeviceKeyframes = (
     case 'zoom-in':
       return {
         opacity: ease,
-        transform: `scale(${0.6 + easeQuart * 0.4})`,
+        transform: `scale(${0.7 + ease * 0.3})`,
       };
 
     case 'zoom-out':
@@ -1126,7 +1126,7 @@ export const generateDeviceKeyframes = (
       // Scale up from small with slide
       return {
         opacity: ease,
-        transform: `scale(${0.4 + easeQuart * 0.6}) translateY(${(1 - ease) * 30}px)`,
+        transform: `scale(${0.5 + ease * 0.5}) translateY(${(1 - ease) * 20}px)`,
       };
 
     case 'parallax-3d':
