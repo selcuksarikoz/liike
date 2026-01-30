@@ -19,6 +19,8 @@ export type RenderStatus = {
   totalFrames: number;
   error: string | null;
   phase: 'idle' | 'capturing' | 'encoding' | 'done';
+  format?: ExportFormat;
+  isImageExport?: boolean;
 };
 
 type StylePreset = 'default' | 'glass-light' | 'glass-dark' | 'neon-glow' | 'cyber' | 'gradient-border' | 'frost' | 'liquid' | 'hologram' | 'inset-dark' | 'outline' | 'border' | 'double-border';
@@ -203,6 +205,8 @@ const initialRenderStatus: RenderStatus = {
   totalFrames: 0,
   error: null,
   phase: 'idle',
+  format: undefined,
+  isImageExport: false,
 };
 
 export const useRenderStore = create<RenderStore>((set) => ({

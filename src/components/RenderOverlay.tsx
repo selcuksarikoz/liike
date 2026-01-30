@@ -5,6 +5,14 @@ export const RenderOverlay = () => {
 
   if (!renderStatus.isRendering) return null;
 
+  const isImageExport =
+    renderStatus.isImageExport ??
+    ['png', 'webp', 'gif'].includes(renderStatus.format ?? 'mp4');
+  const title = isImageExport ? 'Exporting Image' : 'Exporting Video';
+  const description = isImageExport
+    ? 'Capturing a single frame. Keep the window visible while we render.'
+    : 'Please keep this window in the foreground while we capture your masterpiece.';
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/100 backdrop-blur-md animate-in fade-in duration-300">
       <div className="w-full max-w-md p-8 flex flex-col items-center gap-8">
@@ -23,11 +31,9 @@ export const RenderOverlay = () => {
         </div>
 
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold text-white">Exporting Video</h2>
-          <p className="text-sm text-ui-muted max-w-xs mx-auto">
-            Please keep this window in the foreground while we capture your masterpiece.
-          </p>
-          {renderStatus.phase === 'capturing' && (
+          <h2 className="text-xl font-bold text-white">{title}</h2>
+          <p className="text-sm text-ui-muted max-w-xs mx-auto">{description}</p>
+          {renderStatus.phase === 'capturing' && !isImageExport && (
             <p className="text-xs text-ui-muted font-mono">
               Frame {renderStatus.currentFrame} / {renderStatus.totalFrames}
             </p>

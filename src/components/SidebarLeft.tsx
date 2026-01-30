@@ -15,6 +15,7 @@ import {
   ActionCard,
   ControlGroup,
 } from './ui/SidebarPrimitives';
+import { FileInput } from './ui/FileInput';
 import { AnimationsTab } from './sidebar/AnimationsTab';
 import { BackgroundModal } from './BackgroundModal';
 import { FrameSelectorModal } from './modals/FrameSelectorModal';
@@ -254,11 +255,9 @@ export const SidebarLeft = () => {
           <div className="animate-in fade-in slide-in-from-left-2 duration-300">
             <SidebarSection borderBottom>
               <SidebarHeader>Upload Media</SidebarHeader>
-              <input
+              <FileInput
                 ref={inputRef}
-                type="file"
-                className="hidden"
-                accept="image/*,video/mp4,video/quicktime,video/webm"
+                accept="image/*"
                 multiple={selectedSlot === null}
                 onChange={handleFileSelect}
               />

@@ -14,6 +14,7 @@ import {
   generateDeviceKeyframes,
   type DeviceAnimationType,
 } from '../constants/layoutAnimationPresets';
+import { FileInput } from './ui/FileInput';
 
 export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) => {
   const {
@@ -357,11 +358,9 @@ export const Workarea = ({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
       <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle,var(--color-ui-border)_1px,transparent_1px)] [background-size:32px_32px]" />
 
       {/* Hidden File Input */}
-      <input
-        type="file"
+      <FileInput
         ref={fileInputRef}
-        className="hidden"
-        accept="image/*,video/mp4,video/quicktime,video/webm"
+        accept="image/*"
         onChange={handleFileChange}
       />
 

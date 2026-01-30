@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Blend, Palette, Image, Upload, Trash2 } from 'lucide-react';
 import { useRenderStore } from '../store/renderStore';
 import { Modal } from './modals/Modal';
+import { FileInput } from './ui/FileInput';
 
 // Import background images
 import bg1 from '../assets/bg/1.webp';
@@ -291,12 +292,10 @@ export const BackgroundModal = ({ isOpen, onClose }: Props) => {
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-ui-muted mb-3">
                   Upload Image
                 </h3>
-                <input
+                <FileInput
                   ref={fileInputRef}
-                  type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
-                  className="hidden"
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}

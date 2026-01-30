@@ -174,12 +174,14 @@ export const useStreamingRender = () => {
           phase: 'capturing',
         });
         setRenderStatus({
-          isRendering: true,
-          progress: 0,
-          totalFrames: 1,
-          currentFrame: 0,
-          error: null,
-          phase: 'capturing',
+        isRendering: true,
+        progress: 0,
+        totalFrames: 1,
+        currentFrame: 0,
+        error: null,
+        phase: 'capturing',
+          format: exportFormat,
+          isImageExport: true,
         });
 
          try {
@@ -226,15 +228,27 @@ export const useStreamingRender = () => {
            await writeFile(outputPath, new Uint8Array(arrayBuffer));
            
            console.log('[StreamRender] Image saved:', outputPath);
-           setState(prev => ({ ...prev, isRendering: false, progress: 1, phase: 'done' }));
-           setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
+          setState(prev => ({ ...prev, isRendering: false, progress: 1, phase: 'done' }));
+          setRenderStatus({
+            isRendering: false,
+            progress: 1,
+            phase: 'done',
+            format: exportFormat,
+            isImageExport: true,
+          });
            await revealInFileManager(outputPath);
            
         } catch (error) {
            const errorMsg = (error as Error).message || String(error);
            console.error('[StreamRender] Image export error:', errorMsg);
-           setState(prev => ({ ...prev, error: errorMsg, isRendering: false, phase: 'idle' }));
-           setRenderStatus({ error: errorMsg, isRendering: false, phase: 'idle' });
+          setState(prev => ({ ...prev, error: errorMsg, isRendering: false, phase: 'idle' }));
+          setRenderStatus({
+            error: errorMsg,
+            isRendering: false,
+            phase: 'idle',
+            format: undefined,
+            isImageExport: false,
+          });
         }
         return;
       }
@@ -265,6 +279,8 @@ export const useStreamingRender = () => {
         currentFrame: 0,
         error: null,
         phase: 'capturing',
+        format,
+        isImageExport: false,
       });
 
       try {
@@ -422,7 +438,7 @@ export const useStreamingRender = () => {
         // Finish encoding
         console.log('[StreamRender] Finishing encoding...');
         setState((prev) => ({ ...prev, phase: 'encoding' }));
-        setRenderStatus({ phase: 'encoding' });
+        setRenderStatus({ phase: 'encoding', format, isImageExport: false });
 
         await invoke('finish_streaming_encode', { encoderId: encoderIdRef.current });
         encoderIdRef.current = null;
@@ -441,7 +457,13 @@ export const useStreamingRender = () => {
           progress: 1,
           phase: 'done',
         }));
-        setRenderStatus({ isRendering: false, progress: 1, phase: 'done' });
+        setRenderStatus({
+          isRendering: false,
+          progress: 1,
+          phase: 'done',
+          format,
+          isImageExport: false,
+        });
 
         // Reveal exported file in Finder
         await revealInFileManager(outputPath);
@@ -449,7 +471,13 @@ export const useStreamingRender = () => {
         const errorMsg = (error as Error).message || String(error);
         console.error('[StreamRender] Error:', errorMsg);
         setState((prev) => ({ ...prev, error: errorMsg, isRendering: false, phase: 'idle' }));
-        setRenderStatus({ error: errorMsg, isRendering: false, phase: 'idle' });
+        setRenderStatus({
+          error: errorMsg,
+          isRendering: false,
+          phase: 'idle',
+          format: undefined,
+          isImageExport: false,
+        });
 
         // Clean up export context
         clearExportContext();
