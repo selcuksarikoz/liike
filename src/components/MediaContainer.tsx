@@ -56,14 +56,14 @@ export const MediaContainer = memo(
 
       const clipStartMs = media?.clipStartMs ?? 0;
       const durationMs = media?.duration ?? 0;
-      const relativePlayhead = typeof media?.relativePlayheadMs === 'number'
-        ? media.relativePlayheadMs
-        : Math.max(0, playheadMs - clipStartMs);
+      const relativePlayhead =
+        typeof media?.relativePlayheadMs === 'number'
+          ? media.relativePlayheadMs
+          : Math.max(0, playheadMs - clipStartMs);
       if (typeof relativePlayhead !== 'number') return;
 
-      const currentPlayhead = durationMs > 0
-        ? Math.min(relativePlayhead, durationMs)
-        : relativePlayhead;
+      const currentPlayhead =
+        durationMs > 0 ? Math.min(relativePlayhead, durationMs) : relativePlayhead;
       const timeS = Math.max(0, currentPlayhead) / 1000;
 
       if (!playing) {
@@ -97,7 +97,7 @@ export const MediaContainer = memo(
           video.currentTime = timeS;
         }
 
-          lastPlayheadRef.current = currentPlayhead;
+        lastPlayheadRef.current = currentPlayhead;
       }
     }, [playing, playheadMs, media?.relativePlayheadMs, media?.duration, media?.clipStartMs]);
 
@@ -130,19 +130,19 @@ export const MediaContainer = memo(
       >
         {media ? (
           media.type === 'video' ? (
-        <video
-          ref={videoRef}
-          src={media.url}
-          className="block"
-          style={contentStyle}
-          autoPlay={playing}
-          loop
-          muted
-          playsInline
-          crossOrigin="anonymous"
-          data-clip-start-ms={media?.clipStartMs ?? 0}
-          data-clip-duration-ms={media?.duration ?? 0}
-        />
+            <video
+              ref={videoRef}
+              src={media.url}
+              className="block"
+              style={contentStyle}
+              autoPlay={playing}
+              loop
+              muted
+              playsInline
+              crossOrigin="anonymous"
+              data-clip-start-ms={media?.clipStartMs ?? 0}
+              data-clip-duration-ms={media?.duration ?? 0}
+            />
           ) : (
             <img
               src={media.url}
@@ -154,29 +154,7 @@ export const MediaContainer = memo(
               crossOrigin="anonymous"
             />
           )
-        ) : (
-          <div
-            className={`w-full h-full flex items-center justify-center ${isPreview ? 'p-1' : 'p-8'} ${!isPreview && 'group-hover:brightness-110'}`}
-            style={{
-              background: styleCSS.background || 'rgba(24, 24, 27, 0.8)',
-              border: styleCSS.border || '2px dashed rgba(255, 255, 255, 0.2)',
-              backdropFilter: styleCSS.backdropFilter,
-              transition: 'background 0.3s ease, border 0.3s ease',
-            }}
-          >
-            <div
-              className={`flex flex-col items-center gap-4 text-ui-text ${!isPreview && 'group-hover:text-accent group-hover:scale-110'}`}
-              style={{ transition: 'color 0.3s ease, transform 0.3s ease' }}
-            >
-              <ImagePlus className={isPreview ? 'w-5 h-5' : 'w-16 h-16'} />
-              {!isPreview && (
-                <span className="text-sm uppercase tracking-widest text-center font-bold">
-                  Add Image
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+        ) : null}
 
         {/* Hover overlay */}
         {media && !isPreview && (

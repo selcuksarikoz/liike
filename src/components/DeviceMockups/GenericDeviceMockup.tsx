@@ -1,5 +1,5 @@
+import { useEffect, useState } from 'react';
 import { DeviceConfig, isDeviceImagePreloaded } from '../../constants/devices';
-import { useState, useEffect } from 'react';
 
 export type DeviceMockupProps = {
   children: React.ReactNode;
